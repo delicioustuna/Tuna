@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Tuna.Probabilistic</RootNamespace>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Description>Probabilistic inference (HMC, NUTS, slice sampling, ensemble and parallel tempering MCMC) and convergence diagnostics for Tuna.</Description>
+    <PackageTags>numerics;probabilistic;mcmc;hmc;nuts;bayesian;tuna;dotnet</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuna\Tuna.csproj" />
+    <!-- 有効標本サイズの自己相関（ConvergenceDiagnostics）は FFT を使うので、拡張 Tuna.SignalProcessing も参照する -->
+    <ProjectReference Include="..\Tuna.SignalProcessing\Tuna.SignalProcessing.csproj" />
+    <!-- 分位点のモンテカルロ標準誤差（ConvergenceDiagnostics）はベータ分布を、ポテンシャルと最適化の目的関数の変換（LogDensities）は最適化の型を使う -->
+    <ProjectReference Include="..\Tuna.Statistics\Tuna.Statistics.csproj" />
+    <ProjectReference Include="..\Tuna.Optimization\Tuna.Optimization.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ライブラリ全体の MIT 本文はリポジトリ直下に置き、パッケージの直下に格納する -->
+    <None Include="..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

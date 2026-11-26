@@ -1,0 +1,32 @@
+root = true
+
+# 読みやすさのための書き方。dotnet format style で直せるものだけを置く。
+# src と tests では、それぞれの Directory.Build.props の EnforceCodeStyleInBuild により、違反がビルドの警告として出る。
+#   修正: dotnet format whitespace Tuna.slnx --include src/ tests/
+#         dotnet format style Tuna.slnx --severity warn --include src/ tests/
+#   検査: 上の2つに --verify-no-changes を付ける
+# サブコマンドなしの dotnet format は xUnit などのアナライザーの修正まで行うので使わない。
+# 1行に詰めたラムダの本体など、自動では直らないものは手で改行する。
+[*.cs]
+# 字下げ・空白・改行の位置（dotnet format whitespace と同じ判定）
+dotnet_diagnostic.IDE0055.severity = warning
+
+# if・for などの本体が1文でも括弧で囲む
+csharp_prefer_braces = true:warning
+dotnet_diagnostic.IDE0011.severity = warning
+
+# 埋め込み文（if・for の本体）を同じ行に書かない
+csharp_style_allow_embedded_statements_on_same_line_experimental = false:warning
+dotnet_diagnostic.IDE2001.severity = warning
+
+# ブロックの閉じ括弧の直後の文との間に空行を入れる
+dotnet_style_allow_statement_immediately_after_block_experimental = false:warning
+dotnet_diagnostic.IDE2003.severity = warning
+
+# 空行を2行以上続けない
+dotnet_style_allow_multiple_blank_lines_experimental = false:warning
+dotnet_diagnostic.IDE2000.severity = warning
+
+# 続く閉じ括弧の間に空行を入れない
+csharp_style_allow_blank_lines_between_consecutive_braces_experimental = false:warning
+dotnet_diagnostic.IDE2002.severity = warning

@@ -1,0 +1,41 @@
+<Project>
+
+  <PropertyGroup>
+    <!--
+      .editorconfig の書き方の規則（括弧の省略・埋め込み文・ブロック後の空行など）を、ビルドの警告として出す。
+      直すときは dotnet format style で src と tests を整形する（コマンドはリポジトリ直下の .editorconfig に書いた）。
+    -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+
+    <!-- NuGet パッケージの共通メタデータ -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <Authors>delicioustuna</Authors>
+    <Copyright>Copyright (c) 2026 delicioustuna</Copyright>
+    <PackageProjectUrl>https://github.com/delicioustuna/Tuna</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/delicioustuna/Tuna.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageIcon>icon.png</PackageIcon>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- $(MSBuildThisFileDirectory) を使って、このpropsファイルと同じ階層にある画像を指す -->
+    <None Include="$(MSBuildThisFileDirectory)icon.png" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <!-- リポジトリ直下の README.md を NuGet パッケージの README として同梱する -->
+  <PropertyGroup Condition="Exists('$(MSBuildThisFileDirectory)..\README.md')">
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)..\README.md')">
+    <None Include="$(MSBuildThisFileDirectory)..\README.md" Pack="true" PackagePath="\" Visible="false" />
+  </ItemGroup>
+
+  <!-- NuGet 利用側の IntelliSense が参照する XML ドキュメントを DLL と一緒に出力する。 -->
+  <PropertyGroup Condition="'$(MSBuildProjectName)' != 'Tuna.Generators'">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+</Project>

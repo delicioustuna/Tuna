@@ -1,0 +1,11 @@
+<Project>
+
+  <PropertyGroup>
+    <!--
+      .editorconfig の書き方の規則（括弧の省略・埋め込み文・ブロック後の空行など）を、ビルドの警告として出す。
+      直すときは dotnet format style で src と tests を整形する（コマンドはリポジトリ直下の .editorconfig に書いた）。
+    -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+  </PropertyGroup>
+
+</Project>

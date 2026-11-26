@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Tuna.Differentiation</RootNamespace>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Description>Tape-based reverse-mode automatic differentiation for scalars, vectors, matrices, tensors, and linear algebra operations in Tuna.</Description>
+    <PackageTags>numerics;automatic-differentiation;autodiff;autograd;tuna;dotnet</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuna\Tuna.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ライブラリ全体の MIT 本文はリポジトリ直下に置き、パッケージの直下に格納する -->
+    <None Include="..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

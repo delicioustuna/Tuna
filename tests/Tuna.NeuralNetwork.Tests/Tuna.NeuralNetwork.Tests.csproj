@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 拡張 Tuna.NeuralNetwork（正規化・Mamba・2次元畳み込みと、学習用の記録）のテスト。コアのテスト（Tuna.Tests）はこの拡張を参照しない。 -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Tuna.NeuralNetwork\Tuna.NeuralNetwork.csproj" />
+    <ProjectReference Include="..\..\src\Tuna.Optimization\Tuna.Optimization.csproj" />
+    <None Update="Data\*.safetensors" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

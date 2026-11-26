@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Tuna.Generators/Tuna.Generators.csproj" />
+    <Project Path="src/Tuna/Tuna.csproj" />
+    <Project Path="src/Tuna.Differentiation/Tuna.Differentiation.csproj" />
+    <Project Path="src/Tuna.Probabilistic/Tuna.Probabilistic.csproj" />
+    <Project Path="src/Tuna.Statistics/Tuna.Statistics.csproj" />
+    <Project Path="src/Tuna.Optimization/Tuna.Optimization.csproj" />
+    <Project Path="src/Tuna.Integration/Tuna.Integration.csproj" />
+    <Project Path="src/Tuna.SignalProcessing/Tuna.SignalProcessing.csproj" />
+    <Project Path="src/Tuna.NeuralNetwork/Tuna.NeuralNetwork.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Tuna.Tests/Tuna.Tests.csproj" />
+    <Project Path="tests/Tuna.Differentiation.Tests/Tuna.Differentiation.Tests.csproj" />
+    <Project Path="tests/Tuna.Probabilistic.Tests/Tuna.Probabilistic.Tests.csproj" />
+    <Project Path="tests/Tuna.Statistics.Tests/Tuna.Statistics.Tests.csproj" />
+    <Project Path="tests/Tuna.Optimization.Tests/Tuna.Optimization.Tests.csproj" />
+    <Project Path="tests/Tuna.Integration.Tests/Tuna.Integration.Tests.csproj" />
+    <Project Path="tests/Tuna.SignalProcessing.Tests/Tuna.SignalProcessing.Tests.csproj" />
+    <Project Path="tests/Tuna.NeuralNetwork.Tests/Tuna.NeuralNetwork.Tests.csproj" />
+  </Folder>
+</Solution>

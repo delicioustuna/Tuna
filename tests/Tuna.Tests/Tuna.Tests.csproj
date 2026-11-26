@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- コア Tuna のテスト。拡張（Tuna.SignalProcessing・Tuna.Probabilistic）は参照せず、コアだけでビルド・検証できることを保つ。 -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- LargeMemoryTests は int の上限に近い長さの領域をネイティブメモリに取る -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.4" />
+    <PackageReference Include="CsCheck" Version="5.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
+    <PackageReference Include="System.Numerics.Tensors" Version="10.0.0" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <EmbeddedResource Include="RandomSource/pcg64dxsm-reference.json" />
+    <EmbeddedResource Include="QuasiRandom/sobol-reference.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Tuna\Tuna.csproj" />
+    <!-- パッケージの利用者と同じく属性ベースの Source Generator を有効にし、診断のテストのために型としても参照する -->
+    <ProjectReference Include="..\..\src\Tuna.Generators\Tuna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\ReferenceData\ScalarFunctionReferences.Generated.cs" Link="ReferenceData\ScalarFunctionReferences.Generated.cs" />
+    <Compile Include="..\ReferenceData\ScalarFunctionReferenceAssert.cs" Link="ReferenceData\ScalarFunctionReferenceAssert.cs" />
+    <Compile Include="..\ReferenceData\ReferencePrecision.cs" Link="ReferenceData\ReferencePrecision.cs" />
+  </ItemGroup>
+
+</Project>

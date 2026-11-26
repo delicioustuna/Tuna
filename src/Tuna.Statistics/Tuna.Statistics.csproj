@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Tuna.Statistics</RootNamespace>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Description>Statistical distributions (continuous, discrete, multivariate, and composite) with PDF/CDF/quantile/sampling and automatic differentiation support for Tuna.</Description>
+    <PackageTags>numerics;statistics;distributions;probability;tuna;dotnet</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuna\Tuna.csproj" />
+    <ProjectReference Include="..\Tuna.Differentiation\Tuna.Differentiation.csproj" />
+    <!-- 多変量分布の累積分布関数・領域の確率は数値積分（Genz の変換を Tuna.Integration で積分）で求める -->
+    <ProjectReference Include="..\Tuna.Integration\Tuna.Integration.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ライブラリ全体の MIT 本文はリポジトリ直下に置き、パッケージの直下に格納する -->
+    <None Include="..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+  </ItemGroup>
+
+</Project>

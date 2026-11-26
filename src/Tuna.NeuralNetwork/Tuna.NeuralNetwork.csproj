@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>Tuna.NeuralNetwork</RootNamespace>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Description>Neural network building blocks (2D convolution, Mamba state-space blocks, normalization) and SafeTensors I/O for Tuna.</Description>
+    <PackageTags>numerics;neural-network;deep-learning;mamba;safetensors;tuna;dotnet</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Tuna\Tuna.csproj" />
+    <!-- 学習用の記録（XMathDifferentiationExtensions）が使う。推論だけの呼び出しでは読み込まれない。 -->
+    <ProjectReference Include="..\Tuna.Differentiation\Tuna.Differentiation.csproj" />
+    <!-- 型推論のためのオーバーロード（[InferenceOverloads]）を生成する。ビルド時だけ使い、実行時の依存にはならない。 -->
+    <ProjectReference Include="..\Tuna.Generators\Tuna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ライブラリ全体の MIT 本文はリポジトリ直下に置き、パッケージの直下に格納する -->
+    <None Include="..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath="" />
+    <None Update="IO\README.md" Pack="true" PackagePath="IO/README.md" />
+  </ItemGroup>
+
+</Project>

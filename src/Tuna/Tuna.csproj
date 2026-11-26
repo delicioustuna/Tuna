@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <Description>Numerical computing library for .NET 10 providing vectors, matrices, tensors, linear algebra, special functions, and random/quasi-random generators.</Description>
+    <PackageTags>numerics;math;linear-algebra;special-functions;random;simd;dotnet</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- XMath の定型オーバーロードを生成する。ビルド時だけ使い、実行時の依存にはならない。 -->
+    <ProjectReference Include="..\Tuna.Generators\Tuna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!--
+      拡張 Tuna.SignalProcessing（FFT・ウェーブレット・畳み込み）だけに、ビューの内部表現（Reference・Stride・TryGetDense など）、
+      初期化しない確保（Uninitialized）、並列化の方針（Parallelism）、重なりの判定（StridedLayout）を見せる（本体と同じ計算経路を使うため）。
+    -->
+    <InternalsVisibleTo Include="Tuna.SignalProcessing" />
+    <!--
+      統計の拡張（Tuna.Statistics）の確率分布は、特殊関数の安定な評価の部品（LogGammaPrefix・BetaPrefix・Log1pmx・StirlingCorrection など）を使う。
+      最適化（Tuna.Optimization）は、配列を包む行列（Matrix.Wrap）とビューの間隔（Stride）を使う。同じく friend assembly にする。
+    -->
+    <InternalsVisibleTo Include="Tuna.Statistics" />
+    <InternalsVisibleTo Include="Tuna.Optimization" />
+    <!--
+      ニューラルネットワークの拡張（Tuna.NeuralNetwork）は、並列化の方針（Parallelism。1フレームに数十回ある短い並列区間を、
+      スピン待ちの作業スレッドで回し、入れ子の行列積を逐次にする）と、ビューの内部表現（Reference・Stride）・重なりの判定を使う。
+    -->
+    <InternalsVisibleTo Include="Tuna.NeuralNetwork" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- 利用者のプロジェクトでも [ElementwiseOperation] などが使えるよう、Generator をパッケージのアナライザーとして同梱する -->
+    <None Include="..\Tuna.Generators\bin\$(Configuration)\netstandard2.0\Tuna.Generators.dll" Pack="true" PackagePath="analyzers/dotnet/cs" Visible="false" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ライブラリ全体の MIT 本文はリポジトリ直下に置き、パッケージの直下に格納する -->
+    <None Include="..\..\LICENSE.txt" Link="LICENSE.txt" Pack="true" PackagePath=""
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <None Update="RandomSource/THIRD_PARTY_NOTICES.txt"
+          Pack="true" PackagePath="RandomSource/%(Filename)%(Extension)"
+          CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>
