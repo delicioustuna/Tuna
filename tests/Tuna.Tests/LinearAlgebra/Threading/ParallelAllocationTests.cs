@@ -567,7 +567,7 @@ public class ParallelAllocationTests
             .CreateDelegate<Action<int, int, Action<int>>>();
     }
 
-    private static void AssertNoAllocation(Action call)
+    internal static void AssertNoAllocation(Action call)
     {
         for (int i = 0; i < 32; i++)
         {

@@ -8,6 +8,46 @@ namespace Tuna.Differentiation.Tests.Properties;
 public class DifferentiationPropertyTests
 {
     [Fact]
+    public void CrossPullbackSatisfiesTheAdjointIdentity()
+    {
+        Gen.Int[0, 100000].Sample(seed =>
+        {
+            var random = new Random(seed);
+            var u = Vector<double>.Generate(3, _ => random.Next(-8, 9) / 8.0);
+            var v = Vector<double>.Generate(3, _ => random.Next(-8, 9) / 8.0);
+            var dz = Vector<double>.Generate(3, _ => random.Next(-8, 9) / 8.0);
+            var tape = new Tape();
+            var un = tape.Leaf(u);
+            var vn = tape.Leaf(v);
+            var loss = XMath.Dot(XMath.Cross(un, vn), tape.Constant(dz));
+            tape.Backward(loss);
+
+            Assert.Equal(loss.Value, XMath.Dot(tape.GetGradient(un), u));
+            Assert.Equal(loss.Value, XMath.Dot(tape.GetGradient(vn), v));
+        }, iter: 200, seed: "1760c2055002");
+    }
+
+    [Fact]
+    public void OuterProductPullbackSatisfiesTheAdjointIdentity()
+    {
+        Gen.Select(Gen.Int[0, 16], Gen.Int[0, 16], Gen.Int[0, 100000]).Sample((m, n, seed) =>
+        {
+            var random = new Random(seed);
+            var u = Vector<double>.Generate(m, _ => random.Next(-8, 9) / 8.0);
+            var v = Vector<double>.Generate(n, _ => random.Next(-8, 9) / 8.0);
+            var dz = Matrix<double>.Generate(m, n, (_, _) => random.Next(-8, 9) / 8.0);
+            var tape = new Tape();
+            var un = tape.Leaf(u);
+            var vn = tape.Leaf(v);
+            var loss = XMath.Sum(XMath.ColumnSums(XMath.Hadamard(XMath.Outer(un, vn), tape.Constant(dz))));
+            tape.Backward(loss);
+
+            Assert.Equal(loss.Value, XMath.Dot(tape.GetGradient(un), u));
+            Assert.Equal(loss.Value, XMath.Dot(tape.GetGradient(vn), v));
+        }, iter: 200, seed: "1760ad101001");
+    }
+
+    [Fact]
     public void ScalarGraph_ReverseModeGradientMatchesCentralFiniteDifferenceAndTapeReset()
     {
         var gen = Gen.Select(

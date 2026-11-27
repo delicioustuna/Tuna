@@ -100,6 +100,143 @@ public readonly struct SingularValueDecompositionNode
     }
 
     /// <summary>
+    /// Returns the minimum-norm least-squares solution for a vector right-hand side.
+    /// <para>ベクトル右辺に対して、最小二乗解のうちノルムが最小の解を返します。</para>
+    /// </summary>
+    /// <param name="b">A right-hand side vector node with length <see cref="Rows"/>. / 長さが <see cref="Rows"/> の右辺ベクトルノード。</param>
+    /// <param name="tolerance">The relative cutoff tolerance, as in <see cref="SingularValueDecomposition.Solve(ReadOnlyVectorSpan{double}, double?)"/>. / <see cref="SingularValueDecomposition.Solve(ReadOnlyVectorSpan{double}, double?)"/> と同じカットオフの相対許容誤差。</param>
+    /// <returns>The solution vector node with length <see cref="Columns"/>. / 長さが <see cref="Columns"/> の解ベクトルノード。</returns>
+    /// <remarks>
+    /// <para>The value matches the core solve bit-for-bit. Backpropagation uses the Golub–Pereyra fixed-rank derivative at the truncated matrix, using the rank retained in the forward pass. The value can be discontinuous when a singular value crosses the cutoff.</para>
+    /// <para>値はコアの求解結果とビット単位で一致します。順伝播で保持したランクを使い、切り捨て後の行列に対して Golub–Pereyra の定ランクの微分を計算します。特異値がカットオフをまたぐ点では値が不連続になり得ます。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">The length of <paramref name="b"/> does not match <see cref="Rows"/>. / <paramref name="b"/> の長さが <see cref="Rows"/> と一致しない場合。</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is negative or non-finite. / <paramref name="tolerance"/> が負または有限でない場合。</exception>
+    /// <exception cref="InvalidOperationException">The singular spectrum is invalid, a node is uninitialized or stale, the nodes belong to different tapes, or the tape has finished backpropagation. / 特異値が無効、ノードが未初期化または世代が古い、ノードが異なるテープに属する、あるいは逆伝播済みのテープへ記録しようとした場合。</exception>
+    public VectorNode<double> Solve(VectorNode<double> b, double? tolerance = null)
+    {
+        Tape tape = XMathExtensions.Owner(Owner(), Generation, b.Tape, b.Generation);
+        return new(tape, SolveCore(tape, b.View, tolerance));
+    }
+
+    /// <summary>
+    /// Returns the minimum-norm least-squares solutions for the columns of a matrix right-hand side.
+    /// <para>右辺行列の列ごとに、最小二乗解のうちノルムが最小の解を返します。</para>
+    /// </summary>
+    /// <param name="b">A right-hand side matrix node with <see cref="Rows"/> rows. / 行数が <see cref="Rows"/> の右辺行列ノード。</param>
+    /// <param name="tolerance">The relative cutoff tolerance, as in <see cref="Solve(VectorNode{double}, double?)"/>. / <see cref="Solve(VectorNode{double}, double?)"/> と同じカットオフの相対許容誤差。</param>
+    /// <returns>The solution matrix node, with <see cref="Columns"/> rows and the same number of columns as <paramref name="b"/>. / 行数が <see cref="Columns"/> で、<paramref name="b"/> と同じ列数を持つ解行列ノード。</returns>
+    /// <remarks>
+    /// <para>The fixed-rank derivative and cutoff behavior are the same as for <see cref="Solve(VectorNode{double}, double?)"/>.</para>
+    /// <para>定ランクの微分とカットオフでの挙動は、<see cref="Solve(VectorNode{double}, double?)"/> と同じです。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">The row count of <paramref name="b"/> does not match <see cref="Rows"/>. / <paramref name="b"/> の行数が <see cref="Rows"/> と一致しない場合。</exception>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is negative or non-finite. / <paramref name="tolerance"/> が負または有限でない場合。</exception>
+    /// <exception cref="InvalidOperationException">The singular spectrum is invalid, a node is uninitialized or stale, the nodes belong to different tapes, or the tape has finished backpropagation. / 特異値が無効、ノードが未初期化または世代が古い、ノードが異なるテープに属する、あるいは逆伝播済みのテープへ記録しようとした場合。</exception>
+    public MatrixNode<double> Solve(MatrixNode<double> b, double? tolerance = null)
+    {
+        Tape tape = XMathExtensions.Owner(Owner(), Generation, b.Tape, b.Generation);
+        return new(tape, SolveCore(tape, b.View, tolerance));
+    }
+
+    /// <summary>
+    /// Returns the Moore–Penrose pseudoinverse computed with the retained singular values.
+    /// <para>保持した特異値を使ってムーア・ペンローズ疑似逆行列を求めます。</para>
+    /// </summary>
+    /// <param name="tolerance">The relative cutoff tolerance, as in <see cref="Solve(VectorNode{double}, double?)"/>. / <see cref="Solve(VectorNode{double}, double?)"/> と同じカットオフの相対許容誤差。</param>
+    /// <returns>The <c>n × m</c> pseudoinverse matrix node for an <c>m × n</c> input. / 入力が <c>m × n</c> の場合の <c>n × m</c> の疑似逆行列ノード。</returns>
+    /// <remarks>
+    /// <para>The value matches the core pseudoinverse bit-for-bit. Backpropagation uses the Golub–Pereyra fixed-rank derivative at the truncated matrix, including repeated retained singular values. The value can be discontinuous at the cutoff.</para>
+    /// <para>値はコアの疑似逆行列とビット単位で一致します。逆伝播では切り捨て後の行列に対して Golub–Pereyra の定ランクの微分を使います。保持した特異値が重複する場合にも適用できます。カットオフの境界では値が不連続になり得ます。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentOutOfRangeException"><paramref name="tolerance"/> is negative or non-finite. / <paramref name="tolerance"/> が負または有限でない場合。</exception>
+    /// <exception cref="InvalidOperationException">The singular spectrum is invalid, the node is uninitialized or stale, or the tape has finished backpropagation. / 特異値が無効、ノードが未初期化または世代が古い、あるいは逆伝播済みのテープへ記録しようとした場合。</exception>
+    public MatrixNode<double> PseudoInverse(double? tolerance = null)
+    {
+        Tape tape = Owner();
+        var store = tape.Store<double>();
+        var pool = store.Decompositions;
+        var info = pool.Info(Index);
+        tape.EnsureCanApply(info.RequiresGradient);
+
+        int m = info.Input.Rows, n = info.Input.Columns;
+        int slot = store.AddPooled(n, m, info.RequiresGradient);
+        var svd = pool.SingularValue(Index);
+        try
+        {
+            svd.PseudoInverse(store.WritableMatrix(slot), tolerance);
+            if (info.RequiresGradient)
+            {
+                tape.AppendArrayRecord<double>(ArrayOperation.SvdPseudoInverse, slot, info.Input, default, RetainedRank(svd, tolerance), Index);
+            }
+        }
+        catch
+        {
+            store.DiscardOperationSlots(slot);
+            throw;
+        }
+
+        return new(tape, ArrayView.Whole(slot, n, m));
+    }
+
+    private ArrayView SolveCore(Tape tape, in ArrayView b, double? tolerance)
+    {
+        var store = tape.Store<double>();
+        var pool = store.Decompositions;
+        var info = pool.Info(Index);
+        if (b.Rows != info.Input.Rows)
+        {
+            throw new ArgumentException("The right-hand side must have as many rows as the original matrix.", nameof(b));
+        }
+
+        bool record = info.RequiresGradient || store.RequiresGradient(b.Slot);
+        tape.EnsureCanApply(record);
+        int n = info.Input.Columns;
+        int slot = store.AddPooled(n, b.Columns, record);
+        var svd = pool.SingularValue(Index);
+        try
+        {
+            svd.Solve(store.MatrixView(b), store.WritableMatrix(slot), tolerance);
+            if (record)
+            {
+                tape.AppendArrayRecord<double>(ArrayOperation.SvdSolve, slot, info.Input, b, RetainedRank(svd, tolerance), Index);
+            }
+        }
+        catch
+        {
+            store.DiscardOperationSlots(slot);
+            throw;
+        }
+
+        return ArrayView.Whole(slot, n, b.Columns);
+    }
+
+    private static int RetainedRank(SingularValueDecomposition svd, double? tolerance)
+    {
+        var values = svd.Values;
+        if (tolerance is not { } relativeTolerance || values.Length == 0)
+        {
+            return svd.Rank;
+        }
+
+        // Match the core cutoff, including the rescaling that avoids a rounded subnormal threshold.
+        double cutoff = relativeTolerance * values[0];
+        int shift = double.IsSubnormal(cutoff) ? 54 : 0;
+        if (shift != 0)
+        {
+            cutoff = relativeTolerance * Math.ScaleB(values[0], shift);
+        }
+
+        int rank = 0;
+        while (rank < values.Length && (shift == 0 ? values[rank] : Math.ScaleB(values[rank], shift)) > cutoff)
+        {
+            rank++;
+        }
+
+        return rank;
+    }
+
+    /// <summary>
     /// Computes the thin singular value decomposition of a matrix node.
     /// <para>行列ノードの薄い特異値分解を計算します。</para>
     /// </summary>

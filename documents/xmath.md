@@ -84,13 +84,13 @@ Matrix<double> scaled = Hadamard(X, scale.BroadcastRows(X.Rows));
 
 ## 主な演算カテゴリ
 
-- **初等関数・数値安定関数**: `Exp`, `Log`, `Sqrt`, `Sin`, `Cos`, `Pow`, `Log1p`, `Expm1`, `Log1mexp`, `LogAddExp`, `Hypot` など
-- **活性化関数・Softmax**: `Relu`, `LeakyRelu`, `Elu`, `Selu`, `Silu`, `Gelu`, `Sigmoid`, `Softplus`, `Softmax`, `LogSoftmax`, `ColumnSoftmax`, `ColumnLogSoftmax`
-- **縮約・統計量**: `Sum`, `Mean`, `Variance`, `StandardDeviation`, `Min`, `Max`, `Norm`, `Norm1`, `NormInfinity`, `LogSumExp`, `ColumnSums`, `RowMeans` など（`ignoreNaN: true` オプション付きオーバーロードあり）
+- **初等関数・数値安定関数**: `Exp`, `Log`, `Sqrt`, `Pow`, `Log1p`, `Expm1`, `Log1mExp`, `LogAddExp`, `Hypot` など
+- **活性化関数・Softmax**: `Relu`, `LeakyRelu`, `Elu`, `Selu`, `Silu`, `Gelu`, `Logistic`, `Tanh`, `Softplus`, `Softmax`, `LogSoftmax`, `ColumnSoftmax`, `ColumnLogSoftmax`
+- **縮約・統計量**: `Sum`, `Mean`, `Variance`, `StandardDeviation`, `Min`, `Max`, `Norm`, `Norm1`, `NormInfinity`, `LogSumExp`, `Trace`, `ColumnSums`, `RowMeans` など（`ignoreNaN: true` オプション付きオーバーロードあり）
 - **ソート・順序統計量**: `Sort`, `ArgSort`, `Median`, `Quantile`, `IndexOfMax`, `IndexOfMin`
-- **積・距離**: `Dot`, `Multiply`, `Hadamard`, `Outer`, `Transpose`, `EuclideanDistance`, `SquaredEuclideanDistance`, `CosineDistance`
-- **複素数**: `Real`, `Imaginary`, `Conjugate`, `Magnitude`, `Phase`
-- **連立一次方程式**: `Solve`, `Inverse`, `SolveLowerTriangular`, `SolveUpperTriangular`
+- **積・距離**: `Dot`, `Cross`, `Multiply`, `Hadamard`, `Outer`, `Transpose`, `Distance`, `SquaredDistance`
+- **複素数**: `Real`, `Imaginary`, `Magnitude`, `Phase`
+- **連立一次方程式・対数行列式**: `Solve`, `Inverse`, `SolveLowerTriangular`, `SolveUpperTriangular`, `CholeskyLogDeterminant`
 
 全メソッドの網羅的な一覧は [Tuna API リファレンス](api/Tuna.md#static-class-xmath) を参照してください。
 

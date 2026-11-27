@@ -7,6 +7,21 @@ public static partial class XMathExtensions
     extension(XMath)
     {
         /// <summary>
+        /// Computes the natural logarithm of the determinant of a symmetric positive definite matrix node.
+        /// <para>対称正定値行列ノードの行列式の自然対数を計算します。</para>
+        /// </summary>
+        /// <param name="a">The input matrix node, interpreted as symmetric from its lower triangle. / 下三角部分を対称行列として解釈する入力行列ノード。</param>
+        /// <returns>A scalar node holding the log determinant, or zero for a 0 × 0 matrix. / 対数行列式を格納したスカラーノード。0 × 0 の行列の場合は 0。</returns>
+        /// <remarks>
+        /// <para>Uses the same pullback as <see cref="CholeskyDecompositionNode.LogDeterminant"/>. Use the decomposition node directly to reuse the factor for other operations.</para>
+        /// <para>逆伝播は <see cref="CholeskyDecompositionNode.LogDeterminant"/> と同じです。他の演算でも因子を使う場合は、分解ノードで再利用できます。</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException"><paramref name="a"/> is not square or is not numerically positive definite. / <paramref name="a"/> が正方行列でない、または数値的に正定値でない場合。</exception>
+        /// <exception cref="InvalidOperationException">The node is uninitialized or stale, or recording requires a reset. / ノードが未初期化、世代が古い、または記録を続けるためにテープのリセットが必要な場合。</exception>
+        public static ScalarNode CholeskyLogDeterminant(MatrixNode<double> a)
+            => CholeskyDecompositionNode.ComputeLogDeterminant(a);
+
+        /// <summary>
         /// Solves the linear system <c>Ax = b</c> using partially pivoted LU decomposition.
         /// <para>部分ピボット付き LU 分解を用いて連立一次方程式 <c>Ax = b</c> を解きます。</para>
         /// </summary>

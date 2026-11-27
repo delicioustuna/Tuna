@@ -18,7 +18,7 @@ public class ArrayElementwiseDerivativeTests(ITestOutputHelper output)
     // double でスカラー自動微分と同一の式・関数を使う演算（0 の符号を除き局所微分が一致する）。
     private static readonly HashSet<string> SameFormula =
         ["Negate", "Log", "Sqrt", "Square", "Abs", "Log1p", "Logit", "Add", "Subtract", "Hadamard", "Multiply", "Min", "Max",
-         "Pow", "LogAddExp", "LogSubExp", "ScalarSubtract"];
+         "Pow", "Hypot", "LogAddExp", "LogSubExp", "ScalarSubtract"];
 
     public static TheoryData<string> UnaryCases() => UnaryNames();
 
@@ -46,6 +46,36 @@ public class ArrayElementwiseDerivativeTests(ITestOutputHelper output)
             Matches(expected[i], view[i], exact, context + " view");
             MatchesSingle(expectedSingle[i], single[i], context + " float");
             MatchesSingle(expectedSingle[i], singleView[i], context + " float view");
+        }
+    }
+
+    [Fact]
+    public void TanhGradientsMatchAcrossLayoutsAndRetainSubnormalTails()
+    {
+        double[] tail = [46, 50, 51, 52, 52.5, 52.67, 52.68, 53];
+        uint[] roundedSingleBits = [0x4D482, 0x6A, 0xE, 0x2, 1, 1, 0, 0];
+        double[] inputs = [.. tail, .. tail.Select(x => -x), -0.0, 0, 1, -1, 373, -373, 374, double.NegativeInfinity, double.PositiveInfinity, double.NaN];
+
+        Check<double>(inputs);
+        var single = Check<float>(inputs);
+        for (int i = 0; i < tail.Length; i++)
+        {
+            Assert.Equal(roundedSingleBits[i], BitConverter.SingleToUInt32Bits((float)single[i]));
+            Assert.Equal(roundedSingleBits[i], BitConverter.SingleToUInt32Bits((float)single[i + tail.Length]));
+        }
+
+        static double[] Check<T>(double[] inputs) where T : unmanaged, IFloatingPointIeee754<T>
+        {
+            var vector = UnaryGradient<T>("Tanh", inputs, transposed: false);
+            var view = UnaryGradient<T>("Tanh", inputs, transposed: true);
+            for (int i = 0; i < inputs.Length; i++)
+            {
+                double scalar = UnaryGradient<T>("Tanh", [inputs[i]], transposed: false)[0];
+                DifferentiationAssert.EqualBits(scalar, vector[i], $"Tanh derivative at {inputs[i]:R}");
+                DifferentiationAssert.EqualBits(scalar, view[i], $"Tanh view derivative at {inputs[i]:R}");
+            }
+
+            return vector;
         }
     }
 
@@ -120,6 +150,7 @@ public class ArrayElementwiseDerivativeTests(ITestOutputHelper output)
     [InlineData("Abs")]
     [InlineData("Expm1")]
     [InlineData("Log1p")]
+    [InlineData("Tanh")]
     [InlineData("Logistic")]
     [InlineData("LogLogistic")]
     [InlineData("Logit")]

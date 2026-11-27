@@ -93,16 +93,14 @@ public static partial class XMathExtensions
         public static ScalarNode Tanh(ScalarNode x)
         {
             double raw = x.Value;
-            double value = Math.Tanh(raw);
+            double value = XMath.Tanh<double>(raw);
             if (x.Tape is null)
             {
                 return new(value);
             }
 
-            // Compute sech(x)^2 via t = exp(-|x|) to avoid cancellation in 1 - tanh(x)^2 and premature underflow in exp(-2|x|).
             double t = Math.Exp(-Math.Abs(raw));
-            double u = 2 * t / (1 + t * t);
-            return ScalarNode.Unary(value, x, u * u);
+            return ScalarNode.Unary(value, x, TanhDerivativeFromExp<double>.Invoke(t));
         }
 
         /// <summary>

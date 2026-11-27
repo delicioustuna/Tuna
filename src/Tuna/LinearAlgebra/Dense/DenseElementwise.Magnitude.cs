@@ -5,7 +5,7 @@ using System.Runtime.Intrinsics;
 
 namespace Tuna.LinearAlgebra;
 
-// 複素数の絶対値 |z|（Complex.Magnitude）の SIMD 実装。
+// 複素数の絶対値 |z|（Complex.Magnitude）および実数 XMath.Hypot の SIMD 実装。
 // .NET 10 の double.Hypot（AMD AOCL 由来、FMA 未使用）と同じ演算順序をレーンごとの選択で再現し、ビット単位で一致させる。
 internal static partial class DenseElementwise
 {
@@ -14,6 +14,74 @@ internal static partial class DenseElementwise
     private const double HypotUp = 2.409919865102884E-181;      // 2^-600
     private const double HypotSubnormalBias = 9.232978617785736E-128; // 2^-422（非正規化数を正規化数に変換する際の補正）
     private const ulong HypotHeadMask = 0xFFFFFFFFF8000000;     // 仮数の上位 26 ビット（2 乗が丸めなしで求まる）
+
+    private readonly struct HypotKernel<T> : IExactBinaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Invoke(T x, T y) => T.Hypot(x, y);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector128<T> Invoke(Vector128<T> x, Vector128<T> y) => typeof(T) == typeof(double)
+            ? Hypot(x.AsDouble(), y.AsDouble()).As<double, T>()
+            : Hypot(x.AsSingle(), y.AsSingle()).As<float, T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector256<T> Invoke(Vector256<T> x, Vector256<T> y) => typeof(T) == typeof(double)
+            ? Hypot(x.AsDouble(), y.AsDouble()).As<double, T>()
+            : Hypot(x.AsSingle(), y.AsSingle()).As<float, T>();
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector512<T> Invoke(Vector512<T> x, Vector512<T> y) => typeof(T) == typeof(double)
+            ? Hypot(x.AsDouble(), y.AsDouble()).As<double, T>()
+            : Hypot(x.AsSingle(), y.AsSingle()).As<float, T>();
+    }
+
+    private readonly struct HypotScalarKernel<T>(T scalar) : IExactUnaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public T Invoke(T x) => T.Hypot(x, scalar);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector128<T> Invoke(Vector128<T> x) => default(HypotKernel<T>).Invoke(x, Vector128.Create(scalar));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector256<T> Invoke(Vector256<T> x) => default(HypotKernel<T>).Invoke(x, Vector256.Create(scalar));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector512<T> Invoke(Vector512<T> x) => default(HypotKernel<T>).Invoke(x, Vector512.Create(scalar));
+    }
+
+    // 有限の float 値の 2 乗は非正規化数を含め double で厳密に表現できる。
+    // float.Hypot と同じ順序で倍精度の二乗和・平方根を計算してから単精度へ丸め、無限大を NaN より優先する。
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<float> Hypot(Vector128<float> x, Vector128<float> y)
+    {
+        var (xLo, xHi) = Vector128.Widen(x);
+        var (yLo, yHi) = Vector128.Widen(y);
+        var result = Vector128.Narrow(Vector128.Sqrt(xLo * xLo + yLo * yLo), Vector128.Sqrt(xHi * xHi + yHi * yHi));
+        var infinity = Vector128.IsInfinity(x) | Vector128.IsInfinity(y);
+        result = Vector128.ConditionalSelect(Vector128.IsNaN(result), Vector128.Create(float.NaN), result);
+        return Vector128.ConditionalSelect(infinity, Vector128.Create(float.PositiveInfinity), result);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<float> Hypot(Vector256<float> x, Vector256<float> y)
+    {
+        var (xLo, xHi) = Vector256.Widen(x);
+        var (yLo, yHi) = Vector256.Widen(y);
+        var result = Vector256.Narrow(Vector256.Sqrt(xLo * xLo + yLo * yLo), Vector256.Sqrt(xHi * xHi + yHi * yHi));
+        var infinity = Vector256.IsInfinity(x) | Vector256.IsInfinity(y);
+        result = Vector256.ConditionalSelect(Vector256.IsNaN(result), Vector256.Create(float.NaN), result);
+        return Vector256.ConditionalSelect(infinity, Vector256.Create(float.PositiveInfinity), result);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<float> Hypot(Vector512<float> x, Vector512<float> y)
+    {
+        var (xLo, xHi) = Vector512.Widen(x);
+        var (yLo, yHi) = Vector512.Widen(y);
+        var result = Vector512.Narrow(Vector512.Sqrt(xLo * xLo + yLo * yLo), Vector512.Sqrt(xHi * xHi + yHi * yHi));
+        var infinity = Vector512.IsInfinity(x) | Vector512.IsInfinity(y);
+        result = Vector512.ConditionalSelect(Vector512.IsNaN(result), Vector512.Create(float.NaN), result);
+        return Vector512.ConditionalSelect(infinity, Vector512.Create(float.PositiveInfinity), result);
+    }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     internal static void Magnitude(ReadOnlySpan<Complex> x, Span<double> destination)

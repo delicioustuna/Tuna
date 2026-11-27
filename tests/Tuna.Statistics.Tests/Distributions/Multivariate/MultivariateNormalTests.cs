@@ -45,6 +45,103 @@ public class MultivariateNormalTests
         DistributionAssert.Close(expected, d.LogPdf(x), 1e-15, "LogPdf");
     }
 
+    [Theory]
+    [InlineData(4)]
+    [InlineData(15)]
+    [InlineData(16)]
+    [InlineData(19)]
+    [InlineData(128)]
+    [InlineData(257)]
+    public void BulkLogPdfMatchesScalarForwardSubstitution(int dimension)
+    {
+        const int points = 11;
+        var random = new Random(382);
+        var mean = new double[dimension];
+        var factor = new Matrix<double>(dimension, dimension);
+        for (int j = 0; j < dimension; j++)
+        {
+            mean[j] = random.NextDouble() - 0.5;
+            factor[j, j] = 1 + random.NextDouble();
+            for (int i = j + 1; i < dimension; i++)
+            {
+                factor[i, j] = (random.NextDouble() - 0.5) / 4;
+            }
+        }
+
+        var d = MultivariateNormalDistribution.FromCholeskyFactor(mean, factor);
+        var x = new Matrix<double>(points, dimension).T;
+        for (int j = 0; j < points; j++)
+        {
+            for (int i = 0; i < dimension; i++)
+            {
+                x[i, j] = 6 * random.NextDouble() - 3;
+            }
+        }
+
+        var destination = new Matrix<double>(2, points).Row(1);
+        d.LogPdf(x, destination);
+        double normalizer = d.LogPdf(mean);
+        var z = new double[dimension];
+        for (int column = 0; column < points; column++)
+        {
+            for (int i = 0; i < dimension; i++)
+            {
+                z[i] = x[i, column] - mean[i];
+            }
+
+            for (int j = 0; j < dimension; j++)
+            {
+                z[j] /= factor[j, j];
+                for (int i = j + 1; i < dimension; i++)
+                {
+                    z[i] -= factor[i, j] * z[j];
+                }
+            }
+
+            double halfSquaredNorm = 0;
+            foreach (double value in z)
+            {
+                halfSquaredNorm += 0.5 * value * value;
+            }
+
+            long bits = BitConverter.DoubleToInt64Bits(normalizer - halfSquaredNorm);
+            Assert.Equal(bits, BitConverter.DoubleToInt64Bits(destination[column]));
+            Assert.Equal(bits, BitConverter.DoubleToInt64Bits(d.LogPdf(x.Column(column))));
+        }
+    }
+
+    [Fact]
+    public void BulkLogPdfPreservesExtremePointHandling()
+    {
+        const int dimension = 17;
+        var mean = new double[dimension];
+        mean[0] = -0.91e308;
+        var factor = new Matrix<double>(dimension, dimension);
+        factor.Diagonal().Fill(1);
+        factor[0, 0] = 1e154;
+        factor[1, 1] = 1e-150;
+        var d = MultivariateNormalDistribution.FromCholeskyFactor(mean, factor);
+        var x = new Matrix<double>(dimension, 5);
+        x[0, 0] = 0.91e308;
+        x[0, 1] = 1.2e308;
+        x[1, 2] = 1e200;
+        x[0, 3] = double.PositiveInfinity;
+        x[0, 4] = double.NegativeInfinity;
+        x[dimension - 1, 4] = double.NaN;
+
+        var destination = new double[x.Columns];
+        d.LogPdf(x, destination);
+        Assert.Equal(double.PositiveInfinity, x[0, 0] - mean[0]);
+        double scaled = 2 * ((0.5 * x[0, 0] - 0.5 * mean[0]) / factor[0, 0]);
+        double expected = d.LogPdf(mean) - 0.5 * scaled * scaled;
+        Assert.True(double.IsFinite(expected));
+        Assert.Equal(expected, destination[0]);
+        Assert.Equal(double.NegativeInfinity, destination[1]);
+        Assert.Equal(double.NegativeInfinity, destination[2]);
+        Assert.Equal(double.NegativeInfinity, destination[3]);
+        Assert.True(double.IsNaN(destination[4]));
+    }
+
     [Fact]
     public void FromCholeskyFactorMatchesTheCovarianceConstructor()
     {

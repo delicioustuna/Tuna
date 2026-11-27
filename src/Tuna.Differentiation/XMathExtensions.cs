@@ -42,6 +42,76 @@ public static partial class XMathExtensions
             => MultiplyCore(a, x);
 
         /// <summary>
+        /// Computes the outer product <c>u vᵀ</c>.
+        /// <para>2 つのベクトルの外積（直積）<c>u vᵀ</c> を計算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type (<see langword="float"/> or <see langword="double"/>). / 要素型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="u">The vector that determines the rows. / 行に対応するベクトルノード。</param>
+        /// <param name="v">The vector that determines the columns. / 列に対応するベクトルノード。</param>
+        /// <returns>A matrix node holding <c>u vᵀ</c>. / 外積 <c>u vᵀ</c> を格納した行列ノード。</returns>
+        /// <remarks>
+        /// <para>The pullback accumulates <c>dZ v</c> into the gradient of <paramref name="u"/> and <c>dZᵀ u</c> into the gradient of <paramref name="v"/>.</para>
+        /// <para>逆伝播では <paramref name="u"/> の勾配に <c>dZ v</c>、<paramref name="v"/> の勾配に <c>dZᵀ u</c> を加算します。</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">Thrown if either node is uninitialized or stale, the nodes belong to different tapes, or the tape's backward pass has completed. / ノードが未初期化または世代が古い、異なるテープに属している、あるいは逆伝播を完了したテープへ記録しようとした場合。</exception>
+        public static MatrixNode<T> Outer<T>(VectorNode<T> u, VectorNode<T> v) where T : unmanaged, IFloatingPointIeee754<T>
+        {
+            Tape tape = Owner(u.Tape, u.Generation, v.Tape, v.Generation);
+            var store = tape.Store<T>();
+            bool record = store.RequiresGradient(u.View.Slot) || store.RequiresGradient(v.View.Slot);
+            tape.EnsureCanApply(record);
+
+            int slot = store.AddPooled(u.Length, v.Length, record);
+            XMath.Outer(store.VectorView(u.View), store.VectorView(v.View), store.WritableMatrix(slot));
+            if (record)
+            {
+                tape.AppendArrayRecord<T>(ArrayOperation.Outer, slot, u.View, v.View);
+            }
+
+            return new(tape, ArrayView.Whole(slot, u.Length, v.Length));
+        }
+
+        /// <summary>
+        /// Computes the cross product <c>u × v</c> of two three-dimensional vector nodes.
+        /// <para>2 つの 3 次元ベクトルノードの外積 <c>u × v</c> を計算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type (<see langword="float"/> or <see langword="double"/>). / 要素型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="u">The first vector node, of length 3. / 長さ 3 の第 1 ベクトルノード。</param>
+        /// <param name="v">The second vector node, of length 3. / 長さ 3 の第 2 ベクトルノード。</param>
+        /// <returns>A vector node holding <c>u × v</c>. / <c>u × v</c> を格納したベクトルノード。</returns>
+        /// <remarks>
+        /// <para>For the output adjoint <c>dz</c>, backpropagation accumulates <c>v × dz</c> into the gradient of <paramref name="u"/> and <c>dz × u</c> into the gradient of <paramref name="v"/>.</para>
+        /// <para>出力の随伴を <c>dz</c> とすると、逆伝播では <paramref name="u"/> の勾配に <c>v × dz</c>、<paramref name="v"/> の勾配に <c>dz × u</c> を加算します。</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">Either vector node has a length other than 3. / いずれかのベクトルノードの長さが 3 以外の場合。</exception>
+        /// <exception cref="InvalidOperationException">An input node is uninitialized, stale or belongs to a different tape, or recording requires a reset. / 入力ノードが未初期化、世代が古い、別のテープに属する、または記録を続けるためにテープのリセットが必要な場合。</exception>
+        public static VectorNode<T> Cross<T>(VectorNode<T> u, VectorNode<T> v) where T : unmanaged, IFloatingPointIeee754<T>
+        {
+            Tape tape = Owner(u.Tape, u.Generation, v.Tape, v.Generation);
+            if (u.Length != 3)
+            {
+                throw new ArgumentException("Vector length must be 3.", nameof(u));
+            }
+
+            if (v.Length != 3)
+            {
+                throw new ArgumentException("Vector length must be 3.", nameof(v));
+            }
+
+            var store = tape.Store<T>();
+            bool record = store.RequiresGradient(u.View.Slot) || store.RequiresGradient(v.View.Slot);
+            tape.EnsureCanApply(record);
+            int slot = store.AddPooled(3, 1, record);
+            XMath.Cross(store.VectorView(u.View), store.VectorView(v.View), store.WritableVector(slot));
+            if (record)
+            {
+                tape.AppendArrayRecord<T>(ArrayOperation.Cross, slot, u.View, v.View);
+            }
+
+            return new(tape, ArrayView.Whole(slot, 3, 1));
+        }
+
+        /// <summary>
         /// Computes the sum of all elements, <c>Σ x[i]</c>.
         /// <para>全要素の総和 <c>Σ x[i]</c> を計算します。</para>
         /// </summary>

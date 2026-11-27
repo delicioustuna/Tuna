@@ -62,23 +62,52 @@ internal static partial class StridedKernels
             return false;
         }
 
+        if (x.Rows == 1)
+        {
+            x = x.T;
+            destination = destination.T;
+        }
+
         const int Chunk = 64;
         Span<T> buffer = stackalloc T[Chunk];
-        long total = (long)x.Rows * x.Columns;
+        var output = destination.AsReadOnly();
+        int rows = x.Rows;
+        int sourceStride = x.RowStride, destinationStride = output.RowStride;
+        long total = (long)rows * x.Columns;
         for (long start = 0; start < total; start += Chunk)
         {
             var part = buffer[..(int)Math.Min(Chunk, total - start)];
-            for (int k = 0; k < part.Length; k++)
+            var (firstColumn, firstRow) = Math.DivRem(start, rows);
+            int row = (int)firstRow, column = (int)firstColumn;
+            for (int copied = 0; copied < part.Length;)
             {
-                long index = start + k;
-                part[k] = x.ElementAt((int)(index % x.Rows), (int)(index / x.Rows));
+                int count = Math.Min(rows - row, part.Length - copied);
+                ref readonly T source = ref x.ElementAt(row, column);
+                for (int i = 0; i < count; i++)
+                {
+                    part[copied + i] = Unsafe.Add(ref Unsafe.AsRef(in source), (nint)i * sourceStride);
+                }
+
+                copied += count;
+                row = 0;
+                column++;
             }
 
             DenseElementwise.TryMap<T, TOperator>(part, part, op);
-            for (int k = 0; k < part.Length; k++)
+            row = (int)firstRow;
+            column = (int)firstColumn;
+            for (int copied = 0; copied < part.Length;)
             {
-                long index = start + k;
-                Element(destination, (int)(index % x.Rows), (int)(index / x.Rows)) = part[k];
+                int count = Math.Min(rows - row, part.Length - copied);
+                ref T target = ref Unsafe.AsRef(in output.ElementAt(row, column));
+                for (int i = 0; i < count; i++)
+                {
+                    Unsafe.Add(ref target, (nint)i * destinationStride) = part[copied + i];
+                }
+
+                copied += count;
+                row = 0;
+                column++;
             }
         }
 

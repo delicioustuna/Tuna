@@ -21,7 +21,7 @@ Vector<double> x = Solve(A, b);
 Matrix<double> Ainv = Inverse(A); // 解くだけなら Solve の方が高速かつ高精度
 ```
 
-三角行列の連立一次方程式には `SolveLowerTriangular` / `SolveUpperTriangular` を使用できます。
+三角行列の連立一次方程式には `SolveLowerTriangular` / `SolveUpperTriangular` を使用できます。また、対称正定値行列の対数行列式だけを 1 回計算したい場合は `CholeskyLogDeterminant` を使用できます（下三角部分のみを参照します）。
 
 ## 行列分解クラス一覧
 
@@ -34,7 +34,7 @@ Matrix<double> Ainv = Inverse(A); // 解くだけなら Solve の方が高速か
 | `QrDecomposition` | `A.Qr()` | 縦長・正方行列の最小二乗法（`Solve`：`Vector<double>`・`Matrix<double>`・ビュー・`ReadOnlySpan<double>` 対応）、直交基底 |
 | `SymmetricEigenDecomposition` | `A.SymmetricEigen()` | 対称行列の固有値（昇順）・直交固有ベクトル（下三角部分のみ参照） |
 | `EigenDecomposition` | `A.Eigen()` | 一般正方行列の複素固有値・固有ベクトル（`Complex` を使う際は `using Complex = System.Numerics.Complex;` を推奨） |
-| `SingularValueDecomposition` | `A.Svd()` | 一般行列の特異値（降順）・数値ランク・条件数・低ランク近似 |
+| `SingularValueDecomposition` | `A.Svd()` | 一般行列の特異値（降順）・数値ランク・条件数・低ランク近似・最小ノルム最小二乗解（`Solve`）・疑似逆行列（`PseudoInverse`） |
 | `BatchCholeskyDecomposition` | `BatchCholeskyDecomposition.Compute(T)` | 3 階 `Tensor<double>` 内の複数行列に対する一括 Cholesky 分解 |
 
 ### 使用例: Cholesky 分解と条件数

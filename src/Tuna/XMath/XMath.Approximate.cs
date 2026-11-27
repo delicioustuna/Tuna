@@ -25,6 +25,18 @@ public static partial class XMath
         return DenseElementwise.Exp(x);
     }
 
+    [ElementwiseOperation(OperatorName = "ApproximateTanh", OperatorContainer = "Operators")]
+    internal static T ApproximateTanh<T>(T x) where T : unmanaged, IHyperbolicFunctions<T>
+    {
+        if (typeof(T) == typeof(float))
+        {
+            float y = DenseElementwise.ApproximateTanh(Unsafe.As<T, float>(ref x));
+            return Unsafe.As<float, T>(ref y);
+        }
+
+        return Tanh(x);
+    }
+
     [ElementwiseOperation(OperatorName = "ApproximateLogistic", OperatorContainer = "Operators")]
     internal static T ApproximateLogistic<T>(T x)
         where T : unmanaged, IFloatingPointIeee754<T>
@@ -139,6 +151,71 @@ public static partial class XMath
     public static MatrixSpan<T> Exp<T>(ReadOnlyMatrixSpan<T> x, bool approximate, MatrixSpan<T> destination)
         where T : unmanaged, INumberBase<T>, IExponentialFunctions<T> =>
         approximate ? ApproximateExp(x, destination) : Exp(x, destination);
+
+    /// <summary>
+    /// Computes the hyperbolic tangent <c>tanh(x)</c>, optionally using a fast approximation for <see cref="float"/>.
+    /// <para>双曲線正接 <c>tanh(x)</c> を計算します（<see cref="float"/> では高速な近似式を選択可能）。</para>
+    /// </summary>
+    /// <typeparam name="T">The numeric type. / 数値型。</typeparam>
+    /// <param name="x">The input value. / 入力値。</param>
+    /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+    /// <returns>The hyperbolic tangent of <paramref name="x"/>. / <paramref name="x"/> の双曲線正接。</returns>
+    /// <remarks>
+    /// <para>For types other than <see cref="float"/>, both settings give the same result as <see cref="Tanh{T}(T)"/>.</para>
+    /// <para><see cref="float"/> 以外の型では、どちらの設定でも <see cref="Tanh{T}(T)"/> と同じ結果を返します。</para>
+    /// </remarks>
+    public static T Tanh<T>(T x, bool approximate) where T : unmanaged, IHyperbolicFunctions<T> =>
+        approximate ? ApproximateTanh(x) : Tanh(x);
+
+    /// <summary>
+    /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise for a vector, optionally using a fast approximation for <see cref="float"/>.
+    /// <para>ベクトルの各要素の双曲線正接 <c>tanh(x)</c> を計算します（<see cref="float"/> では高速な近似式を選択可能）。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input vector. / 入力ベクトル。</param>
+    /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+    /// <returns>A new vector containing the results. / 計算結果を格納した新しいベクトル。</returns>
+    [InferenceOverloads]
+    public static Vector<T> Tanh<T>(ReadOnlyVectorSpan<T> x, bool approximate) where T : unmanaged, IHyperbolicFunctions<T> =>
+        approximate ? ApproximateTanh(x) : Tanh(x);
+
+    /// <summary>
+    /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise for a vector and writes the results to <paramref name="destination"/>, optionally using a fast approximation for <see cref="float"/>.
+    /// <para>ベクトルの各要素の双曲線正接 <c>tanh(x)</c> を計算し、<paramref name="destination"/> に書き込みます（<see cref="float"/> では高速な近似式を選択可能）。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input vector. / 入力ベクトル。</param>
+    /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+    /// <param name="destination">The destination span. / 結果を書き込む出力先。</param>
+    /// <returns><paramref name="destination"/>. / <paramref name="destination"/>。</returns>
+    [InferenceOverloads]
+    public static VectorSpan<T> Tanh<T>(ReadOnlyVectorSpan<T> x, bool approximate, VectorSpan<T> destination) where T : unmanaged, IHyperbolicFunctions<T> =>
+        approximate ? ApproximateTanh(x, destination) : Tanh(x, destination);
+
+    /// <summary>
+    /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise for a matrix, optionally using a fast approximation for <see cref="float"/>.
+    /// <para>行列の各要素の双曲線正接 <c>tanh(x)</c> を計算します（<see cref="float"/> では高速な近似式を選択可能）。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input matrix. / 入力行列。</param>
+    /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+    /// <returns>A new matrix containing the results. / 計算結果を格納した新しい行列。</returns>
+    [InferenceOverloads]
+    public static Matrix<T> Tanh<T>(ReadOnlyMatrixSpan<T> x, bool approximate) where T : unmanaged, IHyperbolicFunctions<T> =>
+        approximate ? ApproximateTanh(x) : Tanh(x);
+
+    /// <summary>
+    /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise for a matrix and writes the results to <paramref name="destination"/>, optionally using a fast approximation for <see cref="float"/>.
+    /// <para>行列の各要素の双曲線正接 <c>tanh(x)</c> を計算し、<paramref name="destination"/> に書き込みます（<see cref="float"/> では高速な近似式を選択可能）。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input matrix. / 入力行列。</param>
+    /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+    /// <param name="destination">The destination span. / 結果を書き込む出力先。</param>
+    /// <returns><paramref name="destination"/>. / <paramref name="destination"/>。</returns>
+    [InferenceOverloads]
+    public static MatrixSpan<T> Tanh<T>(ReadOnlyMatrixSpan<T> x, bool approximate, MatrixSpan<T> destination) where T : unmanaged, IHyperbolicFunctions<T> =>
+        approximate ? ApproximateTanh(x, destination) : Tanh(x, destination);
 
     /// <summary>
     /// Computes the logistic sigmoid function <c>σ(x) = 1 / (1 + e⁻ˣ)</c>, optionally using a fast approximation for <see cref="float"/>.
@@ -467,6 +544,46 @@ public static partial class XMath
             else
             {
                 Exp(x);
+            }
+        }
+
+        /// <summary>
+        /// Applies the hyperbolic tangent <c>x ← tanh(x)</c> elementwise to a vector in place, optionally using a fast approximation for <see cref="float"/>.
+        /// <para>ベクトルの各要素に双曲線正接 <c>x ← tanh(x)</c> をインプレースで適用します（<see cref="float"/> では高速な近似式を選択可能）。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type. / 要素型。</typeparam>
+        /// <param name="x">The vector to modify in place. / インプレースで更新するベクトル。</param>
+        /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+        [InferenceOverloads]
+        public static void Tanh<T>(VectorSpan<T> x, bool approximate) where T : unmanaged, IHyperbolicFunctions<T>
+        {
+            if (approximate)
+            {
+                ApproximateTanh(x);
+            }
+            else
+            {
+                Tanh(x);
+            }
+        }
+
+        /// <summary>
+        /// Applies the hyperbolic tangent <c>x ← tanh(x)</c> elementwise to a matrix in place, optionally using a fast approximation for <see cref="float"/>.
+        /// <para>行列の各要素に双曲線正接 <c>x ← tanh(x)</c> をインプレースで適用します（<see cref="float"/> では高速な近似式を選択可能）。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type. / 要素型。</typeparam>
+        /// <param name="x">The matrix to modify in place. / インプレースで更新する行列。</param>
+        /// <param name="approximate"><see langword="true"/> to use the fast <see cref="float"/> approximation. / <see cref="float"/> で高速な近似式を使用する場合は <see langword="true"/>。</param>
+        [InferenceOverloads]
+        public static void Tanh<T>(MatrixSpan<T> x, bool approximate) where T : unmanaged, IHyperbolicFunctions<T>
+        {
+            if (approximate)
+            {
+                ApproximateTanh(x);
+            }
+            else
+            {
+                Tanh(x);
             }
         }
 

@@ -27,6 +27,7 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
     private SpareArrays[] trimOrder = [];
     // Retained at peak length and excluded from RetentionFactor because broadcast backward passes can expand n to n^2.
     private readonly T[][] scratch = [[], [], [], [], [], [], [], [], []];
+    private int[][]? scratchExponents;
     private DecompositionPool? decompositions;
     private long borrowed;
     private long peakBorrowed;
@@ -190,11 +191,20 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
             case ArrayOperation.MatrixVectorMultiply:
                 MatrixVectorMultiplyBackward(record);
                 break;
+            case ArrayOperation.Outer:
+                OuterBackward(record);
+                break;
+            case ArrayOperation.Cross:
+                CrossBackward(record);
+                break;
             case ArrayOperation.Sum:
                 SumBackward(record, adjoints[record.Output]);
                 break;
             case ArrayOperation.Dot:
                 DotBackward(record, adjoints[record.Output]);
+                break;
+            case ArrayOperation.Trace:
+                TraceBackward(record, adjoints[record.Output]);
                 break;
             case ArrayOperation.UserOperation:
                 UserOperationBackward(record);
@@ -280,14 +290,66 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
                 (m, n, ld, transposed) = (a.RowCount, a.ColumnCount, LeadingDimension(a.Slot), a.Transposed);
             }
 
-            Span<T> target = BeginGradient(x, out bool overwrite).Slice(Offset(x), x.RowCount);
-            // Detect zero multipliers before non-transposed Gemv, which may skip those columns and lose 0 * non-finite = NaN.
-            int skipped = transposed && m > 0 ? NextZero(dy.Slice(0, n), 0) : n;
-            Gemv(!transposed, m, n, aValues, ld, dy, overwrite, target);
-            if (skipped < n)
-            {
-                AddSkippedColumns(skipped, m, n, aValues, ld, dy, target);
-            }
+            AddMatrixVectorProduct(x, !transposed, m, n, aValues, ld, dy);
+        }
+    }
+
+    private void OuterBackward(in ArrayRecord record)
+    {
+        int output = record.Output;
+        int m = rows[output], n = columns[output];
+        if (!Touched(output) || m == 0 || n == 0)
+        {
+            return;
+        }
+
+        ArrayView u = record.Left, v = record.Right;
+        ReadOnlySpan<T> dz = OutputGradient(output);
+        if (RequiresGradient(u.Slot))
+        {
+            AddMatrixVectorProduct(u, false, m, n, dz, m, Values(v.Slot).Slice(Offset(v), n));
+        }
+
+        if (RequiresGradient(v.Slot))
+        {
+            AddMatrixVectorProduct(v, true, m, n, dz, m, Values(u.Slot).Slice(Offset(u), m));
+        }
+    }
+
+    private void CrossBackward(in ArrayRecord record)
+    {
+        int output = record.Output;
+        if (!Touched(output))
+        {
+            return;
+        }
+
+        ArrayView u = record.Left, v = record.Right;
+        var dz = new ReadOnlyVectorSpan<T>(OutputGradient(output));
+        Span<T> contribution = stackalloc T[3];
+        var destination = new VectorSpan<T>(contribution);
+        if (RequiresGradient(u.Slot))
+        {
+            XMath.Cross(VectorView(v), dz, destination);
+            AddGradient(u, contribution, negate: false);
+        }
+
+        if (RequiresGradient(v.Slot))
+        {
+            XMath.Cross(dz, VectorView(u), destination);
+            AddGradient(v, contribution, negate: false);
+        }
+    }
+
+    private void AddMatrixVectorProduct(in ArrayView target, bool transpose, int m, int n, ReadOnlySpan<T> matrix, int lda, ReadOnlySpan<T> vector)
+    {
+        Span<T> gradient = BeginGradient(target, out bool overwrite).Slice(Offset(target), target.RowCount);
+        // Non-transposed Gemv may skip zero multipliers, including products with non-finite matrix entries.
+        int skipped = !transpose && m > 0 ? NextZero(vector[..n], 0) : n;
+        Gemv(transpose, m, n, matrix, lda, vector, overwrite, gradient);
+        if (skipped < n)
+        {
+            AddSkippedColumns(skipped, m, n, matrix, lda, vector, gradient);
         }
     }
 
@@ -365,6 +427,28 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
         }
     }
 
+    private void TraceBackward(in ArrayRecord record, double adjoint)
+    {
+        T g = FromDouble(adjoint);
+        ArrayView x = record.Left;
+        int length = Math.Min(x.Rows, x.Columns);
+        if (T.IsZero(g) || length == 0)
+        {
+            return;
+        }
+
+        Span<T> gradient = BeginGradient(x, out bool overwrite);
+        if (overwrite)
+        {
+            gradient.Clear();
+        }
+
+        var diagonal = x.Broadcast
+            ? new VectorSpan<T>(gradient.Slice(Offset(x), length))
+            : WritableMatrixOf(gradient, x).Diagonal();
+        XMath.InPlace.Add(diagonal, g);
+    }
+
     // Uses a dedicated non-FMA kernel instead of Blas.Axpy for ISA bit-determinism and stable JIT codegen.
     private void AddScaled(in ArrayView target, T g, ReadOnlySpan<T> source)
     {
@@ -380,6 +464,19 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
         {
             buffer = GC.AllocateUninitializedArray<T>(length);
             scratch[index] = buffer;
+        }
+
+        return buffer.AsSpan(0, length);
+    }
+
+    public Span<int> ScratchExponents(int index, int length)
+    {
+        var buffers = scratchExponents ??= new int[scratch.Length][];
+        var buffer = buffers[index];
+        if (buffer is null || buffer.Length < length)
+        {
+            buffer = GC.AllocateUninitializedArray<int>(length);
+            buffers[index] = buffer;
         }
 
         return buffer.AsSpan(0, length);

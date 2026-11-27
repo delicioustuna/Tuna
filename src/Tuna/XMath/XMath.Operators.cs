@@ -10,6 +10,11 @@ public static partial class XMath
             internal T Y => y;
         }
 
+        public readonly partial struct HypotScalar<T>
+        {
+            internal T Y => y;
+        }
+
         public readonly partial struct MaxScalar<T>
         {
             internal T Y => y;

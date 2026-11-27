@@ -89,24 +89,7 @@ public sealed class CholeskyDecomposition
     /// Gets the natural logarithm of the determinant, <c>ln det A = 2 Σ ln lᵢᵢ</c>, or <see cref="double.NaN"/> if <see cref="IsPositiveDefinite"/> is <see langword="false"/>.
     /// <para>行列式の自然対数 <c>ln det A = 2 Σ ln lᵢᵢ</c> を取得します。<see cref="IsPositiveDefinite"/> が <see langword="false"/> の場合は <see cref="double.NaN"/> を返します。</para>
     /// </summary>
-    public double LogDeterminant
-    {
-        get
-        {
-            if (!IsPositiveDefinite)
-            {
-                return double.NaN;
-            }
-
-            double sum = 0;
-            for (int i = 0; i < L.Rows; i++)
-            {
-                sum += Math.Log(L.Data[i + i * L.Rows]);
-            }
-
-            return 2 * sum;
-        }
-    }
+    public double LogDeterminant => IsPositiveDefinite ? CholeskyKernels.LogDeterminant(L.Rows, L.Data) : double.NaN;
 
     /// <summary>
     /// Computes the Cholesky decomposition of the specified symmetric positive definite matrix.

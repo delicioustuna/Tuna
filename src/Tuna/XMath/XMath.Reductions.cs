@@ -24,6 +24,22 @@ public static partial class XMath
         StridedKernels.Sum(x);
 
     /// <summary>
+    /// Computes the sum of the main diagonal of a matrix.
+    /// <para>行列の主対角成分の和を計算します。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input matrix. / 入力行列。</param>
+    /// <returns>The sum of the first <c>min(x.Rows, x.Columns)</c> diagonal elements, or zero if the matrix is empty. / 主対角上の <c>min(x.Rows, x.Columns)</c> 個の成分の和。空行列の場合は 0。</returns>
+    /// <remarks>
+    /// <para>Uses the same accumulation and non-finite value handling as <see cref="Sum{T}(ReadOnlyVectorSpan{T})"/>.</para>
+    /// <para>加算方法と非有限値の扱いは <see cref="Sum{T}(ReadOnlyVectorSpan{T})"/> と同じです。</para>
+    /// </remarks>
+    [InferenceOverloads]
+    public static T Trace<T>(ReadOnlyMatrixSpan<T> x)
+        where T : unmanaged, INumberBase<T> =>
+        Sum(x.Diagonal());
+
+    /// <summary>
     /// Computes the sum of each column in a matrix.
     /// <para>行列の各列の総和を計算します。</para>
     /// </summary>

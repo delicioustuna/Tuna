@@ -5,7 +5,7 @@ namespace Tuna.Tests.LinearAlgebra;
 // System.Numerics.Vector<T> より Tuna.LinearAlgebra.Vector<T> を優先させるため、名前空間の内側で取り込む。
 using Tuna.LinearAlgebra;
 
-// approximate: true の Exp・Logistic・Silu・Softplus・Gelu を検証する。
+// approximate: true の Exp・Tanh・Logistic・Silu・Softplus・Gelu を検証する。
 // float 近似式の ULP 誤差上限、特殊値、スカラーと SIMD のビット一致、および double・Half の挙動（Gelu 以外は approximate: false と同一）を確認する。
 [Trait("LinearAlgebra", "XMath")]
 public class ApproximateElementwiseTests
@@ -15,6 +15,7 @@ public class ApproximateElementwiseTests
     private static readonly Approximation[] Approximations =
     [
         new("Exp", x => Exp(x, true), null, Math.Exp, 1.07),
+        new("Tanh", x => Tanh(x, true), v => Tanh(v, true), Math.Tanh, 1.1),
         new("Logistic", x => Logistic(x, true), v => Logistic(v, true), Logistic, 2.41),
         new("Silu", x => Silu(x, true), v => Silu(v, true), Silu, 3.35),
         new("Softplus", x => Softplus(x, true), v => Softplus(v, true), Softplus, 2.8),
@@ -125,7 +126,7 @@ public class ApproximateElementwiseTests
     public void SpecialInputsGiveTheLimitingValuesAndNaNPassesThrough()
     {
         Func<Vector<float>, Vector<float>> exp = x => Exp(x, true), logistic = x => Logistic(x, true), silu = x => Silu(x, true),
-            softplus = x => Softplus(x, true), gelu = x => Gelu(x, true);
+            softplus = x => Softplus(x, true), gelu = x => Gelu(x, true), tanh = x => Tanh(x, true);
 
         // 指数: ±∞・±0・溢れの境目・非正規化数・0 への下位桁あふれ
         AssertBits("Exp", exp, float.PositiveInfinity, float.PositiveInfinity);
@@ -140,6 +141,15 @@ public class ApproximateElementwiseTests
         AssertBits("Exp", exp, -103.97f, float.Epsilon);
         AssertBits("Exp", exp, -104, 0);
         AssertBits("Exp", exp, -1000, 0);
+
+        AssertBits("Tanh", tanh, float.PositiveInfinity, 1);
+        AssertBits("Tanh", tanh, float.NegativeInfinity, -1);
+        AssertBits("Tanh", tanh, float.MaxValue, 1);
+        AssertBits("Tanh", tanh, float.MinValue, -1);
+        AssertBits("Tanh", tanh, 0, 0);
+        AssertBits("Tanh", tanh, -0f, -0f);
+        AssertBits("Tanh", tanh, float.Epsilon, float.Epsilon);
+        AssertBits("Tanh", tanh, -float.Epsilon, -float.Epsilon);
 
         // ロジスティック関数
         AssertBits("Logistic", logistic, float.PositiveInfinity, 1);
@@ -207,11 +217,13 @@ public class ApproximateElementwiseTests
             .Concat(Enumerable.Range(0, 3_000).Select(_ => 100 * random.NextDouble() - 50)).ToArray();
         var v = new Vector<double>(x);
         Assert.Equal(Exp(v).ToArray(), Exp(v, true).ToArray());
+        Assert.Equal(Tanh(v).ToArray().Select(BitConverter.DoubleToInt64Bits), Tanh(v, true).ToArray().Select(BitConverter.DoubleToInt64Bits));
         Assert.Equal(Logistic(v).ToArray(), Logistic(v, true).ToArray());
         Assert.Equal(Silu(v).ToArray(), Silu(v, true).ToArray());
         Assert.Equal(Softplus(v).ToArray(), Softplus(v, true).ToArray());
         foreach (double value in x)
         {
+            Assert.Equal(BitConverter.DoubleToInt64Bits(Tanh(value)), BitConverter.DoubleToInt64Bits(Tanh(value, true)));
             Assert.Equal(Logistic(value), Logistic(value, true));
             Assert.Equal(Silu(value), Silu(value, true));
             Assert.Equal(Softplus(value), Softplus(value, true));
@@ -221,6 +233,12 @@ public class ApproximateElementwiseTests
         var h = x.Select(value => (Half)value).ToArray();
         var hv = new Vector<Half>(h);
         Assert.Equal(Exp(hv).ToArray(), Exp(hv, true).ToArray());
+        Assert.Equal(Tanh(hv).ToArray().Select(BitConverter.HalfToInt16Bits), Tanh(hv, true).ToArray().Select(BitConverter.HalfToInt16Bits));
+        foreach (Half value in h)
+        {
+            Assert.Equal(BitConverter.HalfToInt16Bits(Tanh(value)), BitConverter.HalfToInt16Bits(Tanh(value, true)));
+        }
+
         Assert.Equal(Logistic(hv).ToArray(), Logistic(hv, true).ToArray());
         Assert.Equal(Silu(hv).ToArray(), Silu(hv, true).ToArray());
         Assert.Equal(Softplus(hv).ToArray(), Softplus(hv, true).ToArray());
@@ -265,6 +283,8 @@ public class ApproximateElementwiseTests
 
         Check("Exp", (v, p) => Exp(v, p), (v, p, d) => Exp(v, p, d), (m, p) => Exp(m, p), (m, p, d) => Exp(m, p, d),
             (v, p) => InPlace.Exp(v, p), (m, p) => InPlace.Exp(m, p), v => Exp(v));
+        Check("Tanh", (v, p) => Tanh(v, p), (v, p, d) => Tanh(v, p, d), (m, p) => Tanh(m, p), (m, p, d) => Tanh(m, p, d),
+            (v, p) => InPlace.Tanh(v, p), (m, p) => InPlace.Tanh(m, p), v => Tanh(v));
         Check("Logistic", (v, p) => Logistic(v, p), (v, p, d) => Logistic(v, p, d), (m, p) => Logistic(m, p), (m, p, d) => Logistic(m, p, d),
             (v, p) => InPlace.Logistic(v, p), (m, p) => InPlace.Logistic(m, p), v => Logistic(v));
         Check("Silu", (v, p) => Silu(v, p), (v, p, d) => Silu(v, p, d), (m, p) => Silu(m, p), (m, p, d) => Silu(m, p, d),

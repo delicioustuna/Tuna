@@ -117,5 +117,47 @@ public class CholeskyDecompositionTests
     {
         Assert.Equal(0, new Matrix<double>(0, 0).Cholesky().L.Rows);
         Assert.Equal(3.0, new Matrix<double>(new double[,] { { 9 } }).Cholesky().L[0, 0]);
+        Assert.Equal(0.0, XMath.CholeskyLogDeterminant(new Matrix<double>(0, 0)));
+    }
+
+    [Fact]
+    public void CholeskyLogDeterminantReadsTheLowerTriangleOfATransposedSlice()
+    {
+        var storage = new Matrix<double>(4, 5);
+        var view = storage[1..3, 2..4].T;
+        view[0, 0] = 4;
+        view[1, 0] = 2;
+        view[0, 1] = double.NaN;
+        view[1, 1] = 3;
+        var original = storage.ToArray();
+
+        Assert.Equal(Math.Log(8.0), XMath.CholeskyLogDeterminant(view), 1e-14);
+        Assert.Equal(original, storage.ToArray());
+    }
+
+    [Theory]
+    [InlineData(1e-300)]
+    [InlineData(1e300)]
+    public void CholeskyLogDeterminantRemainsFiniteAtExtremeScales(double diagonal)
+    {
+        var matrix = Matrix<double>.FromDiagonal([diagonal, diagonal]);
+        Assert.Equal(2 * Math.Log(diagonal), XMath.CholeskyLogDeterminant(matrix), 1e-12);
+    }
+
+    [Fact]
+    public void CholeskyLogDeterminantRejectsRectangularAndNonPositiveDefiniteMatrices()
+    {
+        Assert.Throws<ArgumentException>("a", () => XMath.CholeskyLogDeterminant(new Matrix<double>(2, 3)));
+        Assert.Throws<ArgumentException>("a", () => XMath.CholeskyLogDeterminant(Matrix<double>.FromDiagonal([1, -1])));
+        Assert.Throws<ArgumentException>("a", () => XMath.CholeskyLogDeterminant(Matrix<double>.FromDiagonal([1, 0])));
+        Assert.Throws<ArgumentException>("a", () => XMath.CholeskyLogDeterminant(Matrix<double>.FromDiagonal([double.NaN])));
+        Assert.Throws<ArgumentException>("a", () => XMath.CholeskyLogDeterminant(Matrix<double>.FromDiagonal([double.PositiveInfinity])));
+    }
+
+    [Fact]
+    public void CholeskyLogDeterminantRejectsAnOversizedWorkspace()
+    {
+        Assert.Throws<OverflowException>(() =>
+            XMath.CholeskyLogDeterminant(new ReadOnlyMatrixSpan<double>([1.0], [46341, 46341], [0, 0])));
     }
 }

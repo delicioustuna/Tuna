@@ -226,6 +226,9 @@ Represents a thin singular value decomposition `A = UΣVᵀ` recorded on a `Tape
 | メソッド | 説明 |
 | --- | --- |
 | `static SingularValueDecompositionNode Compute(MatrixNode<double> a)` | Computes the thin singular value decomposition of a matrix node. / 行列ノードの薄い特異値分解を計算します。 |
+| `MatrixNode<double> PseudoInverse(double? tolerance = default)` | Returns the Moore–Penrose pseudoinverse computed with the retained singular values. / 保持した特異値を使ってムーア・ペンローズ疑似逆行列を求めます。 |
+| `VectorNode<double> Solve(VectorNode<double> b, double? tolerance = default)` | Returns the minimum-norm least-squares solution for a vector right-hand side. / ベクトル右辺に対して、最小二乗解のうちノルムが最小の解を返します。 |
+| `MatrixNode<double> Solve(MatrixNode<double> b, double? tolerance = default)` | Returns the minimum-norm least-squares solutions for the columns of a matrix right-hand side. / 右辺行列の列ごとに、最小二乗解のうちノルムが最小の解を返します。 |
 
 ### `readonly struct SymmetricEigenDecompositionNode`
 
@@ -359,6 +362,7 @@ Provides `XMath` extension methods for building differentiable scalar, vector, m
 | `static VectorNode<T> Add<T>(VectorNode<T> x, ScalarNode scalar)` | Adds a scalar to each element of a vector, `x + s`. / ベクトルの各要素にスカラーを加算した `x + s` を計算します。 |
 | `static MatrixNode<T> Add<T>(MatrixNode<T> x, ScalarNode scalar)` | Adds a scalar to each element of a matrix, `x + s`. / 行列の各要素にスカラーを加算した `x + s` を計算します。 |
 | `static ScalarNode Atan(ScalarNode x)` | Computes the inverse tangent `atan(x)`. / 逆正接 `atan(x)` を計算します。 |
+| `static ScalarNode CholeskyLogDeterminant(MatrixNode<double> a)` | Computes the natural logarithm of the determinant of a symmetric positive definite matrix node. / 対称正定値行列ノードの行列式の自然対数を計算します。 |
 | `static MatrixNode<T> ColumnLogSoftmax<T>(MatrixNode<T> x)` | Computes the log-softmax transformation along each column. / 各列に対して対数ソフトマックス変換を計算します。 |
 | `static VectorNode<T> ColumnLogSumExp<T>(MatrixNode<T> x)` | Computes `ln Σ exp` for each column. / 各列の `ln Σ exp` を計算します。 |
 | `static VectorNode<T> ColumnMeans<T>(MatrixNode<T> x)` | Computes the arithmetic mean of each column. / 各列の算術平均を計算します。 |
@@ -366,6 +370,7 @@ Provides `XMath` extension methods for building differentiable scalar, vector, m
 | `static VectorNode<T> ColumnSums<T>(MatrixNode<T> x)` | Computes the sum of each column. / 各列の総和を計算します。 |
 | `static VectorNode<T> ColumnSumsOfSquares<T>(MatrixNode<T> x)` | Computes the sum of squares of each column. / 各列の 2 乗和を計算します。 |
 | `static ScalarNode Cos(ScalarNode x)` | Computes the cosine `cos(x)`. / 余弦 `cos(x)` を計算します。 |
+| `static VectorNode<T> Cross<T>(VectorNode<T> u, VectorNode<T> v)` | Computes the cross product `u × v` of two three-dimensional vector nodes. / 2 つの 3 次元ベクトルノードの外積 `u × v` を計算します。 |
 | `static VectorNode<T> Divide<T>(VectorNode<T> x, VectorNode<T> y)` | Divides two vector nodes elementwise, `x / y`. / 2 つのベクトルノードの要素ごとの商 `x / y` を計算します。 |
 | `static MatrixNode<T> Divide<T>(MatrixNode<T> x, MatrixNode<T> y)` | Divides two matrix nodes elementwise, `x / y`. / 2 つの行列ノードの要素ごとの商 `x / y` を計算します。 |
 | `static VectorNode<T> Divide<T>(VectorNode<T> x, ScalarNode y)` | Divides each element of a vector by a scalar, `x / s`. / ベクトルの各要素をスカラーで割った `x / s` を計算します。 |
@@ -388,6 +393,13 @@ Provides `XMath` extension methods for building differentiable scalar, vector, m
 | `static MatrixNode<T> Gelu<T>(MatrixNode<T> x, bool approximate)` | Applies the GELU activation function elementwise, optionally using the `tanh` approximation. / 各要素に GELU 活性化関数を適用します（オプションで `tanh` 近似式を使用できます）。 |
 | `static VectorNode<T> Hadamard<T>(VectorNode<T> x, VectorNode<T> y)` | Computes the elementwise (Hadamard) product `x ∘ y`. / 要素ごとの積（アダマール積）`x ∘ y` を計算します。 |
 | `static MatrixNode<T> Hadamard<T>(MatrixNode<T> x, MatrixNode<T> y)` | Computes the elementwise (Hadamard) product `x ∘ y`. / 要素ごとの積（アダマール積）`x ∘ y` を計算します。 |
+| `static ScalarNode Hypot(ScalarNode x, ScalarNode y)` | Computes `√(x² + y²)` and records its partial derivatives. / `√(x² + y²)` を計算し、偏微分を記録します。 |
+| `static VectorNode<T> Hypot<T>(VectorNode<T> x, VectorNode<T> y)` | Computes `√(x² + y²)` elementwise for two vectors. / 2 つのベクトルの要素ごとに `√(x² + y²)` を計算します。 |
+| `static MatrixNode<T> Hypot<T>(MatrixNode<T> x, MatrixNode<T> y)` | Computes `√(x² + y²)` elementwise for two matrices. / 2 つの行列の要素ごとに `√(x² + y²)` を計算します。 |
+| `static VectorNode<T> Hypot<T>(VectorNode<T> x, ScalarNode y)` | Computes `√(x[i]² + y²)` for each element of a vector. / ベクトルの要素ごとに `√(x[i]² + y²)` を計算します。 |
+| `static MatrixNode<T> Hypot<T>(MatrixNode<T> x, ScalarNode y)` | Computes `√(x[i,j]² + y²)` for each element of a matrix. / 行列の要素ごとに `√(x[i,j]² + y²)` を計算します。 |
+| `static VectorNode<T> Hypot<T>(ScalarNode x, VectorNode<T> y)` | Computes `√(x² + y[i]²)` for each element of a vector. / ベクトルの要素ごとに `√(x² + y[i]²)` を計算します。 |
+| `static MatrixNode<T> Hypot<T>(ScalarNode x, MatrixNode<T> y)` | Computes `√(x² + y[i,j]²)` for each element of a matrix. / 行列の要素ごとに `√(x² + y[i,j]²)` を計算します。 |
 | `static VectorNode<T> LeakyRelu<T>(VectorNode<T> x, T slope)` | Applies the Leaky ReLU activation function (`x` for `x > 0`, otherwise `slope·x`) elementwise. / 各要素に Leaky ReLU 活性化関数（`x > 0` で `x`、それ以外で `slope·x`）を適用します。 |
 | `static MatrixNode<T> LeakyRelu<T>(MatrixNode<T> x, T slope)` | Applies the Leaky ReLU activation function (`x` for `x > 0`, otherwise `slope·x`) elementwise. / 各要素に Leaky ReLU 活性化関数（`x > 0` で `x`、それ以外で `slope·x`）を適用します。 |
 | `static VectorNode<T> Log<T>(VectorNode<T> x)` | Computes the natural logarithm `ln x` elementwise. / 各要素の自然対数 `ln x` を計算します。 |
@@ -443,6 +455,7 @@ Provides `XMath` extension methods for building differentiable scalar, vector, m
 | `static TensorNode<T> Multiply<T>(TensorNode<T> a, TensorNode<T> b)` | Records the batched product of the matrices at matching indices. / インデックスが一致する行列ごとの積を記録します。 |
 | `static VectorNode<T> Negate<T>(VectorNode<T> x)` | Negates each element, `-x`. / 各要素の符号を反転した `-x` を計算します。 |
 | `static MatrixNode<T> Negate<T>(MatrixNode<T> x)` | Negates each element, `-x`. / 各要素の符号を反転した `-x` を計算します。 |
+| `static MatrixNode<T> Outer<T>(VectorNode<T> u, VectorNode<T> v)` | Computes the outer product `u vᵀ`. / 2 つのベクトルの外積（直積）`u vᵀ` を計算します。 |
 | `static VectorNode<T> Pow<T>(VectorNode<T> x, VectorNode<T> y)` | Computes the elementwise power `x^y`. / 要素ごとの冪乗 `x^y` を計算します。 |
 | `static MatrixNode<T> Pow<T>(MatrixNode<T> x, MatrixNode<T> y)` | Computes the elementwise power `x^y`. / 要素ごとの冪乗 `x^y` を計算します。 |
 | `static VectorNode<T> Pow<T>(VectorNode<T> x, ScalarNode y)` | Raises each element of a vector to a scalar power, `x^s`. / ベクトルの各要素のスカラー冪 `x^s` を計算します。 |
@@ -495,7 +508,12 @@ Provides `XMath` extension methods for building differentiable scalar, vector, m
 | `static MatrixNode<T> SumMatrices<T>(TensorNode<T> x)` | Records the sum over the matrix index axis of a tensor. / テンソルの行列インデックス軸に沿う総和を記録します。 |
 | `static ScalarNode SumOfSquares<T>(VectorNode<T> x)` | Computes the sum of squares `Σ x[i]²`. / 2 乗和 `Σ x[i]²` を計算します。 |
 | `static ScalarNode Tan(ScalarNode x)` | Computes the tangent `tan(x)`. / 正接 `tan(x)` を計算します。 |
+| `static VectorNode<T> Tanh<T>(VectorNode<T> x)` | Computes the hyperbolic tangent `tanh(x)` elementwise. / 各要素の双曲線正接 `tanh(x)` を計算します。 |
+| `static MatrixNode<T> Tanh<T>(MatrixNode<T> x)` | Computes the hyperbolic tangent `tanh(x)` elementwise. / 各要素の双曲線正接 `tanh(x)` を計算します。 |
 | `static ScalarNode Tanh(ScalarNode x)` | Computes the hyperbolic tangent `tanh(x)`. / 双曲線正接 `tanh(x)` を計算します。 |
+| `static VectorNode<T> Tanh<T>(VectorNode<T> x, bool approximate)` | Computes the hyperbolic tangent `tanh(x)` elementwise, optionally using an approximate `float` kernel. / 各要素の双曲線正接 `tanh(x)` を計算します（`float` では近似カーネルを選択可能）。 |
+| `static MatrixNode<T> Tanh<T>(MatrixNode<T> x, bool approximate)` | Computes the hyperbolic tangent `tanh(x)` elementwise, optionally using an approximate `float` kernel. / 各要素の双曲線正接 `tanh(x)` を計算します（`float` では近似カーネルを選択可能）。 |
+| `static ScalarNode Trace<T>(MatrixNode<T> x)` | Computes the sum of the main diagonal of a matrix node. / 行列ノードの主対角成分の和を計算します。 |
 
 ### `static class XMathSpecialExtensions`
 

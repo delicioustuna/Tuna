@@ -135,7 +135,8 @@ public class ArrayBroadcastTests
 
         // 0 列のビューに演算と積を通しても、勾配は 0（届かない）。0 要素のベクトルを並べたものも同じ。
         var product = XMath.Exp(empty) * tape.Constant(new Matrix<double>(0, 2));
-        ScalarNode loss = Reduce(tape, product) + Reduce(tape, XMath.Gelu(none.Broadcast(4))) + Reduce(tape, XMath.Exp(empty.T));
+        ScalarNode loss = Reduce(tape, product) + Reduce(tape, XMath.Gelu(none.Broadcast(4))) + Reduce(tape, XMath.Exp(empty.T))
+            + Reduce(tape, XMath.Tanh(empty)) + XMath.Sum(XMath.Tanh(none));
         tape.Backward(loss);
         Assert.Equal(0, loss.Value);
         Assert.Equal(new double[3], tape.GetGradient(v).ToArray());

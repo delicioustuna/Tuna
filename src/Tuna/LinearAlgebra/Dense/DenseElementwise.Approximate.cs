@@ -28,6 +28,9 @@ internal static partial class DenseElementwise
     internal static float ApproximateExp(float x) => InvokeSingle<ApproximateExpFunction>(x);
 
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+    internal static float ApproximateTanh(float x) => InvokeSingle<ApproximateTanhFunction>(x);
+
+    [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
     internal static float ApproximateLogistic(float x) => InvokeSingle<ApproximateLogisticFunction>(x);
 
     [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
@@ -74,6 +77,7 @@ internal static partial class DenseElementwise
         static abstract TSelf operator /(TSelf x, TSelf y);
         static abstract TSelf operator -(TSelf x);
         static abstract TSelf Abs(TSelf x);
+        static abstract TSelf CopySign(TSelf magnitude, TSelf sign);
         static abstract TSelf FusedMultiplyAdd(TSelf x, TSelf y, TSelf z);
 
         // NaN 以外の x を [low, high] にクランプする（NaN の振る舞いは命令依存のため呼び出し側で復元する）。
@@ -100,6 +104,8 @@ internal static partial class DenseElementwise
         public static SingleScalarLanes operator /(SingleScalarLanes x, SingleScalarLanes y) => new(x.Value / y.Value);
         public static SingleScalarLanes operator -(SingleScalarLanes x) => new(-x.Value);
         public static SingleScalarLanes Abs(SingleScalarLanes x) => new(Math.Abs(x.Value));
+        public static SingleScalarLanes CopySign(SingleScalarLanes magnitude, SingleScalarLanes sign) =>
+            new(MathF.CopySign(magnitude.Value, sign.Value));
         public static SingleScalarLanes FusedMultiplyAdd(SingleScalarLanes x, SingleScalarLanes y, SingleScalarLanes z) =>
             new(MathF.FusedMultiplyAdd(x.Value, y.Value, z.Value));
         public static SingleScalarLanes ClampNumber(SingleScalarLanes x, SingleScalarLanes low, SingleScalarLanes high) =>
@@ -138,6 +144,8 @@ internal static partial class DenseElementwise
         public static SingleLanes128 operator /(SingleLanes128 x, SingleLanes128 y) => new(x.Value / y.Value);
         public static SingleLanes128 operator -(SingleLanes128 x) => new(-x.Value);
         public static SingleLanes128 Abs(SingleLanes128 x) => new(Vector128.Abs(x.Value));
+        public static SingleLanes128 CopySign(SingleLanes128 magnitude, SingleLanes128 sign) =>
+            new(Vector128.CopySign(magnitude.Value, sign.Value));
         public static SingleLanes128 FusedMultiplyAdd(SingleLanes128 x, SingleLanes128 y, SingleLanes128 z) =>
             new(Vector128.FusedMultiplyAdd(x.Value, y.Value, z.Value));
         public static SingleLanes128 ClampNumber(SingleLanes128 x, SingleLanes128 low, SingleLanes128 high) =>
@@ -171,6 +179,8 @@ internal static partial class DenseElementwise
         public static SingleLanes256 operator /(SingleLanes256 x, SingleLanes256 y) => new(x.Value / y.Value);
         public static SingleLanes256 operator -(SingleLanes256 x) => new(-x.Value);
         public static SingleLanes256 Abs(SingleLanes256 x) => new(Vector256.Abs(x.Value));
+        public static SingleLanes256 CopySign(SingleLanes256 magnitude, SingleLanes256 sign) =>
+            new(Vector256.CopySign(magnitude.Value, sign.Value));
         public static SingleLanes256 FusedMultiplyAdd(SingleLanes256 x, SingleLanes256 y, SingleLanes256 z) =>
             new(Vector256.FusedMultiplyAdd(x.Value, y.Value, z.Value));
         public static SingleLanes256 ClampNumber(SingleLanes256 x, SingleLanes256 low, SingleLanes256 high) =>
@@ -204,6 +214,8 @@ internal static partial class DenseElementwise
         public static SingleLanes512 operator /(SingleLanes512 x, SingleLanes512 y) => new(x.Value / y.Value);
         public static SingleLanes512 operator -(SingleLanes512 x) => new(-x.Value);
         public static SingleLanes512 Abs(SingleLanes512 x) => new(Vector512.Abs(x.Value));
+        public static SingleLanes512 CopySign(SingleLanes512 magnitude, SingleLanes512 sign) =>
+            new(Vector512.CopySign(magnitude.Value, sign.Value));
         public static SingleLanes512 FusedMultiplyAdd(SingleLanes512 x, SingleLanes512 y, SingleLanes512 z) =>
             new(Vector512.FusedMultiplyAdd(x.Value, y.Value, z.Value));
         public static SingleLanes512 ClampNumber(SingleLanes512 x, SingleLanes512 low, SingleLanes512 high) =>
@@ -276,6 +288,31 @@ internal static partial class DenseElementwise
         {
             var (p, t) = ApproximateExpParts(x);
             return KeepNaN(x, TLanes.ScaleByShiftedExponent(p, t));
+        }
+    }
+
+    private readonly struct ApproximateTanhFunction : ISingleLanesFunction
+    {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TLanes Invoke<TLanes>(TLanes x) where TLanes : struct, ISingleLanes<TLanes>
+        {
+            // tanh(10) は 1 に丸まる。指数の引数を [0, 20] に収める。
+            var a = TLanes.ClampNumber(TLanes.Abs(x), TLanes.Create(0), TLanes.Create(10));
+            var one = TLanes.Create(1);
+            var (p, t) = ApproximateExpParts(a + a);
+            var e = TLanes.ScaleByShiftedExponent(p, t);
+            var tail = one - TLanes.Create(2) / (one + e);
+
+            // (tanh(a) - a)/a³ を z = a² ∈ [0, 9/16] で Chebyshev 補間し、原点付近の桁落ちを防ぐ。
+            var z = a * a;
+            var q = TLanes.FusedMultiplyAdd(TLanes.Create(0.00190950245f), z, TLanes.Create(-0.00793380762f));
+            q = TLanes.FusedMultiplyAdd(q, z, TLanes.Create(0.0216153189f));
+            q = TLanes.FusedMultiplyAdd(q, z, TLanes.Create(-0.0539358536f));
+            q = TLanes.FusedMultiplyAdd(q, z, TLanes.Create(0.133331796f));
+            q = TLanes.FusedMultiplyAdd(q, z, TLanes.Create(-0.333333321f));
+            var nearZero = TLanes.FusedMultiplyAdd(a * z, q, a);
+            var result = TLanes.Select(TLanes.GreaterThan(a, TLanes.Create(0.75f)), tail, nearZero);
+            return KeepNaN(x, TLanes.CopySign(result, x));
         }
     }
 

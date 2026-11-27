@@ -118,25 +118,16 @@ public readonly struct CholeskyDecompositionNode
     public static bool TryCompute(MatrixNode<double> a, out CholeskyDecompositionNode result)
     {
         Tape tape = a.Owner();
-        if (a.Rows != a.Columns)
-        {
-            throw new ArgumentException("The matrix must be square.", nameof(a));
-        }
-
         var store = tape.Store<double>();
-        bool record = store.RequiresGradient(a.View.Slot);
-        tape.EnsureCanApply(record);
-
-        var pool = store.Decompositions;
-        int index = pool.TakeCholesky(a.Rows);
-        var cholesky = pool.Cholesky(index);
-        if (!cholesky.TryRecompute(store.MatrixView(a.View)))
+        int index = TryTakeFactor(tape, store, a, out bool record);
+        if (index < 0)
         {
-            pool.ReleaseLast(index);
             result = default;
             return false;
         }
 
+        var pool = store.Decompositions;
+        var cholesky = pool.Cholesky(index);
         ref DecompositionInfo info = ref pool.Info(index);
         info.Input = a.View;
         info.RequiresGradient = record;
@@ -148,12 +139,66 @@ public readonly struct CholeskyDecompositionNode
         if (record)
         {
             tape.AppendArrayRecord<double>(ArrayOperation.Cholesky, info.Factor, a.View, default, 0, index);
-            info.LogDeterminantIndex = tape.AppendScalarOutput();
-            tape.AppendArrayRecord<double>(ArrayOperation.CholeskyLogDeterminant, info.LogDeterminantIndex, a.View, default, 0, index);
+            info.LogDeterminantIndex = RecordLogDeterminant(tape, a.View, index);
         }
 
         result = new(tape, index);
         return true;
+    }
+
+    internal static ScalarNode ComputeLogDeterminant(MatrixNode<double> a)
+    {
+        Tape tape = a.Owner();
+        var store = tape.Store<double>();
+        int index = TryTakeFactor(tape, store, a, out bool record);
+        if (index < 0)
+        {
+            throw new ArgumentException("The matrix is not positive definite.", nameof(a));
+        }
+
+        var pool = store.Decompositions;
+        double value = pool.Cholesky(index).LogDeterminant;
+        if (record)
+        {
+            int output = RecordLogDeterminant(tape, a.View, index);
+            return new(value, tape, output, tape.Generation);
+        }
+
+        pool.ReleaseLast(index);
+        return new(value);
+    }
+
+    private static int TryTakeFactor(Tape tape, ArrayStore<double> store, MatrixNode<double> a, out bool record)
+    {
+        if (a.Rows != a.Columns)
+        {
+            throw new ArgumentException("The matrix must be square.", nameof(a));
+        }
+
+        record = store.RequiresGradient(a.View.Slot);
+        tape.EnsureCanApply(record);
+        var pool = store.Decompositions;
+        int index = pool.TakeCholesky(a.Rows);
+        bool success = false;
+        try
+        {
+            success = pool.Cholesky(index).TryRecompute(store.MatrixView(a.View));
+            return success ? index : -1;
+        }
+        finally
+        {
+            if (!success)
+            {
+                pool.ReleaseLast(index);
+            }
+        }
+    }
+
+    private static int RecordLogDeterminant(Tape tape, in ArrayView a, int index)
+    {
+        int output = tape.AppendScalarOutput();
+        tape.AppendArrayRecord<double>(ArrayOperation.CholeskyLogDeterminant, output, a, default, 0, index);
+        return output;
     }
 
     /// <summary>

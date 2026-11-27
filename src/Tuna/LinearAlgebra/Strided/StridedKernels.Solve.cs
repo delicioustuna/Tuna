@@ -111,6 +111,39 @@ internal static partial class StridedKernels
         SolveFactoredInPlace(n, lu, pivots, x, vector: false);
     }
 
+    internal static double CholeskyLogDeterminant(ReadOnlyMatrixSpan<double> a)
+    {
+        int n = a.Rows;
+        if (n != a.Columns)
+        {
+            throw new ArgumentException("The matrix must be square.", nameof(a));
+        }
+
+        const int stackLimit = 256;
+        int length = checked(n * n);
+        double[]? rented = null;
+        Span<double> l = length <= stackLimit
+            ? stackalloc double[length]
+            : (rented = WorkArrayPool<double>.Rent(length)).AsSpan(0, length);
+        try
+        {
+            CopyDense(a, l);
+            if (CholeskyKernels.Factor(n, l, n) != 0)
+            {
+                throw new ArgumentException("The matrix is not positive definite.", nameof(a));
+            }
+
+            return CholeskyKernels.LogDeterminant(n, l);
+        }
+        finally
+        {
+            if (rented is not null)
+            {
+                WorkArrayPool<double>.Return(rented);
+            }
+        }
+    }
+
     // 分解済み LU で AX = B（transpose 時は A^T X = B）をインプレースで解く。
     internal static void SolveFactoredInPlace(
         int n, ReadOnlySpan<double> lu, ReadOnlySpan<int> pivots, MatrixSpan<double> x, bool vector, bool transpose = false)

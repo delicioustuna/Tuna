@@ -3,7 +3,7 @@ using Tuna.LinearAlgebra;
 
 namespace Tuna.Differentiation;
 
-internal static class LinearAlgebraBackward
+internal static partial class LinearAlgebraBackward
 {
     // Fixed block size depends only on order so results do not vary with thread count.
     internal const int CholeskyBlock = 64;
@@ -48,6 +48,12 @@ internal static class LinearAlgebraBackward
                 break;
             case ArrayOperation.SingularValueDecomposition:
                 SingularValue(store, record);
+                break;
+            case ArrayOperation.SvdSolve:
+                SvdSolve(store, record);
+                break;
+            case ArrayOperation.SvdPseudoInverse:
+                SvdPseudoInverse(store, record);
                 break;
         }
     }

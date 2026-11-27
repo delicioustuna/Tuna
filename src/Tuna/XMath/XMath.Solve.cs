@@ -291,4 +291,18 @@ public static partial class XMath
         StridedKernels.Inverse(a, destination);
         return destination;
     }
+
+    /// <summary>
+    /// Computes the natural logarithm of the determinant of a symmetric positive definite matrix.
+    /// <para>対称正定値行列の行列式の自然対数を計算します。</para>
+    /// </summary>
+    /// <param name="a">The input matrix, interpreted as symmetric from its lower triangle. / 下三角部分を対称行列として解釈する入力行列。</param>
+    /// <returns>The natural logarithm of the determinant, or zero for a 0 × 0 matrix. / 行列式の自然対数。0 × 0 の行列の場合は 0。</returns>
+    /// <remarks>
+    /// <para>Computes <c>2 Σ ln lᵢᵢ</c> from the Cholesky factor <c>L</c>. Use <see cref="CholeskyDecomposition"/> to reuse the factor for other operations.</para>
+    /// <para>コレスキー因子 <c>L</c> から <c>2 Σ ln lᵢᵢ</c> を計算します。他の演算でも因子を使う場合は <see cref="CholeskyDecomposition"/> で再利用できます。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException"><paramref name="a"/> is not square or is not numerically positive definite. / <paramref name="a"/> が正方行列でない、または数値的に正定値でない場合。</exception>
+    /// <exception cref="OverflowException">The workspace size <c>n²</c> exceeds <see cref="int.MaxValue"/>. / 作業領域の要素数 <c>n²</c> が <see cref="int.MaxValue"/> を超える場合。</exception>
+    public static double CholeskyLogDeterminant(ReadOnlyMatrixSpan<double> a) => StridedKernels.CholeskyLogDeterminant(a);
 }

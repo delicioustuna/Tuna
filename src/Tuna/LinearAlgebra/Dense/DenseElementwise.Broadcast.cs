@@ -48,6 +48,10 @@ internal static partial class DenseElementwise
         {
             ZipScalarLines<T, DivideKernel<T>>(ref values, valueStride, ref scalars, scalarStride, ref destination, destinationStride, length, count, scalarOnLeft);
         }
+        else if (typeof(TOperator) == typeof(StaticBinaryOperator<T, XMath.Operators.Hypot<T>>))
+        {
+            ZipScalarLines<T, HypotKernel<T>>(ref values, valueStride, ref scalars, scalarStride, ref destination, destinationStride, length, count, scalarOnLeft);
+        }
         else if (typeof(TOperator) == typeof(StaticBinaryOperator<T, XMath.Operators.Min<T>>))
         {
             ZipScalarLines<T, MinKernel<T>>(ref values, valueStride, ref scalars, scalarStride, ref destination, destinationStride, length, count, scalarOnLeft);

@@ -85,6 +85,12 @@ internal static partial class DenseElementwise
             return Math.Exp(x);
         }
 
+        return ExpNormal(x);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static double ExpNormal(double x)
+    {
         double z = Math.FusedMultiplyAdd(x, ExpInvLn2N, ExpShift);
         double kd = z - ExpShift;
         ulong ki = BitConverter.DoubleToUInt64Bits(z);
@@ -103,6 +109,25 @@ internal static partial class DenseElementwise
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static Vector128<double> Exp(Vector128<double> x)
     {
+        var y = ExpNormal(x);
+        var outside = ~Vector128.LessThanOrEqual(Vector128.Abs(x), Vector128.Create(ExpExactLimit));
+        if (Vector128.EqualsAll(outside.AsUInt64(), Vector128<ulong>.Zero))
+        {
+            return y;
+        }
+
+        y = Vector128.ConditionalSelect(Vector128.LessThanOrEqual(x, Vector128.Create(ExpZeroBelow)), Vector128<double>.Zero, y);
+        y = Vector128.ConditionalSelect(Vector128.GreaterThanOrEqual(x, Vector128.Create(ExpInfinityAbove)), Vector128.Create(double.PositiveInfinity), y);
+        var nan = ~Vector128.Equals(x, x);
+        y = Vector128.ConditionalSelect(nan, (x.AsUInt64() | Vector128.Create(QuietBit)).AsDouble(), y);
+        var special = outside
+            & Vector128.GreaterThan(x, Vector128.Create(ExpZeroBelow)) & Vector128.LessThan(x, Vector128.Create(ExpInfinityAbove));
+        return Vector128.EqualsAll(special.AsUInt64(), Vector128<ulong>.Zero) ? y : FallbackLanes<MathExp>(x, y, special);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector128<double> ExpNormal(Vector128<double> x)
+    {
         var z = Vector128.FusedMultiplyAdd(x, Vector128.Create(ExpInvLn2N), Vector128.Create(ExpShift));
         var kd = z - Vector128.Create(ExpShift);
         var ki = z.AsUInt64();
@@ -115,18 +140,30 @@ internal static partial class DenseElementwise
         var q = Vector128.FusedMultiplyAdd(Vector128.FusedMultiplyAdd(Vector128.FusedMultiplyAdd(Vector128.FusedMultiplyAdd(
             Vector128.Create(ExpC6), r, Vector128.Create(ExpC5)), r, Vector128.Create(ExpC4)), r, Vector128.Create(ExpC3)), r, Vector128.Create(ExpC2));
         var p = Vector128.FusedMultiplyAdd(r2, q, r);
-        var y = Vector128.FusedMultiplyAdd(scale, tail + p, scale);
-        y = Vector128.ConditionalSelect(Vector128.LessThanOrEqual(x, Vector128.Create(ExpZeroBelow)), Vector128<double>.Zero, y);
-        y = Vector128.ConditionalSelect(Vector128.GreaterThanOrEqual(x, Vector128.Create(ExpInfinityAbove)), Vector128.Create(double.PositiveInfinity), y);
-        var nan = ~Vector128.Equals(x, x);
-        y = Vector128.ConditionalSelect(nan, (x.AsUInt64() | Vector128.Create(QuietBit)).AsDouble(), y);
-        var special = ~Vector128.LessThanOrEqual(Vector128.Abs(x), Vector128.Create(ExpExactLimit))
-            & Vector128.GreaterThan(x, Vector128.Create(ExpZeroBelow)) & Vector128.LessThan(x, Vector128.Create(ExpInfinityAbove));
-        return Vector128.EqualsAll(special.AsUInt64(), Vector128<ulong>.Zero) ? y : FallbackLanes<MathExp>(x, y, special);
+        return Vector128.FusedMultiplyAdd(scale, tail + p, scale);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static Vector256<double> Exp(Vector256<double> x)
+    {
+        var y = ExpNormal(x);
+        var outside = ~Vector256.LessThanOrEqual(Vector256.Abs(x), Vector256.Create(ExpExactLimit));
+        if (Vector256.EqualsAll(outside.AsUInt64(), Vector256<ulong>.Zero))
+        {
+            return y;
+        }
+
+        y = Vector256.ConditionalSelect(Vector256.LessThanOrEqual(x, Vector256.Create(ExpZeroBelow)), Vector256<double>.Zero, y);
+        y = Vector256.ConditionalSelect(Vector256.GreaterThanOrEqual(x, Vector256.Create(ExpInfinityAbove)), Vector256.Create(double.PositiveInfinity), y);
+        var nan = ~Vector256.Equals(x, x);
+        y = Vector256.ConditionalSelect(nan, (x.AsUInt64() | Vector256.Create(QuietBit)).AsDouble(), y);
+        var special = outside
+            & Vector256.GreaterThan(x, Vector256.Create(ExpZeroBelow)) & Vector256.LessThan(x, Vector256.Create(ExpInfinityAbove));
+        return Vector256.EqualsAll(special.AsUInt64(), Vector256<ulong>.Zero) ? y : FallbackLanes<MathExp>(x, y, special);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector256<double> ExpNormal(Vector256<double> x)
     {
         var z = Vector256.FusedMultiplyAdd(x, Vector256.Create(ExpInvLn2N), Vector256.Create(ExpShift));
         var kd = z - Vector256.Create(ExpShift);
@@ -140,18 +177,30 @@ internal static partial class DenseElementwise
         var q = Vector256.FusedMultiplyAdd(Vector256.FusedMultiplyAdd(Vector256.FusedMultiplyAdd(Vector256.FusedMultiplyAdd(
             Vector256.Create(ExpC6), r, Vector256.Create(ExpC5)), r, Vector256.Create(ExpC4)), r, Vector256.Create(ExpC3)), r, Vector256.Create(ExpC2));
         var p = Vector256.FusedMultiplyAdd(r2, q, r);
-        var y = Vector256.FusedMultiplyAdd(scale, tail + p, scale);
-        y = Vector256.ConditionalSelect(Vector256.LessThanOrEqual(x, Vector256.Create(ExpZeroBelow)), Vector256<double>.Zero, y);
-        y = Vector256.ConditionalSelect(Vector256.GreaterThanOrEqual(x, Vector256.Create(ExpInfinityAbove)), Vector256.Create(double.PositiveInfinity), y);
-        var nan = ~Vector256.Equals(x, x);
-        y = Vector256.ConditionalSelect(nan, (x.AsUInt64() | Vector256.Create(QuietBit)).AsDouble(), y);
-        var special = ~Vector256.LessThanOrEqual(Vector256.Abs(x), Vector256.Create(ExpExactLimit))
-            & Vector256.GreaterThan(x, Vector256.Create(ExpZeroBelow)) & Vector256.LessThan(x, Vector256.Create(ExpInfinityAbove));
-        return Vector256.EqualsAll(special.AsUInt64(), Vector256<ulong>.Zero) ? y : FallbackLanes<MathExp>(x, y, special);
+        return Vector256.FusedMultiplyAdd(scale, tail + p, scale);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private static Vector512<double> Exp(Vector512<double> x)
+    {
+        var y = ExpNormal(x);
+        var outside = ~Vector512.LessThanOrEqual(Vector512.Abs(x), Vector512.Create(ExpExactLimit));
+        if (Vector512.EqualsAll(outside.AsUInt64(), Vector512<ulong>.Zero))
+        {
+            return y;
+        }
+
+        y = Vector512.ConditionalSelect(Vector512.LessThanOrEqual(x, Vector512.Create(ExpZeroBelow)), Vector512<double>.Zero, y);
+        y = Vector512.ConditionalSelect(Vector512.GreaterThanOrEqual(x, Vector512.Create(ExpInfinityAbove)), Vector512.Create(double.PositiveInfinity), y);
+        var nan = ~Vector512.Equals(x, x);
+        y = Vector512.ConditionalSelect(nan, (x.AsUInt64() | Vector512.Create(QuietBit)).AsDouble(), y);
+        var special = outside
+            & Vector512.GreaterThan(x, Vector512.Create(ExpZeroBelow)) & Vector512.LessThan(x, Vector512.Create(ExpInfinityAbove));
+        return Vector512.EqualsAll(special.AsUInt64(), Vector512<ulong>.Zero) ? y : FallbackLanes<MathExp>(x, y, special);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static Vector512<double> ExpNormal(Vector512<double> x)
     {
         var z = Vector512.FusedMultiplyAdd(x, Vector512.Create(ExpInvLn2N), Vector512.Create(ExpShift));
         var kd = z - Vector512.Create(ExpShift);
@@ -165,14 +214,7 @@ internal static partial class DenseElementwise
         var q = Vector512.FusedMultiplyAdd(Vector512.FusedMultiplyAdd(Vector512.FusedMultiplyAdd(Vector512.FusedMultiplyAdd(
             Vector512.Create(ExpC6), r, Vector512.Create(ExpC5)), r, Vector512.Create(ExpC4)), r, Vector512.Create(ExpC3)), r, Vector512.Create(ExpC2));
         var p = Vector512.FusedMultiplyAdd(r2, q, r);
-        var y = Vector512.FusedMultiplyAdd(scale, tail + p, scale);
-        y = Vector512.ConditionalSelect(Vector512.LessThanOrEqual(x, Vector512.Create(ExpZeroBelow)), Vector512<double>.Zero, y);
-        y = Vector512.ConditionalSelect(Vector512.GreaterThanOrEqual(x, Vector512.Create(ExpInfinityAbove)), Vector512.Create(double.PositiveInfinity), y);
-        var nan = ~Vector512.Equals(x, x);
-        y = Vector512.ConditionalSelect(nan, (x.AsUInt64() | Vector512.Create(QuietBit)).AsDouble(), y);
-        var special = ~Vector512.LessThanOrEqual(Vector512.Abs(x), Vector512.Create(ExpExactLimit))
-            & Vector512.GreaterThan(x, Vector512.Create(ExpZeroBelow)) & Vector512.LessThan(x, Vector512.Create(ExpInfinityAbove));
-        return Vector512.EqualsAll(special.AsUInt64(), Vector512<ulong>.Zero) ? y : FallbackLanes<MathExp>(x, y, special);
+        return Vector512.FusedMultiplyAdd(scale, tail + p, scale);
     }
 
     // ---------- 対数関数 ----------
@@ -412,7 +454,7 @@ internal static partial class DenseElementwise
     {
         if (Avx2.IsSupported)
         {
-            fixed (ulong* p = table)
+            fixed (ulong* p = &MemoryMarshal.GetReference(table))
             {
                 return Avx2.GatherVector128(p, index.AsInt64(), 8);
             }
@@ -427,7 +469,7 @@ internal static partial class DenseElementwise
     {
         if (Avx2.IsSupported)
         {
-            fixed (ulong* p = table)
+            fixed (ulong* p = &MemoryMarshal.GetReference(table))
             {
                 return Avx2.GatherVector256(p, index.AsInt64(), 8);
             }

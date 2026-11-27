@@ -7,7 +7,7 @@ Tuna はコアパッケージ `Tuna` の上に、領域別の 7 つの拡張パ�
 
 連続分布（正規・ガンマ・ベータ・スチューデント t・指数・ワイブル等）、離散分布（ベルヌーイ・二項・ポアソン・カテゴリカル等）、多変量分布（多変量正規・ディリクレ・ウィシャート・LKJ 相関等）、合成分布（位置尺度変換・切断分布）を提供します。
 
-- 統一インターフェース: `IContinuousDistribution`, `IDiscreteDistribution`, `IMultivariateDistribution`
+- 統一インターフェース: `IContinuousDistribution`, `IDiscreteDistribution`, `IMultivariateContinuousDistribution`, `IMultivariateDiscreteDistribution`
 - 主な操作: `Pdf`/`Pmf`, `LogPdf`/`LogPmf`, `Cdf`, `Sf`, `LogCdf`, `LogSf`, `InverseCdf`, `InverseSf`, `InverseLogCdf`, `InverseLogSf`, `Sample`
 
 ```csharp

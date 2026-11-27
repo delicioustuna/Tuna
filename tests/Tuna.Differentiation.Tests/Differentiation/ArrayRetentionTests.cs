@@ -16,6 +16,216 @@ namespace Tuna.Tests.Differentiation;
 public class ArrayRetentionTests
 {
     [Fact]
+    public void CholeskyLogDeterminantReusesTapeStorageAfterReset()
+    {
+        var matrix = SymmetricPositiveDefinite(6);
+        var tape = new Tape();
+        for (int i = 0; i < 64; i++)
+        {
+            Iterate();
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate();
+            }
+        });
+
+        void Iterate()
+        {
+            tape.Reset();
+            var a = tape.Leaf(matrix);
+            tape.Backward(XMath.CholeskyLogDeterminant(a));
+            _ = tape.GetGradient(a);
+        }
+    }
+
+    [Fact]
+    public void ConstantCholeskyLogDeterminantReusesWorkspaceDuringRecording()
+    {
+        var tape = new Tape();
+        var leaf = tape.Leaf(Matrix<double>.FromDiagonal([4, 16]));
+        var constant = tape.Constant(Matrix<double>.FromDiagonal([9, 25]));
+        ScalarNode loss = XMath.CholeskyLogDeterminant(leaf);
+        ScalarNode value = XMath.CholeskyLogDeterminant(constant);
+        Assert.False(value.RequiresGradient);
+        Assert.Equal(XMath.CholeskyLogDeterminant(constant.Value), value.Value);
+
+        EvaluateConstants();
+        AssertNoAllocation(EvaluateConstants);
+        tape.Backward(loss);
+
+        var gradient = tape.GetGradient(leaf);
+        Assert.Equal(0.25, gradient[0, 0]);
+        Assert.Equal(0.0625, gradient[1, 1]);
+
+        void EvaluateConstants()
+        {
+            for (int i = 0; i < 64; i++)
+            {
+                _ = XMath.CholeskyLogDeterminant(constant);
+            }
+        }
+    }
+
+    [Fact]
+    public void CrossAndTraceReuseTapeStorageAfterReset()
+    {
+        CheckCrossAndTraceAllocation<double>();
+        CheckCrossAndTraceAllocation<float>();
+    }
+
+    private static void CheckCrossAndTraceAllocation<T>() where T : unmanaged, System.Numerics.IFloatingPointIeee754<T>
+    {
+        var u = Vector<T>.Generate(3, i => T.CreateChecked(i + 1));
+        var v = Vector<T>.Generate(3, i => T.CreateChecked(2 - i));
+        var a = Matrix<T>.Generate(4, 5, (i, j) => T.CreateChecked(i - j));
+        var tape = new Tape();
+        for (int i = 0; i < 64; i++)
+        {
+            Iterate();
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate();
+            }
+        });
+
+        void Iterate()
+        {
+            tape.Reset();
+            var x = tape.Leaf(u);
+            var y = tape.Leaf(v);
+            var matrix = tape.Leaf(a);
+            tape.Backward(XMath.Sum(XMath.Cross(x, y)) + XMath.Trace(matrix));
+            _ = tape.GetGradient(x);
+            _ = tape.GetGradient(y);
+            _ = tape.GetGradient(matrix);
+        }
+    }
+
+    [Fact]
+    public void OuterProductReusesTapeStorageAfterReset()
+    {
+        CheckOuterProductAllocation<double>();
+        CheckOuterProductAllocation<float>();
+    }
+
+    [Theory]
+    [InlineData(9, 6, 0)]
+    [InlineData(40, 60, 0)]
+    [InlineData(4, 5, -400)]
+    public void SvdSolvesAndPseudoInverseAllocateNothingAfterReset(int m, int n, int exponent)
+    {
+        var a = RandomRectangle(m, n);
+        foreach (ref double value in a.AsSpan())
+        {
+            value = Math.ScaleB(value, exponent);
+        }
+
+        var b = RandomVector(m);
+        var rhs = RandomRectangle(m, 9);
+        var tape = new Tape();
+        for (int i = 0; i < 32; i++)
+        {
+            Iterate();
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate();
+            }
+        });
+
+        void Iterate()
+        {
+            tape.Reset();
+            var coefficient = tape.Leaf(a);
+            var single = tape.Leaf(b);
+            var multiple = tape.Leaf(rhs);
+            var svd = SingularValueDecompositionNode.Compute(coefficient);
+            ScalarNode loss = XMath.Sum(svd.Solve(single))
+                + XMath.Sum(XMath.ColumnSums(svd.Solve(multiple)))
+                + XMath.Sum(XMath.ColumnSums(svd.PseudoInverse()));
+            tape.Backward(loss);
+            _ = tape.GetGradient(coefficient);
+            _ = tape.GetGradient(single);
+            _ = tape.GetGradient(multiple);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void TanhReusesTapeStorageAfterReset(bool approximate)
+    {
+        CheckTanhAllocation<double>(approximate);
+        CheckTanhAllocation<float>(approximate);
+    }
+
+    private static void CheckTanhAllocation<T>(bool approximate) where T : unmanaged, System.Numerics.IFloatingPointIeee754<T>
+    {
+        var input = Matrix<T>.Generate(13, 17, (i, j) => T.CreateChecked(i - j));
+        var tape = new Tape();
+        for (int i = 0; i < 64; i++)
+        {
+            Iterate();
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate();
+            }
+        });
+
+        void Iterate()
+        {
+            tape.Reset();
+            var x = tape.Leaf(input);
+            tape.Backward(XMath.Sum(XMath.ColumnSums(XMath.Tanh(x[1.., 1..].T, approximate))));
+            _ = tape.GetGradient(x);
+        }
+    }
+
+    private static void CheckOuterProductAllocation<T>() where T : unmanaged, System.Numerics.IFloatingPointIeee754<T>
+    {
+        var u = Vector<T>.Generate(19, i => T.CreateChecked(i - 9));
+        var v = Vector<T>.Generate(13, i => T.CreateChecked(6 - i));
+        var tape = new Tape();
+        for (int i = 0; i < 64; i++)
+        {
+            Iterate();
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate();
+            }
+        });
+
+        void Iterate()
+        {
+            tape.Reset();
+            var x = tape.Leaf(u);
+            var y = tape.Leaf(v);
+            tape.Backward(XMath.Sum(XMath.ColumnSums(XMath.Outer(x, y))));
+            _ = tape.GetGradient(x);
+            _ = tape.GetGradient(y);
+        }
+    }
+
+    [Fact]
     public void CustomOperationSavedValuesAndBroadcastGradientsShareBoundedStorage()
     {
         const int columns = 64;

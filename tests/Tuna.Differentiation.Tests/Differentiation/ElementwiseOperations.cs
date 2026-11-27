@@ -12,14 +12,14 @@ internal static class ElementwiseOperations
     internal static readonly string[] Unary =
     [
         "Negate", "Exp", "ExpApproximate", "Log", "Sqrt", "Square", "Abs", "Expm1", "Log1p", "Logistic", "LogisticApproximate",
-        "LogLogistic", "Logit", "Softplus", "SoftplusApproximate", "Log1mExp", "Reciprocal",
+        "LogLogistic", "Logit", "Softplus", "SoftplusApproximate", "Log1mExp", "Reciprocal", "Tanh", "TanhApproximate",
     ];
 
-    internal static readonly string[] Binary = ["Add", "Subtract", "Hadamard", "Divide", "Min", "Max", "Pow", "LogAddExp", "LogSubExp"];
+    internal static readonly string[] Binary = ["Add", "Subtract", "Hadamard", "Divide", "Min", "Max", "Pow", "Hypot", "LogAddExp", "LogSubExp"];
 
     // ScalarSubtract は演算子 s − x。
     internal static readonly string[] WithScalar =
-        ["Add", "Subtract", "Multiply", "Divide", "Min", "Max", "Pow", "LogAddExp", "LogSubExp", "ScalarSubtract"];
+        ["Add", "Subtract", "Multiply", "Divide", "Min", "Max", "Pow", "Hypot", "LogAddExp", "LogSubExp", "ScalarSubtract"];
 
     internal static TheoryData<string> UnaryNames() => new(Unary);
 
@@ -38,6 +38,8 @@ internal static class ElementwiseOperations
         "Abs" => XMath.Abs(x),
         "Expm1" => XMath.Expm1(x),
         "Log1p" => XMath.Log1p(x),
+        "Tanh" => XMath.Tanh(x),
+        "TanhApproximate" => XMath.Tanh(x, approximate: true),
         "Logistic" => XMath.Logistic(x),
         "LogisticApproximate" => XMath.Logistic(x, approximate: true),
         "LogLogistic" => XMath.LogLogistic(x),
@@ -60,6 +62,8 @@ internal static class ElementwiseOperations
         "Abs" => XMath.Abs(x),
         "Expm1" => XMath.Expm1(x),
         "Log1p" => XMath.Log1p(x),
+        "Tanh" => XMath.Tanh(x),
+        "TanhApproximate" => XMath.Tanh(x, approximate: true),
         "Logistic" => XMath.Logistic(x),
         "LogisticApproximate" => XMath.Logistic(x, approximate: true),
         "LogLogistic" => XMath.LogLogistic(x),
@@ -86,6 +90,8 @@ internal static class ElementwiseOperations
             case "Abs": XMath.Abs(x, d); break;
             case "Expm1": XMath.Expm1(x, d); break;
             case "Log1p": XMath.Log1p(x, d); break;
+            case "Tanh": XMath.Tanh(x, d); break;
+            case "TanhApproximate": XMath.Tanh(x, true, d); break;
             case "Logistic": XMath.Logistic(x, d); break;
             case "LogisticApproximate": XMath.Logistic(x, true, d); break;
             case "LogLogistic": XMath.LogLogistic(x, d); break;
@@ -115,6 +121,8 @@ internal static class ElementwiseOperations
             case "Abs": XMath.Abs(x, d); break;
             case "Expm1": XMath.Expm1(x, d); break;
             case "Log1p": XMath.Log1p(x, d); break;
+            case "Tanh": XMath.Tanh(x, d); break;
+            case "TanhApproximate": XMath.Tanh(x, true, d); break;
             case "Logistic": XMath.Logistic(x, d); break;
             case "LogisticApproximate": XMath.Logistic(x, true, d); break;
             case "LogLogistic": XMath.LogLogistic(x, d); break;
@@ -140,6 +148,7 @@ internal static class ElementwiseOperations
         "Abs" => XMath.Abs(x),
         "Expm1" => XMath.Expm1(x),
         "Log1p" => XMath.Log1p(x),
+        "Tanh" or "TanhApproximate" => XMath.Tanh(x),
         "Logistic" or "LogisticApproximate" => XMath.Logistic(x),
         "LogLogistic" => XMath.LogLogistic(x),
         "Logit" => XMath.Logit(x),
@@ -158,6 +167,7 @@ internal static class ElementwiseOperations
         "Min" => XMath.Min(x, y),
         "Max" => XMath.Max(x, y),
         "Pow" => XMath.Pow(x, y),
+        "Hypot" => XMath.Hypot(x, y),
         "LogAddExp" => XMath.LogAddExp(x, y),
         "LogSubExp" => XMath.LogSubExp(x, y),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
@@ -172,6 +182,7 @@ internal static class ElementwiseOperations
         "Min" => XMath.Min(x, y),
         "Max" => XMath.Max(x, y),
         "Pow" => XMath.Pow(x, y),
+        "Hypot" => XMath.Hypot(x, y),
         "LogAddExp" => XMath.LogAddExp(x, y),
         "LogSubExp" => XMath.LogSubExp(x, y),
         _ => throw new ArgumentOutOfRangeException(nameof(name)),
@@ -191,6 +202,7 @@ internal static class ElementwiseOperations
             case "Min": XMath.Min(x, y, d); break;
             case "Max": XMath.Max(x, y, d); break;
             case "Pow": XMath.Pow(x, y, d); break;
+            case "Hypot": XMath.Hypot(x, y, d); break;
             case "LogAddExp": XMath.LogAddExp(x, y, d); break;
             case "LogSubExp": XMath.LogSubExp(x, y, d); break;
             default: throw new ArgumentOutOfRangeException(nameof(name));
@@ -212,6 +224,7 @@ internal static class ElementwiseOperations
             case "Min": XMath.Min(x, y, d); break;
             case "Max": XMath.Max(x, y, d); break;
             case "Pow": XMath.Pow(x, y, d); break;
+            case "Hypot": XMath.Hypot(x, y, d); break;
             case "LogAddExp": XMath.LogAddExp(x, y, d); break;
             case "LogSubExp": XMath.LogSubExp(x, y, d); break;
             default: throw new ArgumentOutOfRangeException(nameof(name));
@@ -229,6 +242,7 @@ internal static class ElementwiseOperations
         "Min" => XMath.Min(x, y),
         "Max" => XMath.Max(x, y),
         "Pow" => XMath.Pow(x, y),
+        "Hypot" => XMath.Hypot(x, y),
         "LogAddExp" => XMath.LogAddExp(x, y),
         "LogSubExp" => XMath.LogSubExp(x, y),
         "ScalarSubtract" => y - x,
@@ -244,6 +258,7 @@ internal static class ElementwiseOperations
         "Min" => XMath.Min(x, s),
         "Max" => XMath.Max(x, s),
         "Pow" => XMath.Pow(x, s),
+        "Hypot" => XMath.Hypot(x, s),
         "LogAddExp" => XMath.LogAddExp(x, s),
         "LogSubExp" => XMath.LogSubExp(x, s),
         "ScalarSubtract" => s - x,
@@ -259,6 +274,7 @@ internal static class ElementwiseOperations
         "Min" => XMath.Min(x, s),
         "Max" => XMath.Max(x, s),
         "Pow" => XMath.Pow(x, s),
+        "Hypot" => XMath.Hypot(x, s),
         "LogAddExp" => XMath.LogAddExp(x, s),
         "LogSubExp" => XMath.LogSubExp(x, s),
         "ScalarSubtract" => s - x,
@@ -278,6 +294,7 @@ internal static class ElementwiseOperations
             case "Min": XMath.Min(x, s, d); break;
             case "Max": XMath.Max(x, s, d); break;
             case "Pow": XMath.Pow(x, s, d); break;
+            case "Hypot": XMath.Hypot(x, s, d); break;
             case "LogAddExp": XMath.LogAddExp(x, s, d); break;
             case "LogSubExp": XMath.LogSubExp(x, s, d); break;
             case "ScalarSubtract":
@@ -304,6 +321,7 @@ internal static class ElementwiseOperations
             case "Min": XMath.Min(x, s, d); break;
             case "Max": XMath.Max(x, s, d); break;
             case "Pow": XMath.Pow(x, s, d); break;
+            case "Hypot": XMath.Hypot(x, s, d); break;
             case "LogAddExp": XMath.LogAddExp(x, s, d); break;
             case "LogSubExp": XMath.LogSubExp(x, s, d); break;
             case "ScalarSubtract":

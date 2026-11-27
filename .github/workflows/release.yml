@@ -40,12 +40,20 @@ jobs:
       - name: Pack
         run: dotnet pack Tuna.slnx -c Release --no-build --no-restore -p:Version=${{ steps.version.outputs.value }} -o ./artifacts/nupkg
 
-      - name: Create GitHub Release
+      - name: Create or Update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${{ steps.version.outputs.tag }}" \
-            ./artifacts/nupkg/*.nupkg \
-            ./artifacts/nupkg/*.snupkg \
-            --title "Tuna ${{ steps.version.outputs.tag }}" \
-            --generate-notes
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" \
+              ./artifacts/nupkg/*.nupkg \
+              ./artifacts/nupkg/*.snupkg \
+              --clobber
+          else
+            gh release create "$TAG" \
+              ./artifacts/nupkg/*.nupkg \
+              ./artifacts/nupkg/*.snupkg \
+              --title "Tuna ${TAG}" \
+              --generate-notes
+          fi

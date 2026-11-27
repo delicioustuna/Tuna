@@ -29,6 +29,10 @@ internal static partial class DenseElementwise
         {
             MapWidened(ref x, xStride, ref destination, destinationStride, length, count, default(LanesKernel<Expm1Function>));
         }
+        else if (typeof(TOperator) == typeof(StaticUnaryOperator<T, XMath.Operators.Tanh<T>>))
+        {
+            MapWidened(ref x, xStride, ref destination, destinationStride, length, count, default(LanesKernel<TanhFunction>));
+        }
         else if (typeof(TOperator) == typeof(StaticUnaryOperator<T, XMath.Operators.Logistic<T>>))
         {
             MapWidened(ref x, xStride, ref destination, destinationStride, length, count, default(LanesKernel<LogisticFunction>));
@@ -52,6 +56,10 @@ internal static partial class DenseElementwise
         else if (typeof(TOperator) == typeof(StaticUnaryOperator<T, XMath.Operators.ApproximateExp<T>>))
         {
             MapApproximate<T, ApproximateExpFunction, LanesKernel<ExpFunction>>(ref x, xStride, ref destination, destinationStride, length, count);
+        }
+        else if (typeof(TOperator) == typeof(StaticUnaryOperator<T, XMath.Operators.ApproximateTanh<T>>))
+        {
+            MapApproximate<T, ApproximateTanhFunction, LanesKernel<TanhFunction>>(ref x, xStride, ref destination, destinationStride, length, count);
         }
         else if (typeof(TOperator) == typeof(StaticUnaryOperator<T, XMath.Operators.ApproximateLogistic<T>>))
         {
@@ -143,7 +151,10 @@ internal static partial class DenseElementwise
         static abstract TSelf operator -(TSelf x);
         static abstract TSelf operator &(TSelf x, TSelf y);
         static abstract TSelf Abs(TSelf x);
+        static abstract TSelf CopySign(TSelf magnitude, TSelf sign);
+        static abstract bool AllTrue(TSelf mask);
         static abstract TSelf Exp(TSelf x);
+        static abstract TSelf ExpNormal(TSelf x);
         static abstract TSelf Log(TSelf x);
         static abstract TSelf Hypot(TSelf x, TSelf y);
         static abstract TSelf Equal(TSelf x, TSelf y);
@@ -177,7 +188,13 @@ internal static partial class DenseElementwise
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ScalarLanes Abs(ScalarLanes x) => new(Math.Abs(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ScalarLanes CopySign(ScalarLanes magnitude, ScalarLanes sign) => new(Math.CopySign(magnitude.Value, sign.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool AllTrue(ScalarLanes mask) => BitConverter.DoubleToUInt64Bits(mask.Value) == ulong.MaxValue;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ScalarLanes Exp(ScalarLanes x) => new(DenseElementwise.Exp(x.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static ScalarLanes ExpNormal(ScalarLanes x) => new(DenseElementwise.ExpNormal(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static ScalarLanes Log(ScalarLanes x) => new(DenseElementwise.Log(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -217,7 +234,13 @@ internal static partial class DenseElementwise
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes128 Abs(Lanes128 x) => new(Vector128.Abs(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Lanes128 CopySign(Lanes128 magnitude, Lanes128 sign) => new(Vector128.CopySign(magnitude.Value, sign.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool AllTrue(Lanes128 mask) => Vector128.EqualsAll(mask.Value.AsUInt64(), Vector128.Create(ulong.MaxValue));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes128 Exp(Lanes128 x) => new(DenseElementwise.Exp(x.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Lanes128 ExpNormal(Lanes128 x) => new(DenseElementwise.ExpNormal(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes128 Log(Lanes128 x) => new(DenseElementwise.Log(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -256,7 +279,13 @@ internal static partial class DenseElementwise
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes256 Abs(Lanes256 x) => new(Vector256.Abs(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Lanes256 CopySign(Lanes256 magnitude, Lanes256 sign) => new(Vector256.CopySign(magnitude.Value, sign.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool AllTrue(Lanes256 mask) => Vector256.EqualsAll(mask.Value.AsUInt64(), Vector256.Create(ulong.MaxValue));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes256 Exp(Lanes256 x) => new(DenseElementwise.Exp(x.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Lanes256 ExpNormal(Lanes256 x) => new(DenseElementwise.ExpNormal(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes256 Log(Lanes256 x) => new(DenseElementwise.Log(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -295,7 +324,13 @@ internal static partial class DenseElementwise
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes512 Abs(Lanes512 x) => new(Vector512.Abs(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Lanes512 CopySign(Lanes512 magnitude, Lanes512 sign) => new(Vector512.CopySign(magnitude.Value, sign.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool AllTrue(Lanes512 mask) => Vector512.EqualsAll(mask.Value.AsUInt64(), Vector512.Create(ulong.MaxValue));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes512 Exp(Lanes512 x) => new(DenseElementwise.Exp(x.Value));
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Lanes512 ExpNormal(Lanes512 x) => new(DenseElementwise.ExpNormal(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Lanes512 Log(Lanes512 x) => new(DenseElementwise.Log(x.Value));
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -384,6 +419,62 @@ internal static partial class DenseElementwise
         y = TLanes.Select(TLanes.Equal(um1, TLanes.Create(-1)), TLanes.Create(-1), y);
         y = TLanes.Select(TLanes.Equal(u, one), x, y);
         return TLanes.Select(TLanes.LessThan(TLanes.Abs(x), TLanes.Create(1e-5)), small, y);
+    }
+
+    internal static double Tanh(double x) => TanhFunction.Invoke(new ScalarLanes(x)).Value;
+
+    private readonly struct TanhFunction : ILanesFunction
+    {
+        private const double PolynomialLimit = 0.75;
+        private const double SaturationLimit = 20;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static TLanes Invoke<TLanes>(TLanes x) where TLanes : struct, ILanes<TLanes>
+        {
+            var magnitude = TLanes.Abs(x);
+            var small = TLanes.LessThanOrEqual(magnitude, TLanes.Create(PolynomialLimit));
+            if (TLanes.AllTrue(small))
+            {
+                var (numerator, denominator) = NearZeroCorrection(magnitude);
+                return TLanes.CopySign(magnitude - numerator / denominator, x);
+            }
+
+            if (TLanes.AllTrue(TLanes.GreaterThanOrEqual(magnitude, TLanes.Create(SaturationLimit))))
+            {
+                return TLanes.CopySign(TLanes.Create(1), x);
+            }
+
+            var result = TLanes.CopySign(MixedRange(magnitude), x);
+            return TLanes.Select(TLanes.Equal(x, x), result, x);
+        }
+
+        // float の上下半分に指数の表引きを展開すると JIT のインライン予算を超える。
+        [MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.AggressiveOptimization)]
+        private static TLanes MixedRange<TLanes>(TLanes magnitude) where TLanes : struct, ILanes<TLanes>
+        {
+            var one = TLanes.Create(1);
+            // tanh(20) は 1 に丸まる。指数の引数を [-40, 0] に収める。
+            var limit = TLanes.Create(SaturationLimit);
+            var bounded = TLanes.Select(TLanes.LessThan(magnitude, limit), magnitude, limit);
+            var e = TLanes.ExpNormal(-(bounded + bounded));
+            var small = TLanes.LessThanOrEqual(magnitude, TLanes.Create(PolynomialLimit));
+            var (p, q) = NearZeroCorrection(bounded);
+            // 補正項の分子と分母を選択し、混在するベクトルでも除算は 1 回にまとめる。
+            var origin = TLanes.Select(small, bounded, one);
+            var numerator = TLanes.Select(small, p, e + e);
+            var denominator = TLanes.Select(small, q, one + e);
+            return origin - numerator / denominator;
+        }
+
+        // tanh(x)/x の [4/4] Padé 近似を x - x³ P(x²)/Q(x²) の形で評価し、原点付近の桁落ちを防ぐ。
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static (TLanes Numerator, TLanes Denominator) NearZeroCorrection<TLanes>(TLanes x) where TLanes : struct, ILanes<TLanes>
+        {
+            var z = x * x;
+            var p = (TLanes.Create(44) * z + TLanes.Create(12870)) * z + TLanes.Create(810810);
+            var q = ((TLanes.Create(45) * z + TLanes.Create(13860)) * z + TLanes.Create(945945)) * z + TLanes.Create(16216200);
+            return (x * z * (p * z + TLanes.Create(11486475)), q * z + TLanes.Create(34459425));
+        }
     }
 
     // XMath.Logistic: x >= 0 ? 1/(1 + e^-x) : e^x/(1 + e^x)

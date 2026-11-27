@@ -9,7 +9,7 @@ namespace Tuna.LinearAlgebra;
 /// <para><c>m × n</c> 行列 <c>A</c> に対し <c>k = min(m, n)</c> として、<see cref="U"/> は <c>m × k</c>、<see cref="V"/> は <c>n × k</c> の正規直交列を持つ行列になります（薄い特異値分解）。</para>
 /// </remarks>
 /// <seealso href="https://www.netlib.org/lapack/explore-html/d3/da8/group__gesvd.html"/>
-public sealed class SingularValueDecomposition
+public sealed partial class SingularValueDecomposition
 {
     // Retained so Rank can compute max(m, n) * eps * sigma_max even when U and V are omitted.
     private readonly int _maxDimension;
@@ -67,28 +67,7 @@ public sealed class SingularValueDecomposition
     /// Gets the numerical rank, defined as the count of singular values strictly greater than <c>max(m, n)·ε·σ_max</c>.
     /// <para>数値ランク（<c>σᵢ &gt; max(m, n)·ε·σ_max</c> を満たす特異値の個数）を取得します。</para>
     /// </summary>
-    public int Rank
-    {
-        get
-        {
-            if (Values.Length == 0)
-            {
-                return 0;
-            }
-
-            double tol = _maxDimension * 2.220446049250313e-16 * Values[0];
-            int rank = 0;
-            foreach (double s in Values)
-            {
-                if (s > tol)
-                {
-                    rank++;
-                }
-            }
-
-            return rank;
-        }
-    }
+    public int Rank => CountAboveCutoff(_maxDimension * Epsilon);
 
     /// <summary>
     /// Computes the thin singular value decomposition of <paramref name="a"/>.

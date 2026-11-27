@@ -1,5 +1,9 @@
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Tuna.LinearAlgebra;
 using Tuna.RandomSource;
+using Simd = System.Numerics.Vector;
+using SimdDouble = System.Numerics.Vector<double>;
 
 namespace Tuna.Statistics.Distributions;
 
@@ -227,6 +231,12 @@ internal static class MultivariateMath
     // 列指向の前進代入で Lz = b をインプレースで解く（先頭 start 要素は 0 とみなす）
     internal static void SolveLowerInPlace(ReadOnlySpan<double> l, int n, Span<double> b, int offset = 0, int stride = 1, int start = 0)
     {
+        if (start >= 0 && (long)n - start >= 16 && stride == 1 && l.Length >= (long)n * n)
+        {
+            SolveLowerContiguousInPlace(l, b.Slice(offset, n), start);
+            return;
+        }
+
         for (int j = start; j < n; j++)
         {
             double z = b[offset + j * stride] / l[j + j * n];
@@ -234,6 +244,40 @@ internal static class MultivariateMath
             for (int i = j + 1; i < n; i++)
             {
                 b[offset + i * stride] -= l[i + j * n] * z;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void SolveLowerContiguousInPlace(ReadOnlySpan<double> l, Span<double> b, int start)
+    {
+        int n = b.Length;
+        ref double factor = ref MemoryMarshal.GetReference(l);
+        ref double rhs = ref MemoryMarshal.GetReference(b);
+        int width = SimdDouble.Count;
+        for (int j = start; j < n; j++)
+        {
+            ref double column = ref Unsafe.Add(ref factor, (nint)j * n);
+            ref double pivot = ref Unsafe.Add(ref rhs, j);
+            double z = pivot / Unsafe.Add(ref column, j);
+            pivot = z;
+            int i = j + 1;
+
+            // 行ごとに更新は独立。乗算と減算を分けてスカラー経路と同じ丸め順序を保つ。
+            if (Simd.IsHardwareAccelerated && i <= n - width)
+            {
+                var scale = new SimdDouble(z);
+                for (; i <= n - width; i += width)
+                {
+                    var coefficients = Simd.LoadUnsafe(ref column, (nuint)i);
+                    var values = Simd.LoadUnsafe(ref rhs, (nuint)i);
+                    Simd.StoreUnsafe(values - coefficients * scale, ref rhs, (nuint)i);
+                }
+            }
+
+            for (; i < n; i++)
+            {
+                Unsafe.Add(ref rhs, i) -= Unsafe.Add(ref column, i) * z;
             }
         }
     }

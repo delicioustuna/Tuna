@@ -24,6 +24,8 @@ public class ApproximateElementwiseBoundaryTests
     {
         "Exp" => new(null, (x, a) => Exp(x, a), (x, a, d) => Exp(x, a, d), (x, a) => InPlace.Exp(x, a),
             (x, a) => Exp(x, a), (x, a, d) => Exp(x, a, d), (x, a) => InPlace.Exp(x, a)),
+        "Tanh" => new((x, a) => Tanh(x, a), (x, a) => Tanh(x, a), (x, a, d) => Tanh(x, a, d), (x, a) => InPlace.Tanh(x, a),
+            (x, a) => Tanh(x, a), (x, a, d) => Tanh(x, a, d), (x, a) => InPlace.Tanh(x, a)),
         "Logistic" => new((x, a) => Logistic(x, a), (x, a) => Logistic(x, a), (x, a, d) => Logistic(x, a, d), (x, a) => InPlace.Logistic(x, a),
             (x, a) => Logistic(x, a), (x, a, d) => Logistic(x, a, d), (x, a) => InPlace.Logistic(x, a)),
         "Silu" => new((x, a) => Silu(x, a), (x, a) => Silu(x, a), (x, a, d) => Silu(x, a, d), (x, a) => InPlace.Silu(x, a),
@@ -49,6 +51,14 @@ public class ApproximateElementwiseBoundaryTests
     [InlineData("Exp", 1f, 2.718281828459045, 1.07)]
     [InlineData("Exp", 88.7228317f, 3.4027985374118487e+38, 1.07)]
     [InlineData("Exp", 88.7228394f, 3.402824498803435e+38, 1.07)]
+    [InlineData("Tanh", -1.00000001e-10f, -1.000000013351432e-10, 1.1)]
+    [InlineData("Tanh", 0.000122070312f, 0.00012207031189367021, 1.1)]
+    [InlineData("Tanh", 0.74999994f, 0.6351489168280008, 1.1)]
+    [InlineData("Tanh", 0.75f, 0.6351489523872873, 1.1)]
+    [InlineData("Tanh", 0.75000006f, 0.6351489879465712, 1.1)]
+    [InlineData("Tanh", 0.873041391f, 0.702916089828552, 1.1)]
+    [InlineData("Tanh", 9.0109129f, 0.9999999701976511, 1.1)]
+    [InlineData("Tanh", 9.01091385f, 0.9999999701977079, 1.1)]
     [InlineData("Logistic", -103.972084f, 7.006443546669571e-46, 2.41)]
     [InlineData("Logistic", -103.972076f, 7.006497001795564e-46, 2.41)]
     [InlineData("Logistic", -100f, 3.720075976020836e-44, 2.41)]
@@ -169,9 +179,45 @@ public class ApproximateElementwiseBoundaryTests
         Assert.True(error <= maxUlps, $"{name}: expected {expected:R}, actual {actual:R}, error {error:R} ulp");
     }
 
+    [Fact]
+    public void TanhApproximationIsOddAndNondecreasingAtTransitions()
+    {
+        // 指数の範囲縮小、多項式との切り替え、1 への飽和の前後で隣接する float を調べる。
+        var transitions = Enumerable.Range(2, 28).Select(n => (float)((n + 0.5) * Math.Log(2) / 2))
+            .Concat(Enumerable.Range(-13, 18).Select(n => MathF.ScaleB(1, n)))
+            .Concat([0.75f, 9.01091385f, 10f]);
+        var inputs = new SortedSet<float>();
+        foreach (float transition in transitions)
+        {
+            float x = transition;
+            for (int i = 0; i < 32; i++)
+            {
+                x = float.BitDecrement(x);
+            }
+
+            for (int i = 0; i < 65; i++)
+            {
+                inputs.Add(x);
+                x = float.BitIncrement(x);
+            }
+        }
+
+        var positive = Tanh(new Vector<float>(inputs.ToArray()), approximate: true);
+        var negative = Tanh(new Vector<float>(inputs.Select(x => -x).ToArray()), approximate: true);
+        float previous = 0;
+        for (int i = 0; i < positive.Length; i++)
+        {
+            Assert.InRange(positive[i], previous, 1f);
+            Assert.Equal(BitConverter.SingleToInt32Bits(-positive[i]), BitConverter.SingleToInt32Bits(negative[i]));
+            previous = positive[i];
+        }
+    }
+
     [Theory]
     [InlineData("Exp", false, 0.049787068367863944)]
     [InlineData("Exp", true, 0.049787068367863944)]
+    [InlineData("Tanh", false, -0.9950547536867305)]
+    [InlineData("Tanh", true, -0.9950547536867305)]
     [InlineData("Logistic", false, 0.04742587317756678)]
     [InlineData("Logistic", true, 0.04742587317756678)]
     [InlineData("Silu", false, -0.14227761953270035)]
@@ -190,6 +236,7 @@ public class ApproximateElementwiseBoundaryTests
     // 現行の近似版と末尾のビットが異なる固定点。falseのAPIが既定の値を保つことを各版で確認する。
     [Theory]
     [InlineData("Exp", -4.9994998f, 0.00674131839f)]
+    [InlineData("Tanh", 0.873041391f, 0.702916086f)]
     [InlineData("Logistic", -4.99989986f, 0.00669351686f)]
     [InlineData("Silu", -4.99980021f, -0.0334695578f)]
     [InlineData("Softplus", -4.99980021f, 0.00671668584f)]
@@ -265,7 +312,7 @@ public class ApproximateElementwiseBoundaryTests
                     return;
                 }
 
-                double ulps = !approximate ? 1 : name switch { "Exp" => 1.07, "Logistic" => 2.41, "Silu" => 3.35, "Softplus" => 2.8, _ => 203 };
+                double ulps = !approximate ? 1 : name switch { "Exp" => 1.07, "Tanh" => 1.1, "Logistic" => 2.41, "Silu" => 3.35, "Softplus" => 2.8, _ => 203 };
                 CheckSingle(name, expected, float.CreateTruncating(actual), ulps);
                 return;
             }
@@ -281,6 +328,8 @@ public class ApproximateElementwiseBoundaryTests
     [Theory]
     [InlineData("Exp", false)]
     [InlineData("Exp", true)]
+    [InlineData("Tanh", false)]
+    [InlineData("Tanh", true)]
     [InlineData("Logistic", false)]
     [InlineData("Logistic", true)]
     [InlineData("Silu", false)]
@@ -322,7 +371,7 @@ public class ApproximateElementwiseBoundaryTests
 
     private static void CheckEmpty<T>(bool approximate) where T : unmanaged, IFloatingPointIeee754<T>
     {
-        foreach (string name in new[] { "Exp", "Logistic", "Silu", "Softplus", "Gelu" })
+        foreach (string name in new[] { "Exp", "Tanh", "Logistic", "Silu", "Softplus", "Gelu" })
         {
             var operation = GetOperation<T>(name);
             var vector = new Vector<T>(0);

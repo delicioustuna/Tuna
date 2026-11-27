@@ -1,4 +1,5 @@
 using Tuna.Differentiation;
+using Tuna.LinearAlgebra;
 using static Tuna.Tests.Differentiation.DifferentiationAssert;
 
 namespace Tuna.Tests.Differentiation;
@@ -10,7 +11,7 @@ public class ElementaryTrigonometricTests
     private static readonly string[] TrigonometricFunctions = ["Sin", "Cos", "Tan"];
 
     [Fact]
-    public void ForwardValuesPreserveMathBitsForTrackedAndConstantInputs()
+    public void ForwardValuesMatchTheScalarFunctionsForTrackedAndConstantInputs()
     {
         double[] values = [0, -0.0, 1, -1, double.Epsilon, -double.Epsilon,
             1e-300, -1e300, double.MaxValue, double.MinValue,
@@ -29,6 +30,28 @@ public class ElementaryTrigonometricTests
                 EqualBits(expected, constant.Value, context: $"{function}({value:R}), constant input");
                 Assert.False(constant.RequiresGradient, $"{function}({value:R}), constant input");
             }
+        }
+    }
+
+    [Fact]
+    public void DoubleTanhForwardValuesAgreeAcrossScalarsAndVectors()
+    {
+        double[] values = [0, -0.0, double.Epsilon, -double.Epsilon, 1e-6, -0.5, 0.5, 0.5048239254415147,
+            double.BitDecrement(0.75), 0.75, double.BitIncrement(0.75), 1.25, -3, 19.061547465398498,
+            double.PositiveInfinity, double.NegativeInfinity, double.NaN, 0.873041391];
+        var x = new Vector<double>(values);
+        var tape = new Tape();
+        var node = tape.Leaf(x);
+        var vector = XMath.Tanh(x);
+        var tracked = XMath.Tanh(node).Value;
+        var approximate = XMath.Tanh(node, approximate: true).Value;
+        for (int i = 0; i < values.Length; i++)
+        {
+            double expected = XMath.Tanh(values[i]);
+            EqualBits(expected, vector[i]);
+            EqualBits(expected, XMath.Tanh(tape.Leaf(values[i])).Value);
+            EqualBits(expected, tracked[i]);
+            EqualBits(expected, approximate[i]);
         }
     }
 
@@ -59,7 +82,7 @@ public class ElementaryTrigonometricTests
     [MemberData(nameof(DifferenceCases))]
     public void GradientsAgreeWithRichardsonDifferences(string function, double value, double step)
     {
-        double expected = Richardson(x => Evaluate(function, x), value, step);
+        double expected = function == "Tanh" ? Richardson(Math.Tanh, value, step) : Richardson(x => Evaluate(function, x), value, step);
         double actual = Gradient(x => Evaluate(function, x), value);
         Close(expected, actual, relativeTolerance: 2e-8, absoluteTolerance: 2e-10, context: $"{function}({value:R})");
     }
@@ -176,7 +199,7 @@ public class ElementaryTrigonometricTests
         "Sin" => Math.Sin(value),
         "Cos" => Math.Cos(value),
         "Tan" => Math.Tan(value),
-        "Tanh" => Math.Tanh(value),
+        "Tanh" => XMath.Tanh(value),
         "Atan" => Math.Atan(value),
         _ => throw new ArgumentOutOfRangeException(nameof(function)),
     };

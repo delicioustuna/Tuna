@@ -84,6 +84,7 @@ public class ElementwiseSimdTests
         yield return new("Sqrt", v => Sqrt(v), x => Sqrt(x), (x, d) => Sqrt(x, d), x => InPlace.Sqrt(x));
         yield return new("Abs", v => Abs(v), x => Abs(x), (x, d) => Abs(x, d), x => InPlace.Abs(x));
         yield return new("Square", v => Square(v), x => Square(x), (x, d) => Square(x, d), x => InPlace.Square(x));
+        yield return new("Tanh", v => Tanh(v), x => Tanh(x), (x, d) => Tanh(x, d), x => InPlace.Tanh(x));
         yield return new("Reciprocal", v => Reciprocal(v), x => Reciprocal(x), (x, d) => Reciprocal(x, d), x => InPlace.Reciprocal(x));
         yield return new("Relu", v => Relu(v), x => Relu(x), (x, d) => Relu(x, d), x => InPlace.Relu(x));
         yield return new("Negate", v => -v, x => Negate(x), (x, d) => Negate(x, d), x => Negate(x, x));
@@ -93,6 +94,7 @@ public class ElementwiseSimdTests
             yield return new($"Subtract {s}", v => v - s, x => Subtract(x, s), (x, d) => Subtract(x, s, d), x => InPlace.Subtract(x, s), NaNs(s));
             yield return new($"Multiply {s}", v => v * s, x => Multiply(x, s), (x, d) => Multiply(x, s, d), x => InPlace.Multiply(x, s), NaNs(s));
             yield return new($"Divide {s}", v => Divide(v, s), x => Divide(x, s), (x, d) => Divide(x, s, d), x => InPlace.Divide(x, s), NaNs(s));
+            yield return new($"Hypot {s}", v => T.Hypot(v, s), x => Hypot(x, s), (x, d) => Hypot(x, s, d), x => InPlace.Hypot(x, s), NaNs(s));
             yield return new($"Max {s}", v => Max(v, s), x => Max(x, s), (x, d) => Max(x, s, d), x => InPlace.Max(x, s), NaNs(s));
             yield return new($"Min {s}", v => Min(v, s), x => Min(x, s), (x, d) => Min(x, s, d), x => InPlace.Min(x, s), NaNs(s));
             yield return new($"LeakyRelu {s}", v => LeakyRelu(v, s), x => LeakyRelu(x, s), (x, d) => LeakyRelu(x, s, d), x => InPlace.LeakyRelu(x, s), NaNs(s));
@@ -115,11 +117,58 @@ public class ElementwiseSimdTests
         yield return new("Subtract", (v, w) => v - w, (x, y) => Subtract(x, y), (x, y, d) => Subtract(x, y, d));
         yield return new("Hadamard", (v, w) => v * w, (x, y) => Hadamard(x, y), (x, y, d) => Hadamard(x, y, d));
         yield return new("Divide", (v, w) => Divide(v, w), (x, y) => Divide(x, y), (x, y, d) => Divide(x, y, d));
+        yield return new("Hypot", T.Hypot, (x, y) => Hypot(x, y), (x, y, d) => Hypot(x, y, d));
         yield return new("Max", (v, w) => Max(v, w), (x, y) => Max(x, y), (x, y, d) => Max(x, y, d));
         yield return new("Min", (v, w) => Min(v, w), (x, y) => Min(x, y), (x, y, d) => Min(x, y, d));
     }
 
     private static T[] Sample<T>(T[] pool, int n, int step, int shift) => Enumerable.Range(0, n).Select(i => pool[(step * i + shift + n) % pool.Length]).ToArray();
+
+    [Fact]
+    public void SingleHypotMatchesScalarBitsAtRoundingBoundariesAndAcrossTheExponentRange()
+    {
+        var x = new Vector<float>(65_537);
+        var y = new Vector<float>(x.Length);
+        float minNormal = MathF.ScaleB(1, -126);
+        float[] boundaries = [.. Pool<float>(53), MathF.BitDecrement(minNormal), minNormal, MathF.BitIncrement(minNormal),
+            MathF.BitDecrement(float.MaxValue), -MathF.BitDecrement(float.MaxValue)];
+        int k = 0;
+        foreach (float a in boundaries)
+        {
+            foreach (float b in boundaries)
+            {
+                x[k] = a;
+                y[k++] = b;
+            }
+        }
+
+        // Choose y on both sides of the midpoint between adjacent results for fixed x.
+        foreach (float a in new[] { float.Epsilon, minNormal, 1f, MathF.ScaleB(1, 64), float.MaxValue })
+        {
+            double next = a == float.MaxValue ? Math.ScaleB(1, 128) : MathF.BitIncrement(a);
+            double midpoint = ((double)a + next) * 0.5;
+            float crossing = (float)Math.Sqrt((midpoint - a) * (midpoint + a));
+            foreach (float b in new[] { MathF.BitDecrement(crossing), crossing, MathF.BitIncrement(crossing) })
+            {
+                x[k] = a;
+                y[k++] = b;
+            }
+        }
+
+        var random = new Random(176);
+        for (; k < x.Length; k++)
+        {
+            x[k] = BitConverter.UInt32BitsToSingle((uint)random.NextInt64(1L << 32));
+            y[k] = BitConverter.UInt32BitsToSingle((uint)random.NextInt64(1L << 32));
+        }
+
+        var actual = Hypot(x, y);
+        for (int i = 0; i < x.Length; i++)
+        {
+            uint expected = BitConverter.SingleToUInt32Bits(float.Hypot(x[i], y[i]));
+            Assert.Equal(expected, BitConverter.SingleToUInt32Bits(actual[i]));
+        }
+    }
 
     private static void AssertUnaryAcrossLayouts<T>() where T : unmanaged, System.Numerics.IFloatingPointIeee754<T>, System.Numerics.IMinMaxValue<T>
     {
@@ -283,6 +332,7 @@ public class ElementwiseSimdTests
         Assert.Throws<OverflowException>(() => { Abs(new[] { int.MinValue }.ToVector()); });
         Assert.Equal(new[] { 1.5m, 0, 2 }, Max(new[] { 1.5m, -1, 2 }.ToVector(), 0m).ToArray());
         Assert.Equal(new[] { (Half)2, (Half)0.5 }, Sqrt(new[] { (Half)4, (Half)0.25 }.ToVector()).ToArray());
+        Assert.Equal(new[] { Half.Tanh((Half)0.5) }, Tanh(new[] { (Half)0.5 }.ToVector()).ToArray());
         Assert.Equal(new[] { new Complex(0, 2) }, Square(new[] { new Complex(1, 1) }.ToVector()).ToArray());
     }
 }

@@ -1,5 +1,6 @@
 using Tuna.LinearAlgebra;
 using static Tuna.XMath;
+using Complex = System.Numerics.Complex;
 using DoubleVector = Tuna.LinearAlgebra.Vector<double>;
 
 namespace Tuna.Tests.LinearAlgebra;
@@ -66,6 +67,97 @@ public class XMathTests
         var e = new DoubleVector(9);
         Assert.Equal(Exp(x).ToArray(), Exp(x, e).ToArray());
         Assert.Same(c, Multiply(a, b, c));
+    }
+
+    [Fact]
+    public void HypotPreservesRangeAndSpecialValues()
+    {
+        double[] left = [3, -5, -0.0, double.Epsilon, 3e200, 3e-200, double.MaxValue, double.PositiveInfinity, double.NaN, 0];
+        double[] right = [4, 12, -0.0, double.Epsilon, 4e200, 4e-200, double.MaxValue, double.NaN, double.NegativeInfinity, double.NaN];
+        var x = new DoubleVector(Enumerable.Range(0, 33).Select(i => left[i % left.Length]).ToArray());
+        var y = new DoubleVector(Enumerable.Range(0, 33).Select(i => right[i % right.Length]).ToArray());
+        double[] expected = x.ToArray().Zip(y.ToArray(), double.Hypot).ToArray();
+        var result = Hypot(x, y);
+        Assert.Equal(expected, result.ToArray());
+        Assert.False(double.IsNegative(result[2]));
+        Assert.True(double.IsFinite(result[4]));
+        Assert.True(result[5] > 0);
+        Assert.Equal(double.PositiveInfinity, result[7]);
+        Assert.Equal(double.PositiveInfinity, result[8]);
+        Assert.True(double.IsNaN(result[9]));
+
+        var a = Matrix<double>.FromColumnMajor(3, 11, x.AsSpan());
+        var b = Matrix<double>.FromColumnMajor(3, 11, y.AsSpan());
+        Hypot(a.T, b.T, a.T);
+        Assert.Equal(expected, a.AsSpan().ToArray());
+
+        var zero = new DoubleVector(0);
+        Assert.Empty(Hypot(zero, zero).ToArray());
+        Assert.Throws<ArgumentException>(() => Hypot(x, y[1..]));
+        Assert.Throws<ArgumentException>(() => { Hypot(x[..32], y[..32], x[1..]); });
+    }
+
+    [Fact]
+    public void HypotSupportsSingleAndHalfPrecision()
+    {
+        float[] left = [3e30f, 3e-30f, float.Epsilon, -0.0f, float.NaN];
+        float[] right = [4e30f, 4e-30f, float.Epsilon, -0.0f, float.PositiveInfinity];
+        var x = new Vector<float>(Enumerable.Range(0, 33).Select(i => left[i % left.Length]).ToArray());
+        var y = new Vector<float>(Enumerable.Range(0, 33).Select(i => right[i % right.Length]).ToArray());
+        var result = Hypot(x, y);
+
+        Assert.Equal(x.ToArray().Zip(y.ToArray(), float.Hypot), result.ToArray());
+        Assert.False(float.IsNegative(result[3]));
+        Assert.Equal((Half)5, Hypot((Half)3, (Half)4));
+        Assert.Equal(new Half[] { (Half)5 }, Hypot(new Vector<Half>([(Half)3]), new Vector<Half>([(Half)4])).ToArray());
+    }
+
+    [Fact]
+    public void OuterAcceptsViewsAndPreservesProductSemantics()
+    {
+        var storage = Matrix<int>.FromRowMajor(3, 3, [2, 3, 5, 7, 11, 13, 17, 19, 23]);
+        var u = storage.Row(0);
+        var v = storage.Column(2)[1..];
+        var expected = new int[,] { { 26, 46 }, { 39, 69 }, { 65, 115 } };
+        Assert.Equal(expected, Outer(u, v).ToArray());
+        var destination = new Matrix<int>(4, 3);
+        var view = destination.T[..3, 1..3];
+        Assert.Equal(expected, Outer(u, v, view).ToArray());
+        Assert.Equal(0, destination[0, 0]);
+
+        var complexLeft = new Vector<Complex>([new(2, 1)]);
+        var complexRight = new Vector<Complex>([new(3, -2)]);
+        Assert.Equal(complexLeft[0] * complexRight[0], Outer(complexLeft, complexRight)[0, 0]);
+
+        var product = Outer(new DoubleVector([-1, double.PositiveInfinity]), new DoubleVector([0]));
+        Assert.True(double.IsNegative(product[0, 0]));
+        Assert.True(double.IsNaN(product[1, 0]));
+    }
+
+    [Fact]
+    public void OuterValidatesShapeOverlapAndEmptyInputs()
+    {
+        var destination = Sequence(3, 2);
+        var u = new DoubleVector([1, 2, 3]);
+        var v = new DoubleVector([4, 5]);
+        var before = destination.ToArray();
+        Assert.Throws<ArgumentException>(() => { Outer(u, u, destination); });
+        Assert.Throws<ArgumentException>(() => { Outer(destination.Column(0), v, destination); });
+        Assert.Throws<ArgumentException>(() => { Outer(u, destination.Row(0), destination); });
+        Assert.Equal(before, destination.ToArray());
+
+        var empty = new DoubleVector(0);
+        var rows = Outer(empty, v);
+        var columns = Outer(u, empty);
+        Assert.Equal((0, 2), (rows.Rows, rows.Columns));
+        Assert.Equal((3, 0), (columns.Rows, columns.Columns));
+        Assert.Same(rows, Outer(empty, v, rows));
+
+        Assert.Throws<OverflowException>(() =>
+        {
+            var large = new ReadOnlyVectorSpan<int>([1], [46_341], [0]);
+            Outer(large, large);
+        });
     }
 
     [Fact]

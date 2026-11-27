@@ -9,6 +9,33 @@ using Tuna.LinearAlgebra;
 public class BroadcastElementwiseTests
 {
     [Fact]
+    public void TanhMatchesScalarBitsOnBroadcastViews()
+    {
+        CheckTanhBroadcast<double>();
+        CheckTanhBroadcast<float>();
+    }
+
+    private static void CheckTanhBroadcast<T>() where T : unmanaged, IFloatingPointIeee754<T>
+    {
+        const int rows = 19;
+        var values = new Vector<T>([T.NegativeZero, T.NaN, T.Epsilon, T.CreateChecked(-0.25), T.One, T.NegativeInfinity]);
+        var broadcast = values.BroadcastRows(rows);
+        var allocated = XMath.Tanh(broadcast);
+        var storage = new Matrix<T>(values.Length + 1, rows + 2);
+        var destination = storage[1.., 1..(rows + 1)];
+        XMath.Tanh(broadcast.T, destination);
+        for (int j = 0; j < values.Length; j++)
+        {
+            T expected = XMath.Tanh(values[j]);
+            for (int i = 0; i < rows; i++)
+            {
+                AssertBits(expected, allocated[i, j], false, $"Tanh({typeof(T).Name}) broadcast [{i}, {j}]");
+                AssertBits(expected, destination[j, i], false, $"Tanh({typeof(T).Name}) transposed broadcast [{j}, {i}]");
+            }
+        }
+    }
+
+    [Fact]
     public void BroadcastRowsMatchesScalarBitsAcrossLayoutsAndDegrees()
     {
         int saved = LinearAlgebraSettings.MaxDegreeOfParallelism;
@@ -43,7 +70,7 @@ public class BroadcastElementwiseTests
                 {
                     foreach (bool scalarOnLeft in new[] { false, true })
                     {
-                        foreach (int operation in Enumerable.Range(0, 6))
+                        foreach (int operation in Enumerable.Range(0, 7))
                         {
                             int rowStride = layout == 3 ? 2 : layout == 2 ? columns + 3 : 1;
                             int columnStride = layout == 2 ? 1 : rows * rowStride + 3;
@@ -154,7 +181,7 @@ public class BroadcastElementwiseTests
         Assert.True(e == a, $"{context}: {e:X16} != {a:X16}");
     }
 
-    private static T Scalar<T>(int operation, T x, T y) where T : INumber<T> => operation switch
+    private static T Scalar<T>(int operation, T x, T y) where T : IFloatingPointIeee754<T> => operation switch
     {
         0 => x + y,
         1 => x - y,
@@ -162,11 +189,12 @@ public class BroadcastElementwiseTests
         3 => x / y,
         4 => T.Min(x, y),
         5 => T.Max(x, y),
+        6 => T.Hypot(x, y),
         _ => throw new ArgumentOutOfRangeException(nameof(operation)),
     };
 
     private static void Into<T>(int operation, ReadOnlyMatrixSpan<T> x, ReadOnlyMatrixSpan<T> y, MatrixSpan<T> d)
-        where T : unmanaged, INumber<T>
+        where T : unmanaged, IFloatingPointIeee754<T>
     {
         switch (operation)
         {
@@ -176,6 +204,7 @@ public class BroadcastElementwiseTests
             case 3: XMath.Divide(x, y, d); break;
             case 4: XMath.Min(x, y, d); break;
             case 5: XMath.Max(x, y, d); break;
+            case 6: XMath.Hypot(x, y, d); break;
         }
     }
 
@@ -189,6 +218,7 @@ public class BroadcastElementwiseTests
         Assert.Throws<ArgumentException>(() => XMath.Subtract(a, a.Row(0).BroadcastRows(17), a));
         Assert.Throws<ArgumentException>(() => XMath.Subtract(a.Row(0).BroadcastRows(17), a, a));
         Assert.Throws<ArgumentException>(() => XMath.Subtract(a[..16, ..], v.BroadcastRows(16), a[1.., ..]));
+        Assert.Throws<ArgumentException>(() => XMath.Tanh(a.Row(0).BroadcastRows(17), a));
     }
 
     private readonly struct DifferenceWithOffset(double offset) : IStatefulBinaryOperator<double>
@@ -223,7 +253,7 @@ public class BroadcastElementwiseTests
         var a = new Matrix<T>(257, 1000);
         var v = new Vector<T>(1000);
         var d = new Matrix<T>(257, 1000);
-        foreach (int operation in Enumerable.Range(0, 6))
+        foreach (int operation in Enumerable.Range(0, 7))
         {
             foreach (bool left in new[] { false, true })
             {

@@ -50,3 +50,4 @@
   - **QR**: Thin QR 微分（Liao et al. 2019）。横長行列（$m < n$）では $R = [X \mid V]$, $A = [\cdot \mid Y]$ に分割し、$dR$ の狭義下三角成分は無視します。
   - **SymmetricEigen**: Giles (2008) の公式を用い、$C_{ij} = 0$ をスキップします。有限固有値差がオーバーフローする場合は `HalvedQuotient`（$0.5 c / (0.5 \lambda_j - 0.5 \lambda_i)$）を使用します。
   - **SVD**: Townsend (2016) の Thin SVD 微分を用い、長方形行列の直交補空間射影を $N'$ へ折り込みます。$(s_j - s_i)(s_j + s_i)$ や分子が非正規化・オーバーフロー領域に入る場合は `ScaledSingularValueQuotients` / `SplitProduct` で仮数と 2 進指数（`ILogB` / `ScaleB`）を分離し、中間オーバーフローによる商の破綻を防ぎます。
+  - **SVD による求解と疑似逆行列**: 順伝播はコアの `Solve` と `PseudoInverse` を呼び出し、保持ランクを記録します。逆伝播は切り捨て後の行列に Golub–Pereyra (1973) の定ランク微分を適用します。特異値の差を分母に使わないため、保持した特異値が重複する場合にも適用できます。`Solve` の逆伝播は保持因子の積で計算します。極端なスケールでは中間結果の仮数と 2 進指数を分けて保持し、勾配を加算する段階で `double` に丸めます。

@@ -11,6 +11,29 @@ public class AllocationTests
         "Multiply", "SolveLowerTriangular", "CholeskySolve",
     };
 
+    [Fact]
+    public void CrossWithDestinationAndTraceDoNotAllocate()
+    {
+        var matrix = new Matrix<double>(3, 3);
+        var vector = new Vector<double>([1, 2, 3]);
+        var destination = new Vector<double>(3);
+
+        Assert.Equal(0L, MinimumAllocation(() => XMath.Cross(matrix.Row(0), vector, destination)));
+        Assert.Equal(0L, MinimumAllocation(() => _ = XMath.Trace(matrix)));
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(40)]
+    public void CholeskyLogDeterminantReusesWorkspaceAfterWarmup(int order)
+    {
+        WithThreads(1, () =>
+        {
+            var a = PositiveDefinite(order);
+            Assert.Equal(0L, MinimumAllocation(() => _ = XMath.CholeskyLogDeterminant(a)));
+        });
+    }
+
     [Theory, MemberData(nameof(SequentialOperations))]
     public void SequentialMatrixOperationsDoNotAllocate(string operation)
     {

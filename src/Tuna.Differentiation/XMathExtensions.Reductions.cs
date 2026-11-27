@@ -25,6 +25,26 @@ public static partial class XMathExtensions
     extension(XMath)
     {
         /// <summary>
+        /// Computes the sum of the main diagonal of a matrix node.
+        /// <para>行列ノードの主対角成分の和を計算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type (<see langword="float"/> or <see langword="double"/>). / 要素型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="x">The input matrix node. / 入力行列ノード。</param>
+        /// <returns>A scalar node holding the diagonal sum widened to <see langword="double"/>, or zero for an empty matrix. / 主対角成分の和を <see langword="double"/> に拡幅したスカラーノード。空行列の場合は 0。</returns>
+        /// <remarks>
+        /// <para>Backpropagation adds the scalar adjoint to each main diagonal entry of the input gradient.</para>
+        /// <para>逆伝播では入力の勾配の主対角成分にスカラーの随伴を加算します。</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">The node is uninitialized or stale, or recording requires a reset. / ノードが未初期化、世代が古い、または記録を続けるためにテープのリセットが必要な場合。</exception>
+        public static ScalarNode Trace<T>(MatrixNode<T> x) where T : unmanaged, IFloatingPointIeee754<T>
+        {
+            Tape tape = x.Owner();
+            var store = tape.Store<T>();
+            double value = double.CreateTruncating(XMath.Trace(store.MatrixView(x.View)));
+            return store.RequiresGradient(x.View.Slot) ? RecordScalar<T>(tape, ArrayOperation.Trace, value, x.View, default) : new(value);
+        }
+
+        /// <summary>
         /// Computes the sum of squares <c>Σ x[i]²</c>.
         /// <para>2 乗和 <c>Σ x[i]²</c> を計算します。</para>
         /// </summary>

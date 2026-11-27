@@ -9,6 +9,56 @@ public class LinearAlgebraViewPropertyTests
     private const double Sentinel = -999999.25;
 
     [Fact]
+    public void CrossIsOrthogonalToBothInputsAndAnticommutative()
+    {
+        Gen.Int[0, 100000].Sample(seed =>
+        {
+            var random = new Random(seed);
+            var u = Vector<double>.Generate(3, _ => random.Next(-32, 33) / 8.0);
+            var v = Vector<double>.Generate(3, _ => random.Next(-32, 33) / 8.0);
+            var uv = XMath.Cross(u, v);
+            var vu = XMath.Cross(v, u);
+
+            Assert.Equal(0, XMath.Dot(uv, u));
+            Assert.Equal(0, XMath.Dot(uv, v));
+            Assert.Equal(XMath.Negate(uv).ToArray(), vu.ToArray());
+            Assert.Equal([0.0, 0.0, 0.0], XMath.Cross(u, u).ToArray());
+        }, iter: 200, seed: "1760c2055001");
+    }
+
+    [Fact]
+    public void TraceIsInvariantUnderTransposeAndCyclicProducts()
+    {
+        Gen.Select(Gen.Int[0, 12], Gen.Int[0, 12], Gen.Int[0, 100000]).Sample((rows, columns, seed) =>
+        {
+            var random = new Random(seed);
+            var a = Matrix<double>.Generate(rows, columns, (_, _) => random.Next(-8, 9) / 8.0);
+            var b = Matrix<double>.Generate(columns, rows, (_, _) => random.Next(-8, 9) / 8.0);
+
+            Assert.Equal(XMath.Trace(a), XMath.Trace(a.T));
+            Assert.Equal(XMath.Trace(XMath.Multiply(a, b)), XMath.Trace(XMath.Multiply(b, a)));
+        }, iter: 150, seed: "17607ace0001");
+    }
+
+    [Fact]
+    public void OuterProductTransposeExchangesTheVectors()
+    {
+        Gen.Select(Gen.Int[0, 24], Gen.Int[0, 24], Gen.Int[0, 1000]).Sample((rows, columns, seed) =>
+        {
+            var random = new Random(seed);
+            var u = new Vector<double>(Enumerable.Range(0, rows).Select(_ => random.NextDouble() - 0.5).ToArray());
+            var v = new Vector<double>(Enumerable.Range(0, columns).Select(_ => random.NextDouble() - 0.5).ToArray());
+            var product = XMath.Outer(u, v);
+            var transposed = XMath.Outer(v, u);
+            var storage = new Matrix<double>(columns, rows);
+            var destination = XMath.Outer(u, v, storage.T);
+
+            Assert.Equal(product.ToArray(), transposed.T.ToArray());
+            Assert.Equal(product.ToArray(), destination.ToArray());
+        }, iter: 150, seed: "456789abcdef");
+    }
+
+    [Fact]
     public void MatrixSpan_SliceTransposeCopyToAndOutOfViewIntegrity()
     {
         var gen = Gen.Select(

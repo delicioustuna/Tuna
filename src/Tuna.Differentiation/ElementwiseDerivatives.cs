@@ -3,6 +3,76 @@ using System.Runtime.CompilerServices;
 
 namespace Tuna.Differentiation;
 
+internal readonly struct HypotDerivative<T> : ITernaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Invoke(T x, T y, T norm)
+    {
+        if (T.IsNormal(norm))
+        {
+            return x / norm;
+        }
+
+        bool xInfinite = T.IsInfinity(x), yInfinite = T.IsInfinity(y);
+        if (xInfinite)
+        {
+            return yInfinite ? T.NaN : T.CopySign(T.One, x);
+        }
+
+        if (yInfinite)
+        {
+            return T.Zero;
+        }
+
+        if (T.IsNaN(norm))
+        {
+            return T.NaN;
+        }
+
+        T scale = T.Max(T.Abs(x), T.Abs(y));
+        if (T.IsZero(scale))
+        {
+            return T.Zero;
+        }
+
+        // At least one scaled component has magnitude 1, even if the stored norm overflowed or rounded to a subnormal.
+        T a = x / scale, b = y / scale;
+        return a / T.Sqrt(a * a + b * b);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector<T> Invoke(Vector<T> x, Vector<T> y, Vector<T> norm)
+    {
+        var normal = Vector.IsNormal(norm);
+        var zero = Vector<T>.Zero;
+        var quotient = x / norm;
+        if (!Vector.EqualsAny(normal, zero))
+        {
+            return quotient;
+        }
+
+        var scale = Vector.Max(Vector.Abs(x), Vector.Abs(y));
+        var a = x / scale;
+        var b = y / scale;
+        var derivative = Vector.ConditionalSelect(Vector.Equals(scale, zero), zero, a / Vector.SquareRoot(a * a + b * b));
+        var xInfinite = Vector.IsInfinity(x);
+        var yInfinite = Vector.IsInfinity(y);
+        derivative = Vector.ConditionalSelect(yInfinite, zero, derivative);
+        derivative = Vector.ConditionalSelect(xInfinite, Vector.CopySign(Vector<T>.One, x), derivative);
+        derivative = Vector.ConditionalSelect((xInfinite & yInfinite) | Vector.IsNaN(norm), new Vector<T>(T.NaN), derivative);
+        return Vector.ConditionalSelect(normal, quotient, derivative);
+    }
+}
+
+internal readonly struct HypotSecondDerivative<T> : ITernaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Invoke(T x, T y, T norm) => HypotDerivative<T>.Invoke(y, x, norm);
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector<T> Invoke(Vector<T> x, Vector<T> y, Vector<T> norm) => HypotDerivative<T>.Invoke(y, x, norm);
+}
+
 internal readonly struct LogDerivative<T> : IUnaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
 {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -71,6 +141,24 @@ internal readonly struct NegativeAbsKernel<T> : IUnaryKernel<T> where T : unmana
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static Vector<T> Invoke(Vector<T> x) => -Vector.Abs(x);
+}
+
+// Squaring only after computing sech(x) from t = exp(-|x|) preserves subnormal tail derivatives.
+internal readonly struct TanhDerivativeFromExp<T> : IUnaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
+{
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static T Invoke(T t)
+    {
+        T sech = (t + t) / (T.One + t * t);
+        return sech * sech;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static Vector<T> Invoke(Vector<T> t)
+    {
+        var sech = (t + t) / (Vector<T>.One + t * t);
+        return sech * sech;
+    }
 }
 
 // Computes sigma(x)*sigma(-x) as t/(1 + t)^2 from t = exp(-|x|) to preserve positive-tail accuracy.

@@ -21,6 +21,8 @@ internal sealed partial class ArrayStore<T>
     internal const int DecompositionFirst = SolveAdjoint;
     internal const int DecompositionSecond = BlockFirst;
     internal const int DecompositionThird = LeftDerivative;
+    internal const int DecompositionFourth = RightDerivative;
+    internal const int DecompositionFifth = LeftValues;
 
     // Relies on ArrayOperation enum grouping: unary, activations, binary, scalar-operand, reductions/softmax, losses, linear algebra.
     private void ElementwiseBackward(in ArrayRecord record, double[] adjoints)
@@ -112,6 +114,11 @@ internal sealed partial class ArrayStore<T>
             case ArrayOperation.Log1p:
                 ElementwiseKernels<T>.Map<Log1pDerivative<T>>(values, d);
                 break;
+            case ArrayOperation.Tanh:
+                ElementwiseKernels<T>.Map<NegativeAbsKernel<T>>(values, d);
+                XMath.Exp(derivative.AsReadOnly(), derivative);
+                ElementwiseKernels<T>.Map<TanhDerivativeFromExp<T>>(d, d);
+                break;
             case ArrayOperation.Logistic:
                 ElementwiseKernels<T>.Map<NegativeAbsKernel<T>>(values, d);
                 XMath.Exp(derivative.AsReadOnly(), derivative);
@@ -197,6 +204,19 @@ internal sealed partial class ArrayStore<T>
                 break;
             case ArrayOperation.Pow:
                 PowDerivatives(xValues, yValues, Values(output).Slice(0, n), dz, left, right, dx, dy);
+                break;
+            case ArrayOperation.Hypot:
+                ReadOnlySpan<T> norm = Values(output).Slice(0, n);
+                if (left)
+                {
+                    ElementwiseKernels<T>.Map<HypotDerivative<T>>(xValues, yValues, norm, dx);
+                }
+
+                if (right)
+                {
+                    ElementwiseKernels<T>.Map<HypotDerivative<T>>(yValues, xValues, norm, dy);
+                }
+
                 break;
             case ArrayOperation.LogAddExp:
             case ArrayOperation.LogSubExp:
@@ -324,6 +344,18 @@ internal sealed partial class ArrayStore<T>
                 break;
             case ArrayOperation.PowScalar:
                 PowDerivatives(xValues, scalar, z, dz, left, right, dx, d);
+                break;
+            case ArrayOperation.HypotScalar:
+                if (left)
+                {
+                    ElementwiseKernels<T>.Map<HypotDerivative<T>>(xValues, s, z, dx);
+                }
+
+                if (right)
+                {
+                    ElementwiseKernels<T>.Map<HypotSecondDerivative<T>>(xValues, s, z, d);
+                }
+
                 break;
             default:
                 LogExpDerivatives(operation == ArrayOperation.LogSubExpScalar, xValues, scalar, dz, left, right, dx, d);

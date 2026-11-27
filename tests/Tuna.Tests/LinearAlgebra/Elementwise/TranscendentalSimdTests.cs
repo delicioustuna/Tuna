@@ -39,6 +39,7 @@ public class TranscendentalSimdTests
         yield return new("Log", v => Log(v), x => Log(x), (x, d) => Log(x, d), x => InPlace.Log(x), 1e-6, 1e6);
         yield return new("Log1p", v => Log1p(v), x => Log1p(x), (x, d) => Log1p(x, d), x => InPlace.Log1p(x), -0.99, 10);
         yield return new("Expm1", v => Expm1(v), x => Expm1(x), (x, d) => Expm1(x, d), x => InPlace.Expm1(x), -5, 5);
+        yield return new("Tanh", v => Tanh(v), x => Tanh(x), (x, d) => Tanh(x, d), x => InPlace.Tanh(x), -10, 10);
         yield return new("Logistic", v => Logistic(v), x => Logistic(x), (x, d) => Logistic(x, d), x => InPlace.Logistic(x), -40, 40);
         yield return new("Logit", v => Logit(v), x => Logit(x), (x, d) => Logit(x, d), x => InPlace.Logit(x), 0, 1);
         yield return new("LogLogistic", v => LogLogistic(v), x => LogLogistic(x), (x, d) => LogLogistic(x, d), x => InPlace.LogLogistic(x), -40, 40);
@@ -51,6 +52,7 @@ public class TranscendentalSimdTests
 
         // 近似版（approximate: true）。double は正確な版と同じ値、float は近似の式（ApproximateElementwiseTests で誤差と特別な入力を確かめる）
         yield return new("Exp approximate", v => T.Exp(v), x => Exp(x, true), (x, d) => Exp(x, true, d), x => InPlace.Exp(x, true), -30, 30);
+        yield return new("Tanh approximate", v => Tanh(v, true), x => Tanh(x, true), (x, d) => Tanh(x, true, d), x => InPlace.Tanh(x, true), -10, 10);
         yield return new("Logistic approximate", v => Logistic(v, true), x => Logistic(x, true), (x, d) => Logistic(x, true, d), x => InPlace.Logistic(x, true), -40, 40);
         yield return new("Silu approximate", v => Silu(v, true), x => Silu(x, true), (x, d) => Silu(x, true, d), x => InPlace.Silu(x, true), -40, 40);
         yield return new("Softplus approximate", v => Softplus(v, true), x => Softplus(x, true), (x, d) => Softplus(x, true, d), x => InPlace.Softplus(x, true), -40, 40);
@@ -184,6 +186,59 @@ public class TranscendentalSimdTests
     {
         AssertLayoutIndependent<double>();
         AssertLayoutIndependent<float>();
+    }
+
+    [Theory]
+    [InlineData(137, 1)]
+    [InlineData(1, 137)]
+    [InlineData(13, 11)]
+    public void ExpPreservesGapsInStridedViews(int rows, int columns)
+    {
+        const double sentinel = -123;
+        int columnStride = 2 * rows + 1;
+        var pool = SpecialValues<double>();
+        double[] values = Enumerable.Range(0, rows * columns).Select(i => pool[i % pool.Length]).ToArray();
+        var expected = Exp(new ReadOnlyVectorSpan<double>(values));
+        double[] inputStorage = Enumerable.Repeat(sentinel, columnStride * columns).ToArray();
+        var outputStorage = (double[])inputStorage.Clone();
+        var expectedStorage = (double[])inputStorage.Clone();
+        for (int j = 0; j < columns; j++)
+        {
+            for (int i = 0; i < rows; i++)
+            {
+                int index = 2 * i + columnStride * j;
+                inputStorage[index] = values[i + rows * j];
+                expectedStorage[index] = expected[i + rows * j];
+            }
+        }
+
+        var input = new MatrixSpan<double>(inputStorage, [rows, columns], [2, columnStride]);
+        var output = new MatrixSpan<double>(outputStorage, [rows, columns], [2, columnStride]);
+        Exp(input.AsReadOnly(), output);
+        InPlace.Exp(input);
+        for (int i = 0; i < expectedStorage.Length; i++)
+        {
+            AssertSame($"destination [{i}]", expectedStorage[i], outputStorage[i]);
+            AssertSame($"in place [{i}]", expectedStorage[i], inputStorage[i]);
+        }
+    }
+
+    [Fact]
+    public void BufferedExpAcceptsBroadcastInput()
+    {
+        const int rows = 13, columns = 11;
+        double[] values = SpecialValues<double>()[10..(10 + rows)];
+        var expected = Exp(new ReadOnlyVectorSpan<double>(values));
+        var input = new ReadOnlyMatrixSpan<double>(values, [rows, columns], [1, 0]);
+        var output = new Matrix<double>(columns, rows).T;
+        Exp(input, output);
+        for (int j = 0; j < columns; j++)
+        {
+            for (int i = 0; i < rows; i++)
+            {
+                AssertSame($"broadcast [{i}, {j}]", expected[i], output[i, j]);
+            }
+        }
     }
 
     [Fact]
@@ -405,6 +460,44 @@ public class TranscendentalSimdTests
         AssertAccuracy(LogReferences, x => Log(x), "Log");
     }
 
+    [Theory]
+    // mpmath 100 桁で算出し、最も近い double に丸めた値。
+    [InlineData(1e-5, 9.999999999666668e-6)]
+    [InlineData(0.125, 0.12435300177159621)]
+    [InlineData(0.5, 0.46211715726000974)]
+    [InlineData(0.7499999999999999, 0.6351489523872873)]
+    [InlineData(0.75, 0.6351489523872873)]
+    [InlineData(0.7500000000000001, 0.6351489523872874)]
+    [InlineData(1.2, 0.8336546070121552)]
+    [InlineData(2.0, 0.9640275800758169)]
+    [InlineData(10.0, 0.9999999958776927)]
+    public void TanhMatchesHighPrecisionReferences(double x, double expected)
+    {
+        Assert.InRange(Math.Abs(Ordinal(expected) - Ordinal(Tanh(x))), 0, 1);
+        Assert.InRange(Math.Abs(Ordinal(-expected) - Ordinal(Tanh(-x))), 0, 1);
+    }
+
+    [Fact]
+    public void TanhPreservesTinyInputsAndRoundsAtTheSaturationBoundary()
+    {
+        // atanh(1 - 2^(-p-1)) を超える最小の表現可能な入力（p は仮数部の精度）。
+        Check(19.061547465398498);
+        Check(9.010913848876953f);
+
+        static void Check<T>(T saturation) where T : unmanaged, IFloatingPointIeee754<T>
+        {
+            T below = T.BitDecrement(saturation);
+            T almostOne = T.BitDecrement(T.One);
+            T[] x = [T.NegativeZero, T.Zero, -T.Epsilon, T.Epsilon, -below, below, -saturation, saturation, T.NegativeInfinity, T.PositiveInfinity];
+            T[] expected = [T.NegativeZero, T.Zero, -T.Epsilon, T.Epsilon, -almostOne, almostOne, -T.One, T.One, -T.One, T.One];
+            var actual = Tanh(new Vector<T>(x));
+            for (int i = 0; i < x.Length; i++)
+            {
+                AssertSame($"Tanh({x[i]})", expected[i], actual[i]);
+            }
+        }
+    }
+
     /// <summary>
     /// 決まった入力（指数・対数の表引きの式を通る範囲。Math.Exp・Math.Log に任せる特別な入力は除く）の結果のビット列の FNV-1a ハッシュ。
     /// 各レーンの演算は IEEE 754 で結果が一意に決まる演算（FMA を含む）だけなので、命令セット（AVX-512・AVX2・SSE・Arm・SIMD なし）によらず同じ値になる。
@@ -432,6 +525,7 @@ public class TranscendentalSimdTests
             ["Log double"] = 0xCD790C1FC0665FF7,
             ["Log1p double"] = 0xBBCD4220FD39E689,
             ["Expm1 double"] = 0x1340D7F2DE53C014,
+            ["Tanh double"] = 0xBF7AA6177032982A,
             ["Logistic double"] = 0xD188B0FCC36385E4,
             ["Logit double"] = 0x0BF705E22FA3CB17,
             ["LogLogistic double"] = 0x0401C931A3026407,
@@ -444,6 +538,7 @@ public class TranscendentalSimdTests
             ["Log float"] = 0xAB9CFE386F00E23E,
             ["Log1p float"] = 0x4AC207DF6226D624,
             ["Expm1 float"] = 0xB862E73A92E36117,
+            ["Tanh float"] = 0x7A119DE15EA80F97,
             ["Logistic float"] = 0x615C6FEA484B8035,
             ["Logit float"] = 0x3796438D13184230,
             ["LogLogistic float"] = 0x9B17224EEBA79827,
@@ -454,10 +549,12 @@ public class TranscendentalSimdTests
 
             // 近似版。double は正確な版と同じ値なので同じハッシュ
             ["Exp approximate double"] = 0x7B49D2CCA9072870,
+            ["Tanh approximate double"] = 0xBF7AA6177032982A,
             ["Logistic approximate double"] = 0xD188B0FCC36385E4,
             ["Silu approximate double"] = 0x84F53C7725BC5D8D,
             ["Softplus approximate double"] = 0x1DA4B008CAF1273E,
             ["Exp approximate float"] = 0x824269574EAA2EE8,
+            ["Tanh approximate float"] = 0xC25DD55720375ECD,
             ["Logistic approximate float"] = 0x9D557D9EE3EC2F83,
             ["Silu approximate float"] = 0xBAA83695379F835E,
             ["Softplus approximate float"] = 0x31292F345CA4B490,

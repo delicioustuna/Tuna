@@ -4,10 +4,11 @@
 
 連続メモリ上の `float` / `double` / `Complex` 要素演算（`src/Tuna/LinearAlgebra/Dense/`）は、**スカラー経路・ストライド付きビュー・SIMD 幅（Vector128 / 256 / 512）によらず、同一入力に対してビット単位で一致する**ことを設計目標としています。
 
-### 正確な丸めが一意に決まる演算（`DenseElementwise.Exact.cs` / `.Complex.cs`）
+### 正確な丸めが一意に決まる演算（`DenseElementwise.Exact.cs` / `.Complex.cs` / `.Magnitude.cs`）
 - 四則演算・平方根・符号操作・比較選択など IEEE 754 で結果が一意に決まる演算を SIMD 化しています。
 - 2 つ以上の入力が NaN の場合にどの NaN ペイロードが残るか、およびシグナリング NaN の静穏化は、IEEE 754 および JIT/ISA 依存のため保証対象外としています。
 - `Max` / `Min` は .NET の `Vector*.Max/Min` が `Math.Max/Min` と同じ規則（NaN 伝播、`+0 > -0`）を持つためそのまま使用し、`Clamp` は比較と選択で記述して NaN 挙動を一致させています。
+- `Hypot`（および `Complex.Magnitude`）は .NET の `Vector*.Hypot` がハードウェア SIMD 化されないため、`double` は `double.Hypot` と演算順序を合わせた自前 SIMD 実装、`float` は `double` へ拡幅して二乗和・平方根を計算してから丸める SIMD 実装（無限大を NaN より優先）を採用し、スカラー片側・ブロードキャスト経路ともビット単位で一致させています。
 
 ### 指数・対数・合成関数（`DenseElementwise.Transcendental.cs` / `.Composite.cs`）
 - .NET 標準の `Vector*.Exp/Log` は誤差が大きいため使用せず、glibc や ARM Optimized Routines と同等の高精度実装を自前で用意しています。
@@ -18,9 +19,10 @@
   1. 値が確定するケース（$\pm\infty$、オーバーフロー、0 へのアンダーフロー、$\ln 0 = -\infty$、NaN）はベクトルマスクで選択する。
   2. 表引きが使えない有限域（指数の非正規化域 $-746 < x < -708$、オーバーフロー直前 $708 < x < 710$、対数の非正規化入力）はそのレーンだけ `Math.Exp` / `Math.Log` へフォールバックする。
 - `float` の高精度版は `double` へ拡幅して同一の式を通し、最後に `float` へ丸めます。
+- `Tanh` は原点付近（$|x| \le 0.75$）を [4/4] Padé 近似で評価して桁落ちを防ぎ、それ以外は飽和境界 $|x| \ge 20$ で $\pm 1$ へ収めつつ `ExpNormal` を再利用して除算を 1 回に集約しています。
 
 ### 近似 `float` カーネル（`DenseElementwise.Approximate.cs`）
-- `float` のまま計算し、表引き（gather）を使わない多項式近似により、1 ベクトルあたりの処理要素数を 2 倍にします。
+- `float` のまま計算し、表引き（gather）を使わない多項式近似により、1 ベクトルあたりの処理要素数を 2 倍にします（`Tanh` では原点付近に Chebyshev 補間、それ以外に単精度指数近似を組み合わせています）。
 - `ISingleLanes` 抽象化の上に 1 度だけ式を書き、スカラー端数と各 SIMD 幅で完全なビット一致を保ちます。途中のクランプは `MinNative`/`MaxNative` を使い、NaN 入力は最後に元のレーンを選択し直します。
 
 ## 2. 縮約とペアワイズ加算木（`DenseReductions.cs`）

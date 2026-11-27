@@ -128,6 +128,11 @@ internal static partial class DenseElementwise
             MapLines(ref x, xStride, ref destination, destinationStride, length, count,
                 new DivideScalarKernel<T>(Unsafe.As<TOperator, XMath.Operators.DivideScalar<T>>(ref op).Y));
         }
+        else if (typeof(TOperator) == typeof(XMath.Operators.HypotScalar<T>))
+        {
+            MapLines(ref x, xStride, ref destination, destinationStride, length, count,
+                new HypotScalarKernel<T>(Unsafe.As<TOperator, XMath.Operators.HypotScalar<T>>(ref op).Y));
+        }
         else if (typeof(TOperator) == typeof(XMath.Operators.MaxScalar<T>))
         {
             MapLines(ref x, xStride, ref destination, destinationStride, length, count,
@@ -188,6 +193,10 @@ internal static partial class DenseElementwise
         else if (typeof(TOperator) == typeof(StaticBinaryOperator<T, XMath.Operators.Min<T>>))
         {
             ZipLines<T, MinKernel<T>>(ref x, xStride, ref y, yStride, ref destination, destinationStride, length, count);
+        }
+        else if (typeof(TOperator) == typeof(StaticBinaryOperator<T, XMath.Operators.Hypot<T>>))
+        {
+            ZipLines<T, HypotKernel<T>>(ref x, xStride, ref y, yStride, ref destination, destinationStride, length, count);
         }
         else
         {

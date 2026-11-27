@@ -106,16 +106,22 @@ public class LinearAlgebraTests
         {
             var tape = new Tape();
             var stored = transposed ? transposedStorage : storage;
+            ReadOnlyMatrixSpan<double> view = transposed ? stored.T : stored;
+            DifferentiationAssert.EqualBits(expected.LogDeterminant, XMath.CholeskyLogDeterminant(view));
             foreach (var source in new[] { tape.Leaf(stored), tape.Constant(stored) })
             {
-                var cholesky = CholeskyDecompositionNode.Compute(transposed ? source.T : source);
+                var a = transposed ? source.T : source;
+                var cholesky = CholeskyDecompositionNode.Compute(a);
+                ScalarNode logDeterminant = XMath.CholeskyLogDeterminant(a);
+                DifferentiationAssert.EqualBits(expected.LogDeterminant, logDeterminant.Value);
+                Assert.Equal(a.RequiresGradient, logDeterminant.RequiresGradient);
                 Assert.Equal(n, cholesky.Order);
                 AssertBits(expected.L.AsSpan(), cholesky.L.Value.ToMatrix().AsSpan());
                 DifferentiationAssert.EqualBits(expected.LogDeterminant, cholesky.LogDeterminant.Value);
                 AssertBits(expected.Solve(b).AsSpan(), cholesky.Solve(tape.Leaf(b)).Value.ToVector().AsSpan());
                 AssertBits(expected.Solve(bs).AsSpan(), cholesky.Solve(tape.Constant(bs)).Value.ToMatrix().AsSpan());
                 DifferentiationAssert.EqualBits(XMath.SumOfSquares(z), cholesky.InverseQuadraticForm(tape.Leaf(b)).Value);
-                Assert.True(CholeskyDecompositionNode.TryCompute(transposed ? source.T : source, out var again));
+                Assert.True(CholeskyDecompositionNode.TryCompute(a, out var again));
                 AssertBits(expected.L.AsSpan(), again.L.Value.ToMatrix().AsSpan());
             }
         }
@@ -242,7 +248,7 @@ public class LinearAlgebraTests
         if (n <= 6)
         {
             AssertGradients([a], [], (tape, m, v) => Pair(tape, CholeskyDecompositionNode.Compute(m[0]).L, gl), 1e-7);
-            AssertGradients([a], [], (tape, m, v) => CholeskyDecompositionNode.Compute(m[0]).LogDeterminant * 1.0, 1e-7);
+            AssertGradients([a], [], (tape, m, v) => XMath.CholeskyLogDeterminant(m[0]) * 1.0, 1e-7);
             AssertGradients([a], [x], (tape, m, v) => CholeskyDecompositionNode.Compute(m[0]).InverseQuadraticForm(v[0]) * 1.0, 1e-7);
             AssertGradients([a.T.ToMatrix()], [b], (tape, m, v) =>
                 XMath.Dot(tape.Constant(h), CholeskyDecompositionNode.Compute(m[0].T).Solve(v[0])), 1e-7);
@@ -361,6 +367,7 @@ public class LinearAlgebraTests
         Assert.False(CholeskyDecompositionNode.TryCompute(bad, out var failed));
         Assert.Throws<InvalidOperationException>(() => _ = failed.Order);
         DifferentiationAssert.Throws<ArgumentException>(() => CholeskyDecompositionNode.Compute(bad), "Compute of an indefinite matrix");
+        Assert.Throws<ArgumentException>("a", () => XMath.CholeskyLogDeterminant(bad));
         // 失敗の後も同じ記録で分解でき、勾配は失敗がなかった場合と同じビット。
         var cholesky = CholeskyDecompositionNode.Compute(good);
         var loss = cholesky.InverseQuadraticForm(tape.Constant(b)) + cholesky.LogDeterminant;
@@ -381,6 +388,18 @@ public class LinearAlgebraTests
         Assert.True(CholeskyDecompositionNode.TryCompute(fixedLeaf, out var recovered));
         tape.Backward(recovered.InverseQuadraticForm(tape.Constant(b)) + recovered.LogDeterminant);
         AssertBits(reference.GetGradient(referenceLeaf).ToMatrix().AsSpan(), tape.GetGradient(fixedLeaf).ToMatrix().AsSpan());
+    }
+
+    [Fact]
+    public void CholeskyLogDeterminantOfAnEmptyNodeHasAnEmptyGradient()
+    {
+        var tape = new Tape();
+        var a = tape.Leaf(new Matrix<double>(0, 0));
+        ScalarNode logDeterminant = XMath.CholeskyLogDeterminant(a);
+
+        Assert.Equal(0.0, logDeterminant.Value);
+        tape.Backward(logDeterminant);
+        Assert.True(tape.GetGradient(a).IsEmpty);
     }
 
     [Theory]

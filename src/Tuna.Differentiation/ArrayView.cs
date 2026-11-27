@@ -60,8 +60,11 @@ internal enum ArrayOperation : byte
 {
     MatrixMultiply,
     MatrixVectorMultiply,
+    Outer,
+    Cross,
     Sum,
     Dot,
+    Trace,
 
     Negate,
     Exp,
@@ -71,6 +74,7 @@ internal enum ArrayOperation : byte
     Abs,
     Expm1,
     Log1p,
+    Tanh,
     Logistic,
     LogLogistic,
     Logit,
@@ -93,6 +97,7 @@ internal enum ArrayOperation : byte
     Min,
     Max,
     Pow,
+    Hypot,
     LogAddExp,
     LogSubExp,
 
@@ -103,6 +108,7 @@ internal enum ArrayOperation : byte
     MinScalar,
     MaxScalar,
     PowScalar,
+    HypotScalar,
     LogAddExpScalar,
     LogSubExpScalar,
     ScalarSubtract,
@@ -149,6 +155,8 @@ internal enum ArrayOperation : byte
     Qr,
     SymmetricEigen,
     SingularValueDecomposition,
+    SvdSolve,
+    SvdPseudoInverse,
 
     // ScalarInput is the index of the user operation in ArrayStore.
     UserOperation,
@@ -158,7 +166,7 @@ internal enum ArrayOperation : byte
 }
 
 // Position is the scalar nodeCount when recorded; backward processes this record before scalar node Position - 1.
-// Scalar holds the unrounded parameter (e.g. scalar operand or LeakyRelu/Elu slope/alpha); ScalarInput holds either
+// Scalar holds the unrounded parameter (e.g. a scalar operand, activation parameter, or retained SVD rank). ScalarInput holds either
 // a scalar node index (-1 if constant), a cached forward slot (losses) or a decomposition or user-operation index.
 internal struct ArrayRecord
 {

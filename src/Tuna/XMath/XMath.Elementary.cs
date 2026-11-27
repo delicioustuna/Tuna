@@ -1,4 +1,5 @@
 using System.Numerics;
+using Tuna.LinearAlgebra;
 
 namespace Tuna;
 
@@ -27,6 +28,24 @@ public static partial class XMath
     public static T Sqrt<T>(T x)
         where T : unmanaged, IRootFunctions<T> =>
         T.Sqrt(x);
+
+    /// <summary>
+    /// Computes <c>√(x² + y²)</c> without undue intermediate overflow or underflow.
+    /// <para>途中計算でのオーバーフローやアンダーフローを回避して <c>√(x² + y²)</c> を計算します。</para>
+    /// </summary>
+    /// <typeparam name="T">The numeric type. / 数値型。</typeparam>
+    /// <param name="x">The first input value. / 第1入力値。</param>
+    /// <param name="y">The second input value. / 第2入力値。</param>
+    /// <returns><c>√(x² + y²)</c>. / <c>√(x² + y²)</c>。</returns>
+    /// <remarks>
+    /// <para>For IEEE 754 inputs, an infinity yields positive infinity even when the other input is NaN, and two zeros yield positive zero. Vector and matrix overloads accept <paramref name="y"/> as either a scalar or a container/view of the same shape as <paramref name="x"/>.</para>
+    /// <para>IEEE 754 の入力では、一方が無限大ならもう一方が NaN でも正の無限大を返し、両方がゼロの場合は正のゼロを返します。ベクトル・行列オーバーロードでは、<paramref name="y"/> にスカラーまたは <paramref name="x"/> と同じ形状のベクトル・行列を指定できます。</para>
+    /// </remarks>
+    [ElementwiseOperation(OperatorName = "HypotScalar", OperatorContainer = "Operators")]
+    [ElementwiseOperation(Over = [nameof(x), nameof(y)], OperatorName = "Hypot", OperatorContainer = "Operators")]
+    public static T Hypot<T>(T x, T y)
+        where T : unmanaged, IRootFunctions<T> =>
+        T.Hypot(x, y);
 
     /// <summary>
     /// Computes the absolute value <c>|x|</c>.
@@ -174,6 +193,23 @@ public static partial class XMath
     public static T Expm1<T>(T x)
         where T : unmanaged, IFloatingPointIeee754<T> =>
         T.CreateTruncating(XMath.Special.Expm1(double.CreateTruncating(x)));
+
+    /// <summary>
+    /// Computes the hyperbolic tangent <c>tanh(x)</c>.
+    /// <para>双曲線正接 <c>tanh(x)</c> を計算します。</para>
+    /// </summary>
+    /// <typeparam name="T">The numeric type. / 数値型。</typeparam>
+    /// <param name="x">The input value. / 入力値。</param>
+    /// <returns>The hyperbolic tangent of <paramref name="x"/>. / <paramref name="x"/> の双曲線正接。</returns>
+    /// <remarks>
+    /// <para>For <see langword="float"/> and <see langword="double"/>, zeros retain their sign, NaN yields NaN, infinities map to the corresponding <c>±1</c>, and scalar and elementwise overloads use the same evaluation.</para>
+    /// <para><see langword="float"/> と <see langword="double"/> では、ゼロの符号を保持し、NaN には NaN、無限大には符号に応じた <c>±1</c> を返します。スカラー版と要素別オーバーロードは同じ式で評価します。</para>
+    /// </remarks>
+    [ElementwiseOperation(OperatorName = "Tanh", OperatorContainer = "Operators")]
+    public static T Tanh<T>(T x) where T : unmanaged, IHyperbolicFunctions<T> =>
+        typeof(T) == typeof(double) || typeof(T) == typeof(float)
+            ? T.CreateTruncating(DenseElementwise.Tanh(double.CreateTruncating(x)))
+            : T.Tanh(x);
 
     /// <summary>
     /// Computes the logistic sigmoid function <c>σ(x) = 1 / (1 + e⁻ˣ)</c>.

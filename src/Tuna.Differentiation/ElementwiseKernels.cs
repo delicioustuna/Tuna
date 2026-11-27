@@ -254,6 +254,33 @@ internal static class ElementwiseKernels<T> where T : unmanaged, IFloatingPointI
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static void Map<TKernel>(ReadOnlySpan<T> x, T s, ReadOnlySpan<T> z, Span<T> d) where TKernel : ITernaryKernel<T>
+    {
+        int n = d.Length;
+        x = x[..n];
+        z = z[..n];
+        int i = 0;
+        if (Vector.IsHardwareAccelerated && Vector<T>.IsSupported)
+        {
+            ref T px = ref MemoryMarshal.GetReference(x);
+            ref T pz = ref MemoryMarshal.GetReference(z);
+            ref T pd = ref MemoryMarshal.GetReference(d);
+            var vs = new Vector<T>(s);
+            int last = n - Vector<T>.Count;
+            for (; i <= last; i += Vector<T>.Count)
+            {
+                TKernel.Invoke(Vector.LoadUnsafe(ref px, (nuint)i), vs, Vector.LoadUnsafe(ref pz, (nuint)i))
+                    .StoreUnsafe(ref pd, (nuint)i);
+            }
+        }
+
+        for (; i < n; i++)
+        {
+            d[i] = TKernel.Invoke(x[i], s, z[i]);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void Map<TKernel>(ReadOnlySpan<T> x, ReadOnlySpan<T> y, T a, T b, T c, Span<T> d) where TKernel : IParameterizedKernel<T>
     {
         int n = d.Length;

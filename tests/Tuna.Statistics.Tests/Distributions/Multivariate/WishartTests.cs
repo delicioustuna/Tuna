@@ -65,6 +65,47 @@ public class WishartTests
     }
 
     [Fact]
+    public void SeventeenDimensionalLogDensitiesMatchTraceFormula()
+    {
+        // 2列目の前進代入は offset = dimension、start = 1 で残りが SIMD 経路の下限の16行になる。
+        const int dimension = 17;
+        const double nu = 23;
+        var lower = new Matrix<double>(dimension, dimension);
+        var standardized = new Matrix<double>(dimension, dimension);
+        double scaleHalfLogDeterminant = 0;
+        double standardizedHalfLogDeterminant = 0;
+        for (int j = 0; j < dimension; j++)
+        {
+            lower[j, j] = 1 + j % 2;
+            standardized[j, j] = 1 + j / 16.0;
+            scaleHalfLogDeterminant += Math.Log(lower[j, j]);
+            standardizedHalfLogDeterminant += Math.Log(standardized[j, j]);
+            for (int i = j + 1; i < dimension; i++)
+            {
+                lower[i, j] = ((i + j) % 7 - 3) / 32.0;
+                standardized[i, j] = ((i + 2 * j) % 5 - 2) / 8.0;
+            }
+        }
+
+        // Σ = LLᵀ、X = (LA)(LA)ᵀ と置くと tr(Σ⁻¹X) = ‖A‖_F²。逆ウィシャート分布では尺度行列と評価点を入れ替える。
+        var scale = lower * lower.T;
+        var factor = lower * standardized;
+        var point = factor * factor.T;
+        double trace = 0;
+        foreach (double value in standardized.AsSpan())
+        {
+            trace += value * value;
+        }
+
+        double common = -0.5 * trace - (dimension + 1) * scaleHalfLogDeterminant
+            - 0.5 * nu * dimension * Math.Log(2) - XMath.Special.LogMultivariateGamma(0.5 * nu, dimension);
+        var wishart = new WishartDistribution(nu, scale);
+        var inverse = new InverseWishartDistribution(nu, point);
+        DistributionAssert.Close(common + (nu - dimension - 1) * standardizedHalfLogDeterminant, wishart.LogPdf(point), 1e-14, "Wishart.LogPdf");
+        DistributionAssert.Close(common + nu * standardizedHalfLogDeterminant, inverse.LogPdf(scale), 1e-14, "InverseWishart.LogPdf");
+    }
+
+    [Fact]
     public void LargeDegreesOfFreedomStayAccurate()
     {
         // X = νΣ（最頻値の近く）。ν ln|X| と ln Γₚ(ν/2) は 1e13 程度で、密度の対数は数十。

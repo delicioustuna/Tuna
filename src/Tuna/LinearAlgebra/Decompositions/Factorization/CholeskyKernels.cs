@@ -39,6 +39,17 @@ internal static class CholeskyKernels
         return FactorRecursive(n, a, lda);
     }
 
+    internal static double LogDeterminant(int n, ReadOnlySpan<double> l)
+    {
+        double sum = 0;
+        for (int i = 0; i < n; i++)
+        {
+            sum += Math.Log(l[i + i * n]);
+        }
+
+        return 2 * sum;
+    }
+
     /// <summary>
     /// これ以上の次数で右視的ブロック版を使う（逐次も同じ手順）
     /// </summary>

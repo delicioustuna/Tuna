@@ -23,7 +23,7 @@ using static Tuna.XMath.Special;
 | --- | --- | --- |
 | `Log*` | 値の自然対数を直接計算（オーバーフロー・アンダーフロー回避） | `LogGamma`, `LogBinomial`, `LogBesselI`, `LogRegularizedGammaQ`, `NormalLogSf` |
 | `*Sf` / `*Q` / `Erfc` | 上側確率・補関数 `1 - F(x)` を桁落ちなく直接計算 | `NormalSf`, `RegularizedGammaQ`, `Erfc` |
-| `*Scaled` | 指数増大・減衰因子を除いたスケーリング値 | `BesselIScaled`, `BesselKScaled`, `AiryAiScaled`, `Erfcx` |
+| `*Scaled` | 指数増大・減衰因子を除いたスケーリング値 | `BesselIScaled`, `BesselKScaled`, `Erfcx` |
 | `Inverse*` | 逆関数（分位点など） | `InverseErf`, `InverseNormalCdf`, `InverseNormalLogSf`, `InverseRegularizedGammaP` |
 | `*Zero` | 関数の零点 | `BesselJZero`, `BesselYZero`, `AiryAiZero` |
 
@@ -54,7 +54,7 @@ Complex w = Faddeeva(new Complex(1.0, 1.0));
 
 ## 主な関数カテゴリ
 
-- **ガンマ・ベータ・組み合わせ**: `Gamma`, `LogGamma`, `Digamma`, `Polygamma`, `Beta`, `LogBeta`, `RegularizedGammaP/Q`, `RegularizedIncompleteBeta`, `Binomial`, `Factorial`, `BarnesG`, `MultivariateGamma`
+- **ガンマ・ベータ・組み合わせ**: `Gamma`, `LogGamma`, `Digamma`, `Polygamma`, `Beta`, `LogBeta`, `RegularizedGammaP/Q`, `RegularizedIncompleteBeta`, `Binomial`, `Factorial`, `BarnesG`, `LogMultivariateGamma`
 - **誤差関数・正規分布**: `Erf`, `Erfc`, `Erfcx`, `Faddeeva`, `NormalPdf`, `NormalCdf`, `NormalSf`, `NormalLogCdf`, `NormalLogSf`, `InverseNormal*`, `OwensT`, `BivariateNormalCdf`
 - **ベッセル・エアリー・ストルーヴェ・ケルビン**: `BesselJ/Y/I/K`, `SphericalBessel*`, `ModifiedSphericalBessel*`, `AiryAi/Bi`, `ScorerGi/Hi`, `StruveH/L`, `Kelvin*`
 - **超幾何・直交多項式**: `Hypergeometric0F1/1F1/2F1/U`, `LegendreP/Q`, `HermiteH`, `LaguerreL`, `ChebyshevT/U`, `JacobiP`, `GegenbauerC`

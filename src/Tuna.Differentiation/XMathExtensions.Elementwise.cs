@@ -280,6 +280,68 @@ public static partial class XMathExtensions
             => UnaryCore(x, ArrayOperation.Log1p, approximate: false);
 
         /// <summary>
+        /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise.
+        /// <para>各要素の双曲線正接 <c>tanh(x)</c> を計算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The floating-point element type (<see langword="float"/> or <see langword="double"/>). / 要素の浮動小数点数型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="x">The input vector node. / 入力ベクトルノード。</param>
+        /// <returns>A vector node holding <c>tanh(x)</c>. / 各要素の演算結果を格納したベクトルノード。</returns>
+        /// <remarks>
+        /// <para>The local derivative is <c>1/cosh²(x)</c>, with 0 at <c>±∞</c> and <c>NaN</c> for <c>NaN</c>. The derivative is evaluated from the input to retain representable values where the output rounds to <c>±1</c>.</para>
+        /// <para>局所微分は <c>1/cosh²(x)</c> とし、<c>±∞</c> では 0、<c>NaN</c> では <c>NaN</c> とします。入力から局所微分を計算するため、出力が <c>±1</c> に丸まる領域でも表現可能な値を保持します。</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">Thrown if the node is uninitialized, belongs to a stale generation, or the tape's backward pass has completed. / ノードが未初期化、世代が古い、または逆伝播を完了したテープへ記録しようとした場合。</exception>
+        public static VectorNode<T> Tanh<T>(VectorNode<T> x) where T : unmanaged, IFloatingPointIeee754<T>
+            => UnaryCore(x, ArrayOperation.Tanh, approximate: false);
+
+        /// <summary>
+        /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise, optionally using an approximate <see langword="float"/> kernel.
+        /// <para>各要素の双曲線正接 <c>tanh(x)</c> を計算します（<see langword="float"/> では近似カーネルを選択可能）。</para>
+        /// </summary>
+        /// <typeparam name="T">The floating-point element type (<see langword="float"/> or <see langword="double"/>). / 要素の浮動小数点数型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="x">The input vector node. / 入力ベクトルノード。</param>
+        /// <param name="approximate"><see langword="true"/> to use the fast <see langword="float"/> approximation in the forward pass. / <see langword="float"/> の順伝播で高速な近似式を使用する場合は <see langword="true"/>。</param>
+        /// <returns>A vector node holding <c>tanh(x)</c>. / 各要素の演算結果を格納したベクトルノード。</returns>
+        /// <remarks>
+        /// <para>Both settings use the analytic local derivative <c>1/cosh²(x)</c>.</para>
+        /// <para>どちらの設定でも、局所微分は解析式 <c>1/cosh²(x)</c> で計算します。</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">Thrown if the node is uninitialized, belongs to a stale generation, or the tape's backward pass has completed. / ノードが未初期化、世代が古い、または逆伝播を完了したテープへ記録しようとした場合。</exception>
+        public static VectorNode<T> Tanh<T>(VectorNode<T> x, bool approximate) where T : unmanaged, IFloatingPointIeee754<T>
+            => UnaryCore(x, ArrayOperation.Tanh, approximate);
+
+        /// <summary>
+        /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise.
+        /// <para>各要素の双曲線正接 <c>tanh(x)</c> を計算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The floating-point element type (<see langword="float"/> or <see langword="double"/>). / 要素の浮動小数点数型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="x">The input matrix node. / 入力行列ノード。</param>
+        /// <returns>A matrix node holding <c>tanh(x)</c>. / 各要素の演算結果を格納した行列ノード。</returns>
+        /// <remarks>
+        /// <para>The local derivative is <c>1/cosh²(x)</c>, with 0 at <c>±∞</c> and <c>NaN</c> for <c>NaN</c>. The derivative is evaluated from the input to retain representable values where the output rounds to <c>±1</c>.</para>
+        /// <para>局所微分は <c>1/cosh²(x)</c> とし、<c>±∞</c> では 0、<c>NaN</c> では <c>NaN</c> とします。入力から局所微分を計算するため、出力が <c>±1</c> に丸まる領域でも表現可能な値を保持します。</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">Thrown if the node is uninitialized, belongs to a stale generation, or the tape's backward pass has completed. / ノードが未初期化、世代が古い、または逆伝播を完了したテープへ記録しようとした場合。</exception>
+        public static MatrixNode<T> Tanh<T>(MatrixNode<T> x) where T : unmanaged, IFloatingPointIeee754<T>
+            => UnaryCore(x, ArrayOperation.Tanh, approximate: false);
+
+        /// <summary>
+        /// Computes the hyperbolic tangent <c>tanh(x)</c> elementwise, optionally using an approximate <see langword="float"/> kernel.
+        /// <para>各要素の双曲線正接 <c>tanh(x)</c> を計算します（<see langword="float"/> では近似カーネルを選択可能）。</para>
+        /// </summary>
+        /// <typeparam name="T">The floating-point element type (<see langword="float"/> or <see langword="double"/>). / 要素の浮動小数点数型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="x">The input matrix node. / 入力行列ノード。</param>
+        /// <param name="approximate"><see langword="true"/> to use the fast <see langword="float"/> approximation in the forward pass. / <see langword="float"/> の順伝播で高速な近似式を使用する場合は <see langword="true"/>。</param>
+        /// <returns>A matrix node holding <c>tanh(x)</c>. / 各要素の演算結果を格納した行列ノード。</returns>
+        /// <remarks>
+        /// <para>Both settings use the analytic local derivative <c>1/cosh²(x)</c>.</para>
+        /// <para>どちらの設定でも、局所微分は解析式 <c>1/cosh²(x)</c> で計算します。</para>
+        /// </remarks>
+        /// <exception cref="InvalidOperationException">Thrown if the node is uninitialized, belongs to a stale generation, or the tape's backward pass has completed. / ノードが未初期化、世代が古い、または逆伝播を完了したテープへ記録しようとした場合。</exception>
+        public static MatrixNode<T> Tanh<T>(MatrixNode<T> x, bool approximate) where T : unmanaged, IFloatingPointIeee754<T>
+            => UnaryCore(x, ArrayOperation.Tanh, approximate);
+
+        /// <summary>
         /// Computes the logistic sigmoid function <c>σ(x) = 1/(1 + e⁻ˣ)</c> elementwise.
         /// <para>各要素のロジスティック関数 <c>σ(x) = 1/(1 + e⁻ˣ)</c> を計算します。</para>
         /// </summary>
@@ -1286,6 +1348,9 @@ public static partial class XMathExtensions
             case ArrayOperation.Log1p:
                 XMath.Log1p(x, destination);
                 break;
+            case ArrayOperation.Tanh:
+                _ = approximate ? XMath.Tanh(x, true, destination) : XMath.Tanh(x, destination);
+                break;
             case ArrayOperation.Logistic:
                 _ = approximate ? XMath.Logistic(x, true, destination) : XMath.Logistic(x, destination);
                 break;
@@ -1336,6 +1401,9 @@ public static partial class XMathExtensions
             case ArrayOperation.Log1p:
                 XMath.Log1p(x, destination);
                 break;
+            case ArrayOperation.Tanh:
+                _ = approximate ? XMath.Tanh(x, true, destination) : XMath.Tanh(x, destination);
+                break;
             case ArrayOperation.Logistic:
                 _ = approximate ? XMath.Logistic(x, true, destination) : XMath.Logistic(x, destination);
                 break;
@@ -1383,6 +1451,9 @@ public static partial class XMathExtensions
             case ArrayOperation.Pow:
                 XMath.Pow(x, y, destination);
                 break;
+            case ArrayOperation.Hypot:
+                XMath.Hypot(x, y, destination);
+                break;
             case ArrayOperation.LogAddExp:
                 XMath.LogAddExp(x, y, destination);
                 break;
@@ -1417,6 +1488,9 @@ public static partial class XMathExtensions
                 break;
             case ArrayOperation.Pow:
                 XMath.Pow(x, y, destination);
+                break;
+            case ArrayOperation.Hypot:
+                XMath.Hypot(x, y, destination);
                 break;
             case ArrayOperation.LogAddExp:
                 XMath.LogAddExp(x, y, destination);
@@ -1458,6 +1532,9 @@ public static partial class XMathExtensions
             case ArrayOperation.PowScalar:
                 XMath.Pow(x, s, destination);
                 break;
+            case ArrayOperation.HypotScalar:
+                XMath.Hypot(x, s, destination);
+                break;
             case ArrayOperation.LogAddExpScalar:
                 XMath.LogAddExp(x, s, destination);
                 break;
@@ -1496,6 +1573,9 @@ public static partial class XMathExtensions
                 break;
             case ArrayOperation.PowScalar:
                 XMath.Pow(x, s, destination);
+                break;
+            case ArrayOperation.HypotScalar:
+                XMath.Hypot(x, s, destination);
                 break;
             case ArrayOperation.LogAddExpScalar:
                 XMath.LogAddExp(x, s, destination);
