@@ -347,6 +347,15 @@ public readonly ref struct ReadOnlyMatrixSpan<TElement> where TElement : unmanag
     public static Matrix<TElement> operator *(ReadOnlyMatrixSpan<TElement> a, TElement scalar) => XMath.Multiply(a, scalar);
 
     /// <summary>
+    /// Divides each element of a matrix view by a scalar.
+    /// <para>行列ビューの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="a">The input matrix view. / 入力行列ビュー。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new matrix containing the quotients. / 各要素の商を格納した新しい行列。</returns>
+    public static Matrix<TElement> operator /(ReadOnlyMatrixSpan<TElement> a, TElement scalar) => XMath.Divide(a, scalar);
+
+    /// <summary>
     /// Computes the matrix product <c>a * b</c>.
     /// <para>行列積 <c>a * b</c> を計算します。</para>
     /// </summary>
@@ -663,6 +672,15 @@ public readonly ref struct MatrixSpan<TElement> where TElement : unmanaged, INum
     /// <param name="scalar">The scalar multiplier. / 掛けるスカラー値。</param>
     /// <returns>A new matrix containing <c>a * scalar</c>. / <c>a * scalar</c> を格納した新しい行列。</returns>
     public static Matrix<TElement> operator *(MatrixSpan<TElement> a, TElement scalar) => XMath.Multiply(a, scalar);
+
+    /// <summary>
+    /// Divides each element of a matrix view by a scalar.
+    /// <para>行列ビューの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="a">The input matrix view. / 入力行列ビュー。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new matrix containing the quotients. / 各要素の商を格納した新しい行列。</returns>
+    public static Matrix<TElement> operator /(MatrixSpan<TElement> a, TElement scalar) => XMath.Divide(a, scalar);
 
     /// <summary>
     /// Computes the matrix product <c>a * b</c>.

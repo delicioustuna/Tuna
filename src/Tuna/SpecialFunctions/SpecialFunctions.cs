@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -19,38 +21,12 @@ public static partial class XMath
         /// The Euler–Mascheroni constant <c>γ</c>.
         /// <para>オイラー・マスケローニ定数 <c>γ</c>。</para>
         /// </summary>
-        public const double EulerGamma = 0.5772156649015329;
-
-        internal const double Epsilon = 2.220446049250313e-16;
-        private const double MinNormal = 2.2250738585072014e-308;
+        /// <seealso cref="Constants.EulerGamma"/>
+        public const double EulerGamma = Constants.EulerGamma;
 
         // 連分数の Lentz 法で 0 除算を避けるための下限値
         private const double Tiny = 1e-300;
         private const int MaxIterations = 1_000_000;
-
-        private const double LnSqrt2Pi = 0.9189385332046728;
-
-        // ln √(2π) の倍精度表現との残差（ln √(2π) - LnSqrt2Pi）
-        private const double LnSqrt2PiLo = -3.8782941580672414e-17;
-
-        private const double LnPi = 1.1447298858494002;
-
-        // ln π の倍精度表現との残差（ln π - LnPi）
-        private const double LnPiLo = 1.0265951162707826e-17;
-
-        private const double LnTwoPi = 1.8378770664093453;
-        private const double SqrtPi = 1.772453850905516;
-        private const double TwoOverSqrtPi = 1.1283791670955126;
-        private const double OneOverSqrtPi = 0.5641895835477563;
-        internal const double Ln2 = 0.6931471805599453;
-        private const double PiSquaredOver6 = 1.6449340668482264;
-        private const double InvTwoPi = 0.15915494309189535;
-
-        // 2π の倍精度表現との残差（2π - 6.283185307179586）
-        private const double TwoPiLo = 2.4492935982947064e-16;
-
-        // e の倍精度表現との残差（e - 2.718281828459045）
-        private const double ELo = 1.4456468917292502e-16;
 
         // ベルヌーイ数 B_{2k}（k = 0, 1, …, 30）
         private static readonly double[] BernoulliEven =
@@ -129,7 +105,7 @@ public static partial class XMath
 
             // u ≥ 2⁵³ では u の丸め誤差（相対 ε/2 以下）が ln u に与える誤差は絶対 ε/2 以下で、ln u ≥ 36 に比べて無視できるので補正しない。
             // 下の補正式の途中の積 ln(u)·x は x ≳ 2.5e305 でオーバーフローする（x = +∞ もここで返る）
-            if (u >= 2 / Epsilon)
+            if (u >= 2 / MachineEpsilon)
             {
                 return Math.Log(u);
             }
@@ -159,7 +135,7 @@ public static partial class XMath
 
             // u ≥ 2⁵² では u - 1 の相対誤差は u の丸め誤差と同程度で、補正 x/ln u と 1 との差は ε/(2x) 未満なので補正しない。
             // 下の補正式の途中の積 (u - 1)x は x ≳ 703 でオーバーフローする（eˣ がオーバーフローした +∞ もここで返る）
-            if (u >= 1 / Epsilon)
+            if (u >= 1 / MachineEpsilon)
             {
                 return um1;
             }
@@ -191,7 +167,7 @@ public static partial class XMath
             {
                 double term = power / k;
                 sum += term;
-                if (Math.Abs(term) <= Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }

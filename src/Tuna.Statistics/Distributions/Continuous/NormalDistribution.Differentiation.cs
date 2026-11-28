@@ -5,7 +5,43 @@ namespace Tuna.Statistics.Distributions;
 
 public readonly partial struct NormalDistribution
 {
-    private const double InverseSqrtTwoPi = 0.3989422804014327;
+    /// <summary>
+    /// Records the sum of normal log densities with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、正規分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="mean">Mean. / 平均。</param>
+    /// <param name="standardDeviation">Standard deviation. / 標準偏差。</param>
+    /// <param name="observations">The observations. / 観測値のベクトル。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations. / パラメータベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPdf(ScalarSetNode<double> mean, ScalarSetNode<double> standardDeviation,
+        ReadOnlyVectorSpan<double> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, mean, standardDeviation);
+
+    /// <summary>
+    /// Records the normal log density for each observation as a single operation.
+    /// <para>正規分布の観測ごとの対数密度を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="mean">Mean. / 平均。</param>
+    /// <param name="standardDeviation">Standard deviation. / 標準偏差。</param>
+    /// <param name="observations">The observations. / 観測値のベクトル。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log densities in observation order. / 入力順に並べた観測ごとの対数密度。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations, or no tape is available. / パラメータベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> mean, ScalarSetNode<double> standardDeviation,
+        ReadOnlyVectorSpan<double> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, mean, standardDeviation, tape: tape);
+
+    private static void ValidateSharedLikelihoodParameters(double? mean, double? standardDeviation, double? unusedThird) =>
+        _ = new NormalDistribution(mean ?? 0, standardDeviation ?? 1, forDifferentiation: true);
+
+    private static LikelihoodEvaluation EvaluateLikelihoodPoint(double observation, double mean, double standardDeviation, double _, LikelihoodGradients gradients) =>
+        new NormalDistribution(mean, standardDeviation, forDifferentiation: true).DensityPoint(observation,
+            (gradients & LikelihoodGradients.First) != 0, (gradients & LikelihoodGradients.Second) != 0);
 
     /// <summary>
     /// Records the normal log density and its derivatives with respect to the mean, standard deviation, and variate.
@@ -21,18 +57,21 @@ public readonly partial struct NormalDistribution
     {
         var distribution = new NormalDistribution(mean.Value, standardDeviation.Value, forDifferentiation: true);
         double observation = x.Value;
-        double z = distribution.Standardize(observation);
-        double value = LogPdfValue(z, Math.Log(distribution._standardDeviation));
         bool requiresLocation = mean.RequiresGradient || x.RequiresGradient;
         bool requiresScale = standardDeviation.RequiresGradient;
-        if (!requiresLocation && !requiresScale)
-        {
-            return value;
-        }
+        var point = distribution.DensityPoint(observation, requiresLocation, requiresScale);
+        return requiresLocation || requiresScale
+            ? ScalarNode.Record(point.Value, [(mean, point.First.Value), (standardDeviation, point.Second.Value), (x, -point.First.Value)])
+            : point.Value;
+    }
 
-        double dMean = requiresLocation ? distribution.LogPdfMeanDerivative(observation, z) : 0;
-        double dScale = requiresScale ? distribution.LogPdfScaleDerivative(observation, z) : 0;
-        return ScalarNode.Record(value, [(mean, dMean), (standardDeviation, dScale), (x, -dMean)]);
+    private LikelihoodEvaluation DensityPoint(double observation, bool requiresLocation, bool requiresScale)
+    {
+        double z = Standardize(observation);
+        double value = LogPdfValue(z, Math.Log(_standardDeviation));
+        double dMean = requiresLocation ? LogPdfMeanDerivative(observation, z) : 0;
+        double dScale = requiresScale ? LogPdfScaleDerivative(observation, z) : 0;
+        return new(value, new(dMean), new(dScale));
     }
 
     /// <summary>
@@ -181,7 +220,7 @@ public readonly partial struct NormalDistribution
         double zError = (Math.FusedMultiplyAdd(-z, scale, difference) + error) / scale;
         double halfSquare = (0.5 * z) * z;
         double exponentError = Math.FusedMultiplyAdd(0.5 * z, z, -halfSquare) + z * zError;
-        double factor = InverseSqrtTwoPi * (1 - exponentError) / XMath.Special.NormalCdf(absolute);
+        double factor = XMath.Constants.OneOverSqrtTwoPi * (1 - exponentError) / XMath.Special.NormalCdf(absolute);
         if (halfSquare < 700)
         {
             double hazard = factor * Math.Exp(-halfSquare);

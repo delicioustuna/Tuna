@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -17,7 +20,7 @@ public static partial class XMath
             if (nu / x <= 0.8)
             {
                 var exponent = BesselPhaseCorrection(nu, x, alternating: true);
-                double rest = Log1p(DebyeSeriesTail(p, nu)) - (LnSqrt2Pi + 0.5 * logR);
+                double rest = Log1p(DebyeSeriesTail(p, nu)) - (LnSqrtTwoPi + 0.5 * logR);
                 return -exponent.Hi + (rest - exponent.Lo);
             }
 
@@ -25,7 +28,7 @@ public static partial class XMath
             double rMinusX = nu * (s * nu / (sr + s * x));
             double ratio = s * x / sr / (1 + p);
             double logRatio = ratio >= MinNormal ? Math.Log(ratio) : Math.Log(x) - logR - Log1p(p);
-            return rMinusX + nu * logRatio - (LnSqrt2Pi + 0.5 * logR) + Log1p(DebyeSeriesTail(p, nu));
+            return rMinusX + nu * logRatio - (LnSqrtTwoPi + 0.5 * logR) + Log1p(DebyeSeriesTail(p, nu));
         }
 
         // max(ν, x) が 2¹⁰²⁰ を超えると R, R + x, 2ν + 1 がオーバーフローしうる (2¹⁰²⁰ 以下なら R₀ + R₁ ≤ 2√2·2¹⁰²⁰ < 2¹⁰²⁴)

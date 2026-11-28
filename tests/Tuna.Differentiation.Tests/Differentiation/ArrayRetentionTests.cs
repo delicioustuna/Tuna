@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Tuna.Differentiation;
@@ -15,6 +17,90 @@ namespace Tuna.Tests.Differentiation;
 [Collection(nameof(ParallelismCollection))]
 public class ArrayRetentionTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void PointwiseOperationsReuseTapeStorageAfterReset(bool pointwise)
+    {
+        CheckPointwiseReuse<float>(pointwise);
+        CheckPointwiseReuse<double>(pointwise);
+    }
+
+    private static void CheckPointwiseReuse<T>(bool pointwise) where T : unmanaged, System.Numerics.IFloatingPointIeee754<T>
+    {
+        var data = Vector<T>.Generate(64, static i => T.CreateChecked(i));
+        var tape = new Tape();
+        Assert.Throws<ArithmeticException>(() => Iterate(fail: true));
+        for (int i = 0; i < 64; i++)
+        {
+            Iterate(fail: false);
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate(fail: false);
+            }
+        });
+
+        void Iterate(bool fail)
+        {
+            tape.Reset();
+            var leaf = tape.Leaf(data);
+            tape.Backward(PointwiseOperationTests.RecordRetainedModel(tape, leaf, tape.Leaf(1), pointwise, fail));
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void FailedPointwiseOperationsKeepStorageBoundedBeforeReset(bool pointwise)
+    {
+        var data = RandomVector(pointwise ? 192 : 16_384);
+        long clean = RetainedBytes(tape => Record(tape, changeShape: false));
+        long failing = RetainedBytes(tape => Record(tape, changeShape: true));
+        Assert.True(failing <= 5 * Math.Max(0, clean) + 16_384, $"failed recordings retained {failing} B, clean recording {clean} B");
+
+        void Record(Tape tape, bool changeShape)
+        {
+            var leaf = tape.Leaf(data);
+            var scale = tape.Leaf(1);
+            if (changeShape)
+            {
+                for (int count = data.Length - 160; count <= data.Length; count++)
+                {
+                    var slice = leaf[..count];
+                    Assert.Throws<ArithmeticException>(() => PointwiseOperationTests.RecordRetainedModel(tape, slice, scale, pointwise, fail: true));
+                }
+            }
+
+            tape.Backward(PointwiseOperationTests.RecordRetainedModel(tape, leaf, scale, pointwise, fail: false));
+            Assert.Equal(1, tape.GetGradient(leaf)[^1]);
+        }
+    }
+
+    [Fact]
+    public void DiscardedOperationsReleaseEmptySparesWithinOneRecording()
+    {
+        var store = new ArrayStore<double>();
+        for (int length = 1024; length <= 1280; length++)
+        {
+            int slot = store.AddPooled(length, 1, requiresGradient: false);
+            store.DiscardOperationSlots(slot);
+        }
+
+        const BindingFlags fields = BindingFlags.Instance | BindingFlags.NonPublic;
+        var storeType = typeof(ArrayStore<double>);
+        var spares = Assert.IsAssignableFrom<IDictionary>(storeType.GetField("spares", fields)!.GetValue(store));
+        var emptySpares = Assert.IsAssignableFrom<ICollection>(storeType.GetField("emptySpares", fields)!.GetValue(store));
+        var trimOrder = Assert.IsAssignableFrom<Array>(storeType.GetField("trimOrder", fields)!.GetValue(store));
+        // The 3 × 1280 element limit fits at most three buffers of length 1024 or more after trimming.
+        Assert.InRange(spares.Count, 0, 3);
+        Assert.Empty(emptySpares);
+        Assert.InRange(trimOrder.Length, 0, 4);
+    }
+
     [Fact]
     public void CholeskyLogDeterminantReusesTapeStorageAfterReset()
     {
@@ -114,6 +200,45 @@ public class ArrayRetentionTests
     {
         CheckOuterProductAllocation<double>();
         CheckOuterProductAllocation<float>();
+    }
+
+    [Fact]
+    public void WedgeProductReusesTapeStorageAfterReset()
+    {
+        CheckWedgeAllocation<double>();
+        CheckWedgeAllocation<float>();
+    }
+
+    private static void CheckWedgeAllocation<T>() where T : unmanaged, System.Numerics.IFloatingPointIeee754<T>
+    {
+        const int n = 19;
+        var u = Vector<T>.Generate(n, i => T.CreateChecked(i - 9));
+        var v = Vector<T>.Generate(n, i => T.CreateChecked(6 - i));
+        var weights = Matrix<T>.Generate(n, n, (i, j) => T.CreateChecked(i - j));
+        var tape = new Tape();
+        for (int i = 0; i < 64; i++)
+        {
+            Iterate();
+        }
+
+        AssertNoAllocation(() =>
+        {
+            for (int i = 0; i < 32; i++)
+            {
+                Iterate();
+            }
+        });
+
+        void Iterate()
+        {
+            tape.Reset();
+            var x = tape.Leaf(u);
+            var y = tape.Leaf(v);
+            var wedge = XMath.Wedge(x, y);
+            tape.Backward(XMath.Sum(XMath.ColumnSums(XMath.Hadamard(wedge, tape.Constant(weights)))));
+            _ = tape.GetGradient(x);
+            _ = tape.GetGradient(y);
+        }
     }
 
     [Theory]

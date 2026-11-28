@@ -162,6 +162,50 @@ public static partial class XMath
     }
 
     /// <summary>
+    /// Computes the elementwise quotient of two tensors.
+    /// <para>2つのテンソルの要素ごとの商を計算します。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The dividend tensor. / 被除数を格納したテンソル。</param>
+    /// <param name="y">The divisor tensor. / 除数を格納したテンソル。</param>
+    /// <returns>A new tensor containing the quotients. / 各要素の商を格納した新しいテンソル。</returns>
+    /// <exception cref="ArgumentException">The input shapes differ. / 入力の形状が一致しない場合。</exception>
+    /// <exception cref="DivideByZeroException">An element is divided by zero and the element type throws for this operation. / ゼロ除算で例外を送出する要素型の値を 0 で割った場合。</exception>
+    /// <exception cref="OverflowException">The result contains more than <see cref="int.MaxValue"/> elements, or the element type throws for a quotient that overflows. / 結果の要素数が <see cref="int.MaxValue"/> を超える場合、または要素の除算がオーバーフローして例外が発生した場合。</exception>
+    [InferenceOverloads]
+    public static Tensor<T> Divide<T>(ReadOnlyTensorSpan<T> x, ReadOnlyTensorSpan<T> y)
+        where T : unmanaged, INumberBase<T>
+    {
+        var result = Tensor<T>.Uninitialized(x.Rows, x.Columns, x.MatrixCount);
+        Divide(x, y, result);
+        return result;
+    }
+
+    /// <summary>
+    /// Divides two tensors elementwise and writes the result to <paramref name="destination"/>.
+    /// <para>2つのテンソルを要素ごとに除算し、結果を <paramref name="destination"/> に書き込みます。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The dividend tensor. / 被除数を格納したテンソル。</param>
+    /// <param name="y">The divisor tensor. / 除数を格納したテンソル。</param>
+    /// <param name="destination">The destination for the result. / 結果を書き込む出力先。</param>
+    /// <returns><paramref name="destination"/>. / <paramref name="destination"/>。</returns>
+    /// <remarks>
+    /// <para>The destination may share storage with an input if both reference the same elements at the same indices. Division follows the element type's <c>/</c> operator.</para>
+    /// <para>出力先と入力が同じ添字で同じ要素を参照する場合は、同じ領域を指定できます。除算の結果は要素型の <c>/</c> に従います。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">The shapes differ, or the destination overlaps an input with a different index mapping. / 形状が一致しないか、出力先と入力が重なり、添字と要素の対応が異なる場合。</exception>
+    /// <exception cref="DivideByZeroException">An element is divided by zero and the element type throws for this operation. / ゼロ除算で例外を送出する要素型の値を 0 で割った場合。</exception>
+    /// <exception cref="OverflowException">An element quotient overflows and the element type throws on overflow. / 要素の除算がオーバーフローして例外が発生した場合。</exception>
+    [InferenceOverloads]
+    public static TensorSpan<T> Divide<T>(ReadOnlyTensorSpan<T> x, ReadOnlyTensorSpan<T> y, TensorSpan<T> destination)
+        where T : unmanaged, INumberBase<T>
+    {
+        StridedKernels.Zip(x, y, destination, default(StaticBinaryOperator<T, Operators.Divide<T>>));
+        return destination;
+    }
+
+    /// <summary>
     /// Computes the elementwise negation <c>-X[k]</c> of a tensor.
     /// <para>テンソルの要素ごとの符号反転 <c>-X[k]</c> を計算します。</para>
     /// </summary>
@@ -224,6 +268,49 @@ public static partial class XMath
         where T : unmanaged, INumberBase<T>
     {
         StridedKernels.Scale(x, scalar, destination);
+        return destination;
+    }
+
+    /// <summary>
+    /// Divides each element of a tensor by a scalar.
+    /// <para>テンソルの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input tensor. / 入力テンソル。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new tensor containing the quotients. / 各要素の商を格納した新しいテンソル。</returns>
+    /// <exception cref="DivideByZeroException">An element is divided by zero and the element type throws for this operation. / ゼロ除算で例外を送出する要素型の値を 0 で割った場合。</exception>
+    /// <exception cref="OverflowException">The result contains more than <see cref="int.MaxValue"/> elements, or the element type throws for a quotient that overflows. / 結果の要素数が <see cref="int.MaxValue"/> を超える場合、または要素の除算がオーバーフローして例外が発生した場合。</exception>
+    [InferenceOverloads]
+    public static Tensor<T> Divide<T>(ReadOnlyTensorSpan<T> x, T scalar)
+        where T : unmanaged, INumberBase<T>
+    {
+        var result = Tensor<T>.Uninitialized(x.Rows, x.Columns, x.MatrixCount);
+        Divide(x, scalar, result);
+        return result;
+    }
+
+    /// <summary>
+    /// Divides each element of a tensor by a scalar and writes the result to <paramref name="destination"/>.
+    /// <para>テンソルの各要素をスカラーで割り、結果を <paramref name="destination"/> に書き込みます。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="x">The input tensor. / 入力テンソル。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <param name="destination">The destination for the result. / 結果を書き込む出力先。</param>
+    /// <returns><paramref name="destination"/>. / <paramref name="destination"/>。</returns>
+    /// <remarks>
+    /// <para>The destination may share storage with the input if both reference the same elements at the same indices. Division follows the element type's <c>/</c> operator.</para>
+    /// <para>出力先と入力が同じ添字で同じ要素を参照する場合は、同じ領域を指定できます。除算の結果は要素型の <c>/</c> に従います。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">The shapes differ, or the destination overlaps the input with a different index mapping. / 形状が一致しないか、出力先と入力が重なり、添字と要素の対応が異なる場合。</exception>
+    /// <exception cref="DivideByZeroException">An element is divided by zero and the element type throws for this operation. / ゼロ除算で例外を送出する要素型の値を 0 で割った場合。</exception>
+    /// <exception cref="OverflowException">An element quotient overflows and the element type throws on overflow. / 要素の除算がオーバーフローして例外が発生した場合。</exception>
+    [InferenceOverloads]
+    public static TensorSpan<T> Divide<T>(ReadOnlyTensorSpan<T> x, T scalar, TensorSpan<T> destination)
+        where T : unmanaged, INumberBase<T>
+    {
+        StridedKernels.Map(x, destination, new Operators.DivideScalar<T>(scalar));
         return destination;
     }
 
@@ -633,6 +720,20 @@ public static partial class XMath
         public static void Multiply<T>(TensorSpan<T> x, T scalar)
             where T : unmanaged, INumberBase<T> =>
             StridedKernels.Scale(x, scalar, x);
+
+        /// <summary>
+        /// Divides each element of a tensor by a scalar in place.
+        /// <para>テンソルの各要素をインプレースでスカラー除算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type. / 要素型。</typeparam>
+        /// <param name="x">The tensor to update. / 更新するテンソル。</param>
+        /// <param name="scalar">The scalar divisor. / 除数。</param>
+        /// <exception cref="DivideByZeroException">An element is divided by zero and the element type throws for this operation. / ゼロ除算で例外を送出する要素型の値を 0 で割った場合。</exception>
+        /// <exception cref="OverflowException">An element quotient overflows and the element type throws on overflow. / 要素の除算がオーバーフローして例外が発生した場合。</exception>
+        [InferenceOverloads]
+        public static void Divide<T>(TensorSpan<T> x, T scalar)
+            where T : unmanaged, INumberBase<T> =>
+            XMath.Divide(x, scalar, x);
 
         /// <summary>
         /// Applies a stateless unary operator elementwise to a tensor in place (<c>x ← TOperator(x)</c>).

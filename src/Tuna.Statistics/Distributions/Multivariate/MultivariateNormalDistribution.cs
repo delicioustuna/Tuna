@@ -141,7 +141,7 @@ public sealed partial class MultivariateNormalDistribution : IMultivariateContin
             return double.IsNaN(status) ? double.NaN : double.NegativeInfinity;
         }
 
-        return -Dimension * DistributionMath.LnSqrt2Pi - _halfLogDeterminant - MultivariateMath.HalfSquaredNorm(z);
+        return -Dimension * XMath.Constants.LnSqrtTwoPi - _halfLogDeterminant - MultivariateMath.HalfSquaredNorm(z);
     }
 
     /// <summary>

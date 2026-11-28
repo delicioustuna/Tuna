@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -48,7 +50,7 @@ public static partial class XMath
             {
                 // X = x²/2 がオーバーフローしうる範囲。非心ガンマ分布は平均 X + μ、分散 2X + μ の正規分布に近づき、
                 // (Y - X - μ)/√(2X + μ) = (y - x) + O(μ/x)（x ≈ y の範囲。それ以外は 0 か 1）
-                return mu < 1e100 ? 0.5 * Erfc((y - x) * InvSqrt2) : double.NaN;
+                return mu < 1e100 ? 0.5 * Erfc((y - x) * OneOverSqrt2) : double.NaN;
             }
 
             // X - Y = (x - y)(x + y)/2 は x ≈ y でも丸め誤差が小さい
@@ -215,7 +217,7 @@ public static partial class XMath
 
                 // 次の項との比 X/(k+1)·Qₖ₊₁/Qₖ は k とともに減る。比が 1/2 未満で項が十分小さければ残りの和も無視できる
                 double ratio = x / (k + 1) * (1 + dk / qk);
-                if (k + 1 > x && ratio < 0.5 && term <= 0.25 * Epsilon * sum)
+                if (k + 1 > x && ratio < 0.5 && term <= 0.25 * MachineEpsilon * sum)
                 {
                     break;
                 }
@@ -262,7 +264,7 @@ public static partial class XMath
                 if (a > y && rho <= 0.5)
                 {
                     double bound = 2 * rho * r / (1 - y / a);
-                    if (bound <= 0.25 * Epsilon * rSum)
+                    if (bound <= 0.25 * MachineEpsilon * rSum)
                     {
                         break;
                     }
@@ -271,7 +273,7 @@ public static partial class XMath
                 // Pⱼ は j について減少するので、残りの和と和の比はポアソン重みだけの比 Σ_(j>k) wⱼ/Σ_(j≤k) wⱼ 以下。
                 // μ が Y に比べて極端に大きく（μ + k + 1 が丸めで Y を超えない）上の判定が使えないときに効く
                 double next = x / (k + 2);
-                if (next < 0.5 && 2 * v * x / (k + 1) <= 0.25 * Epsilon * vSum)
+                if (next < 0.5 && 2 * v * x / (k + 1) <= 0.25 * MachineEpsilon * vSum)
                 {
                     break;
                 }
@@ -296,7 +298,7 @@ public static partial class XMath
                 {
                     term *= y / (aK + j);
                     s += term;
-                    if (term <= 0.5 * Epsilon * s)
+                    if (term <= 0.5 * MachineEpsilon * s)
                     {
                         break;
                     }
@@ -365,7 +367,7 @@ public static partial class XMath
                 }
             }
 
-            double integral = total * h * InvTwoPi;
+            double integral = total * h * OneOverTwoPi;
             if (!isUpper)
             {
                 integral = -integral;
@@ -477,7 +479,7 @@ public static partial class XMath
             {
                 Complex term = power / k;
                 sum += term;
-                if (Complex.Abs(term) <= 0.5 * Epsilon * Complex.Abs(sum))
+                if (Complex.Abs(term) <= 0.5 * MachineEpsilon * Complex.Abs(sum))
                 {
                     break;
                 }

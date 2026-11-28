@@ -5,7 +5,7 @@ using Tuna.Statistics.Distributions;
 
 namespace Tuna.Tests.Probabilistic;
 
-/// <summary>スカラーのモデルを逆モードで微分し、その勾配を NUTS に渡す</summary>
+/// <summary>モデルを逆モードで微分し、その勾配を NUTS に渡す</summary>
 [Trait("Probabilistic", "Mcmc")]
 public class AutomaticDifferentiationTests
 {
@@ -78,6 +78,8 @@ public class AutomaticDifferentiationTests
     private sealed class RobustRegression(double[] features, double[] responses) : IDifferentiableLogDensity
     {
         private readonly Tape tape = new();
+        private readonly Vector<double> featureValues = new(features);
+        private readonly Vector<double> responseValues = new(responses);
 
         public double LogDensity(ReadOnlyVectorSpan<double> theta, VectorSpan<double> gradient)
         {
@@ -87,11 +89,8 @@ public class AutomaticDifferentiationTests
             ScalarNode density = NormalDistribution.LogPdf(0, 10, intercept)
                 + NormalDistribution.LogPdf(0, 10, slope)
                 + CauchyDistribution.LogPdf(0, 5, scale) + inputs[2];
-            for (int i = 0; i < responses.Length; i++)
-            {
-                density += StudentTDistribution.LogPdf(4, intercept + slope * features[i], scale, responses[i]);
-            }
-
+            var locations = intercept + slope * tape.Constant(featureValues);
+            density += StudentTDistribution.LogPdf(4, locations, scale, responseValues);
             return tape.Gradient(density, gradient);
         }
     }

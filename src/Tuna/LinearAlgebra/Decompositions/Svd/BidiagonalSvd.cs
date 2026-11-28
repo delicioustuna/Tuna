@@ -8,8 +8,6 @@ namespace Tuna.LinearAlgebra;
 /// </summary>
 internal static class BidiagonalSvd
 {
-    private const double Epsilon = 1.1102230246251565e-16;
-    private const double SafeMin = 2.2250738585072014e-308;
     private const int MaxIterationFactor = 6;
 
     /// <summary>
@@ -88,8 +86,8 @@ internal static class BidiagonalSvd
 
     private static bool Iterate(int n, Span<double> d, Span<double> e, Span<double> u, int uRows, int ldu, Span<double> v, int vRows, int ldv, Span<double> work, bool vectors)
     {
-        double eps = Epsilon;
-        double unfl = SafeMin;
+        double eps = NumericConstants.UnitRoundoff;
+        double unfl = NumericConstants.MinNormal;
         double tolmul = Math.Max(10.0, Math.Min(100.0, Math.Pow(eps, -0.125)));
         double tol = tolmul * eps;
 
@@ -514,7 +512,7 @@ internal static class BidiagonalSvd
         }
         else
         {
-            double u = Math.Min(4.49423283715579e+307, Math.Max(SafeMin, Math.Max(f1, g1)));
+            double u = Math.Min(4.49423283715579e+307, Math.Max(NumericConstants.MinNormal, Math.Max(f1, g1)));
             double fs = f / u;
             double gs = g / u;
             double dd = Math.Sqrt(fs * fs + gs * gs);
@@ -571,7 +569,7 @@ internal static class BidiagonalSvd
     /// </summary>
     internal static void Svd2x2(double f, double g, double h, out double ssmin, out double ssmax, out double snr, out double csr, out double snl, out double csl)
     {
-        const double eps = 2.220446049250313e-16;
+        const double eps = NumericConstants.MachineEpsilon;
         double ft = f;
         double fa = Math.Abs(ft);
         double ht = h;

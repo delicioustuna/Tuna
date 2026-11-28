@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -70,7 +72,7 @@ public static partial class XMath
                 double next = x - residual / Trigamma(x);
 
                 // 収束の判定は区間の判定より先に行う（x は直前に区間の端になっているので、収束すると next が端に一致する）
-                if (Math.Abs(next - x) <= 2 * Epsilon * x)
+                if (Math.Abs(next - x) <= 2 * MachineEpsilon * x)
                 {
                     return next;
                 }

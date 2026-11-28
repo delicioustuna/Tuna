@@ -16,8 +16,6 @@ internal static class DoubleExponentialQuadrature
 {
     internal const int MaxComponents = 5;
 
-    private const double HalfPi = Math.PI / 2;
-
     // 刻み半減ごとに誤差はおおよそ 2 乗で縮小するため、前段との相対差がこの値以下なら ε 未満とみなす
     private const double Tolerance = 1e-10;
 
@@ -71,7 +69,7 @@ internal static class DoubleExponentialQuadrature
             double e = Math.Exp(-Math.PI * Math.Sinh(Math.Abs(t)));
             double denominator = 1 + e;
             double distance = _half * (2 * e / denominator);
-            weight = _half * HalfPi * Math.Cosh(t) * (4 * e / (denominator * denominator));
+            weight = _half * XMath.Constants.PiOver2 * Math.Cosh(t) * (4 * e / (denominator * denominator));
             bool upper = t >= 0;
             double end = upper ? b : a;
             bool open = t != 0 && end == (upper ? supportMaximum : supportMinimum);
@@ -159,7 +157,7 @@ internal static class DoubleExponentialQuadrature
                 _initialized = true;
                 _density = integrand.Density(_end + _direction * _spacing);
                 double far = integrand.Density(_end + _direction * (2 * _spacing));
-                _exponent = (Math.Log(far) - Math.Log(_density)) / DistributionMath.Ln2;
+                _exponent = (Math.Log(far) - Math.Log(_density)) / XMath.Constants.Ln2;
             }
 
             return _density > 0 && double.IsFinite(_exponent) ? _density * Math.Exp(_exponent * Math.Log(distance / _spacing)) : 0;
@@ -171,10 +169,10 @@ internal static class DoubleExponentialQuadrature
         public bool Node<T>(ref T integrand, double t, out double x, out double weight, out double density, out bool tail)
             where T : struct, IQuadratureIntegrand
         {
-            double ratio = Math.Exp(HalfPi * Math.Sinh(t));
+            double ratio = Math.Exp(XMath.Constants.PiOver2 * Math.Sinh(t));
             double offset = scale * ratio;
             x = a + direction * offset;
-            weight = offset * HalfPi * Math.Cosh(t);
+            weight = offset * XMath.Constants.PiOver2 * Math.Cosh(t);
 
             // 無限遠の側は、密度が 0 になるか寄与が無視できたら止める。有限の端の側は密度が有限なので、端からの距離が十分小さくなったら止める
             tail = t > 0;

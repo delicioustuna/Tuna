@@ -86,8 +86,6 @@ internal static class StockhamKernels
 
     private const double Sin144 = 0.5877852522924731291687059546390727685976;
 
-    private const double SqrtHalf = 0.7071067811865475244008443621048490392848;
-
     // 蝶演算は SIMD 幅ごとに NoInlining メソッドへ分離し、JIT のインライン展開上限超過を防ぐ。
     internal static void Run<TD>(StockhamStage stage, ref Complex input, ref Complex output, nint stride, int part = 0, int parts = 1)
         where TD : IFourierDirection
@@ -601,9 +599,9 @@ internal static class StockhamKernels
         // ω₈ = (1 ∓ i)/√2 なので ω₈·O = (O + R(O))/√2、ω₈²·O = R(O)、ω₈³·O = (R(O) − O)/√2（R は ∓i 倍）
         Radix4Core<TD, TL>(a0, a2, a4, a6, out TL e0, out TL e1, out TL e2, out TL e3);
         Radix4Core<TD, TL>(a1, a3, a5, a7, out TL o0, out TL o1, out TL o2, out TL o3);
-        TL w1 = TL.Scale(TL.Add(o1, Rotate<TD, TL>(o1)), SqrtHalf);
+        TL w1 = TL.Scale(TL.Add(o1, Rotate<TD, TL>(o1)), XMath.Constants.OneOverSqrt2);
         TL w2 = Rotate<TD, TL>(o2);
-        TL w3 = TL.Scale(TL.Subtract(Rotate<TD, TL>(o3), o3), SqrtHalf);
+        TL w3 = TL.Scale(TL.Subtract(Rotate<TD, TL>(o3), o3), XMath.Constants.OneOverSqrt2);
         b0 = TL.Add(e0, o0);
         b1 = TL.Add(e1, w1);
         b2 = TL.Add(e2, w2);

@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -388,7 +391,7 @@ public static partial class XMath
                 c *= (j - q) * z / j;
                 double term = c / (p + j);
                 t += term;
-                if (!(Math.Abs(term) > 0.5 * Epsilon * Math.Abs(t)))
+                if (!(Math.Abs(term) > 0.5 * MachineEpsilon * Math.Abs(t)))
                 {
                     break;
                 }
@@ -410,7 +413,7 @@ public static partial class XMath
         }
 
         // SmallParameterBetaLogValue で ln I を σ = ln I/p から再計算する上限（2⁻⁹⁷⁰ ≈ 1e-292）
-        private const double SmallParameterBetaScaledLogMax = MinNormal / Epsilon;
+        private const double SmallParameterBetaScaledLogMax = MinNormal / MachineEpsilon;
 
         // 前因子を先頭パラメータ p ≤ 1 で割った zᵖ wᑫ/(p B(p, q)) とその対数 logValue を、前因子が非正規化数でも精度を保って計算する
         private static double SmallParameterBetaScaledPrefix(double p, double q, double z, double lnz, double lnw, out double logValue)
@@ -427,7 +430,7 @@ public static partial class XMath
 
                 // ln(q/(p + q)) = -ln(1 + p/q)。p/q ≥ 2⁵² では ln(p/q) との差は ε 未満で、Log1p の途中の積がオーバーフローするのも避ける（p/q がオーバーフローするなら対数の差）
                 double pq = p / q;
-                logRatio = -(pq < 1 / Epsilon ? Log1p(pq) : pq <= double.MaxValue ? Math.Log(pq) : Math.Log(p) - Math.Log(q));
+                logRatio = -(pq < 1 / MachineEpsilon ? Log1p(pq) : pq <= double.MaxValue ? Math.Log(pq) : Math.Log(p) - Math.Log(q));
             }
             else if (q < 10)
             {
@@ -783,7 +786,7 @@ public static partial class XMath
                 d = 1 / d;
                 double delta = d * c;
                 h *= delta;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }
@@ -831,7 +834,7 @@ public static partial class XMath
                 bnp1 = t;
                 double previous = r;
                 r = anp1 / bnp1;
-                if (!(Math.Abs(r - previous) > Epsilon * r))
+                if (!(Math.Abs(r - previous) > MachineEpsilon * r))
                 {
                     break;
                 }
@@ -883,7 +886,7 @@ public static partial class XMath
             else if (a >= 1 && b >= 1)
             {
                 // 正規分布の上側 p 分位点
-                double z = useQ ? -Math.Sqrt(2) * InverseErfc(2 * q) : Math.Sqrt(2) * InverseErfc(2 * p);
+                double z = useQ ? -Sqrt2 * InverseErfc(2 * q) : Sqrt2 * InverseErfc(2 * p);
                 double al = (z * z - 3) / 6;
                 double h = 2 / (1 / (2 * a - 1) + 1 / (2 * b - 1));
                 double w = z * Math.Sqrt(al + h) / h
@@ -915,7 +918,7 @@ public static partial class XMath
                 // 主要項の相対誤差は O(bx) で、bx ≤ ε でなければ b ≳ ε/MinNormal ≈ 1e292 なので、ガンマ分布による初期値の誤差 O(1/b) が無視できる
                 if (!(x >= MinNormal))
                 {
-                    return skewed && tail * (1 + b) > Epsilon ? skewedInitial : x;
+                    return skewed && tail * (1 + b) > MachineEpsilon ? skewedInitial : x;
                 }
             }
             else
@@ -1009,7 +1012,7 @@ public static partial class XMath
 
                 // 収束の判定は区間の判定より先に行う（x は直前に区間の端になっているので、収束すると next が端に一致する）。
                 // 最後の更新値が区間内なら評価して残差の小さい方を返し、区間外（評価済みの端より外）なら評価済みの点を返す
-                if (Math.Abs(next - x) <= 4 * Epsilon * x)
+                if (Math.Abs(next - x) <= 4 * MachineEpsilon * x)
                 {
                     if (!(next > lower && next < upper))
                     {

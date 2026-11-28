@@ -261,6 +261,15 @@ public sealed class Vector<T> where T : unmanaged, INumberBase<T>
     public static Vector<T> operator *(Vector<T> x, T scalar) => XMath.Multiply(x, scalar);
 
     /// <summary>
+    /// Divides each element of a vector by a scalar.
+    /// <para>ベクトルの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="x">The input vector. / 入力ベクトル。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new vector containing the quotients. / 各要素の商を格納した新しいベクトル。</returns>
+    public static Vector<T> operator /(Vector<T> x, T scalar) => XMath.Divide(x, scalar);
+
+    /// <summary>
     /// Computes the matrix-vector product <c>a * x</c>.
     /// <para>行列ベクトル積 <c>a * x</c> を計算します。</para>
     /// </summary>
@@ -289,6 +298,13 @@ public sealed class Vector<T> where T : unmanaged, INumberBase<T>
     /// </summary>
     /// <param name="scalar">The scalar multiplier. / 掛けるスカラー値。</param>
     public void operator *=(T scalar) => XMath.InPlace.Multiply(this, scalar);
+
+    /// <summary>
+    /// Divides each element of this vector by a scalar in place.
+    /// <para>このベクトルの各要素をインプレースでスカラー除算します。</para>
+    /// </summary>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    public void operator /=(T scalar) => XMath.InPlace.Divide(this, scalar);
 
     /// <summary>
     /// Explicitly converts an array to a new <see cref="Vector{T}"/> by copying its elements.

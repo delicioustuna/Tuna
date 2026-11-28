@@ -4,8 +4,6 @@ namespace Tuna.Optimization.Stochastic;
 
 internal readonly struct GradientClip(double divisor, double root, double scale)
 {
-    private const double MinNormal = 2.2250738585072014E-308;
-
     internal bool IsActive => divisor != 0;
 
     internal double Apply(double value)
@@ -26,7 +24,7 @@ internal readonly struct GradientClip(double divisor, double root, double scale)
             return true;
         }
 
-        if (squaredNorm < MinNormal || !double.IsFinite(squaredNorm))
+        if (squaredNorm < NumericConstants.MinNormal || !double.IsFinite(squaredNorm))
         {
             return false;
         }
@@ -36,7 +34,7 @@ internal readonly struct GradientClip(double divisor, double root, double scale)
         {
             double factor = limit / norm;
             // 倍率が 0 や非正規化数に丸められる場合は、勾配をノルムで割ってから上限を掛ける。
-            clip = factor >= MinNormal ? new(1, 1, factor) : new(norm, 1, limit);
+            clip = factor >= NumericConstants.MinNormal ? new(1, 1, factor) : new(norm, 1, limit);
         }
 
         return true;
@@ -57,7 +55,7 @@ internal readonly struct GradientClip(double divisor, double root, double scale)
         }
 
         double factor = limit / root;
-        return factor >= MinNormal ? new(max, 1, factor) : new(max, root, limit);
+        return factor >= NumericConstants.MinNormal ? new(max, 1, factor) : new(max, root, limit);
     }
 
     internal static double SumOfSquares<T>(ReadOnlySpan<T> gradient, double sum)

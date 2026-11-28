@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -55,9 +57,9 @@ public static partial class XMath
                 fLo = Math.ScaleB((double)(ulong)(rest >> lowShift), lowShift - fractionBits);
             }
 
-            // r = f·π を double-double で計算する（π = PiHi + PiLo）
-            double p = fHi * PiHi;
-            double q = Math.FusedMultiplyAdd(fHi, PiHi, -p) + (fHi * PiLo + fLo * PiHi);
+            // r = f·π を double-double で計算する（π = Pi + PiLo）
+            double p = fHi * Pi;
+            double q = Math.FusedMultiplyAdd(fHi, Pi, -p) + (fHi * PiLo + fLo * Pi);
             hi = p + q;
             lo = q - (hi - p);
             if (sign < 0)

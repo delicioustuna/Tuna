@@ -1,5 +1,7 @@
 using System.Globalization;
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -463,7 +465,7 @@ public static partial class XMath
 
             // B₂ₖ = (-1)^(k+1) 2 (2k)! ζ(2k) / (2π)^(2k)
             double sign = k % 2 == 1 ? 1 : -1;
-            return sign * Math.Exp(Ln2 + LogGamma(n + 1.0) + Math.Log(Zeta(n)) - n * LnTwoPi);
+            return sign * Math.Exp(Ln2 + LogGamma(n + 1.0) + Math.Log(Zeta(n)) - n * LnTau);
         }
 
         /// <summary>

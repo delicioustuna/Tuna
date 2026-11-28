@@ -55,6 +55,11 @@ internal static partial class StridedKernels
         where TOperator : IStatefulUnaryOperator<T>
     {
         RequireSameShape(x, destination);
+        if (x.IsEmpty)
+        {
+            return;
+        }
+
         RequireElementwiseAlias(x, destination);
         if (x.TryAsMatrix(out var xm) && destination.AsReadOnly().TryAsMatrix(out var dm))
         {
@@ -75,6 +80,11 @@ internal static partial class StridedKernels
     {
         RequireSameShape(x, y);
         RequireSameShape(x, destination);
+        if (x.IsEmpty)
+        {
+            return;
+        }
+
         RequireElementwiseAlias(x, destination);
         RequireElementwiseAlias(y, destination);
         if (x.TryAsMatrix(out var xm) && y.TryAsMatrix(out var ym) && destination.AsReadOnly().TryAsMatrix(out var dm))
@@ -94,6 +104,11 @@ internal static partial class StridedKernels
         where T : unmanaged, INumberBase<T>
     {
         RequireSameShape(x, destination);
+        if (x.IsEmpty)
+        {
+            return;
+        }
+
         RequireElementwiseAlias(x, destination);
         if (x.TryAsMatrix(out var xm) && destination.AsReadOnly().TryAsMatrix(out var dm))
         {

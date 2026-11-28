@@ -1,10 +1,12 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
 {
     public static partial class Special
     {
-        private const double Sqrt2Pi = 2.5066282746310007;
         private const double PiSquaredOver8 = 1.2337005501361697;
 
         // これ未満では CDF をテータ変換級数で、以上では SF を交代級数で直接計算する。
@@ -156,14 +158,14 @@ public static partial class XMath
                     double e = Math.Exp(-(m - 1) * u);
                     sum += e;
                     derivativeSum += e * (2 * m * u - 1);
-                    if (e <= Epsilon * 0.5 * sum)
+                    if (e <= MachineEpsilon * 0.5 * sum)
                     {
                         break;
                     }
                 }
 
                 // e⁻ᵘ が非正規数になる範囲では、前因子との積を 1 つの指数にまとめて途中のアンダーフローを避ける
-                double leading = u < 700 ? Sqrt2Pi / x * Math.Exp(-u) : Math.Exp(Math.Log(Sqrt2Pi / x) - u);
+                double leading = u < 700 ? SqrtTwoPi / x * Math.Exp(-u) : Math.Exp(Math.Log(SqrtTwoPi / x) - u);
                 cdf = leading * sum;
                 pdf = leading / x * derivativeSum;
                 sf = 1 - cdf;
@@ -190,7 +192,7 @@ public static partial class XMath
                 double sign = j % 2 == 1 ? 1 : -1;
                 alternating += sign * e;
                 derivativeAlternating += sign * j2 * e;
-                if (j2 * e <= Epsilon * 0.5 * Math.Abs(derivativeAlternating))
+                if (j2 * e <= MachineEpsilon * 0.5 * Math.Abs(derivativeAlternating))
                 {
                     break;
                 }
@@ -234,7 +236,7 @@ public static partial class XMath
                 x = 0.5;
                 for (int i = 0; i < 4; i++)
                 {
-                    x = Math.PI / Math.Sqrt(8 * (Math.Log(Sqrt2Pi / x) - target));
+                    x = Math.PI / Math.Sqrt(8 * (Math.Log(SqrtTwoPi / x) - target));
                 }
             }
 
@@ -265,7 +267,7 @@ public static partial class XMath
                 double next = x - residual / slope;
 
                 // 収束の判定は区間の判定より先に行う（x は直前に区間の端になっているので、収束すると next が端に一致する）
-                if (Math.Abs(next - x) <= 4 * Epsilon * x)
+                if (Math.Abs(next - x) <= 4 * MachineEpsilon * x)
                 {
                     return next;
                 }

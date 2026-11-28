@@ -253,7 +253,7 @@ public sealed class BoundedCompositionSampler
             Add(ref sum, ref compensation, first[mr - v]);
         }
 
-        return Math.Log(sum + compensation) + exponent * Math.Log(2);
+        return Math.Log(sum + compensation) + exponent * XMath.Constants.Ln2;
     }
 
     // 長さ width + 1 のブロックごとに前方・後方の累積和を補償付きで計算する（van Herk–Gil–Werman 法）。

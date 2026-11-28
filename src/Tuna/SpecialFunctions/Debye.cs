@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -63,7 +66,7 @@ public static partial class XMath
         // Dₙ(x) = 1 - nx/(2(n+1)) + 2n Σₖ (-1)ᵏ⁺¹ ζ(2k) r^k/(2k+n) (r = (x/2π)² ≤ 0.102; 20 項で r²⁰ < 10⁻¹⁹)
         private static double DebyeSeries(int n, double x)
         {
-            double r = x * InvTwoPi;
+            double r = x * OneOverTwoPi;
             r *= r;
             double power = 1;
             double sum = 0;
@@ -72,7 +75,7 @@ public static partial class XMath
                 power *= r;
                 double term = ZetaAtInteger[2 * k] * power / (2 * k + n);
                 sum += (k & 1) == 1 ? term : -term;
-                if (term <= 0.0625 * Epsilon * Math.Abs(sum))
+                if (term <= 0.0625 * MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }
@@ -96,7 +99,7 @@ public static partial class XMath
 
                 double term = q * Math.Pow(m, -a);
                 bracket -= term;
-                if (term <= 0.0625 * Epsilon * bracket)
+                if (term <= 0.0625 * MachineEpsilon * bracket)
                 {
                     break;
                 }
@@ -120,7 +123,7 @@ public static partial class XMath
                 sum += j;
 
                 // 残りの m < m₁ の和は j·decay 以下、m ≥ m₁ の和は j(1 + m₁/n) 以下
-                if (j * (decay + 1 + m1 / n) <= 0.0625 * Epsilon * sum)
+                if (j * (decay + 1 + m1 / n) <= 0.0625 * MachineEpsilon * sum)
                 {
                     return n * x * sum;
                 }
@@ -139,7 +142,7 @@ public static partial class XMath
 
                 double term = q * Math.Exp(-a * Math.Log(m / m1));
                 block -= term;
-                if (term <= 0.0625 * Epsilon * block)
+                if (term <= 0.0625 * MachineEpsilon * block)
                 {
                     break;
                 }
@@ -162,7 +165,7 @@ public static partial class XMath
             {
                 term *= z / (n + 1 + k);
                 sum += term;
-                if (term <= 0.0625 * Epsilon * sum)
+                if (term <= 0.0625 * MachineEpsilon * sum)
                 {
                     break;
                 }

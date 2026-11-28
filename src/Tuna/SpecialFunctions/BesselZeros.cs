@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -132,7 +134,7 @@ public static partial class XMath
                 // 2次収束なので、刻みが ε 程度になるか、十分小さくなってからも半分以下に減らなくなったら
                 // （J'ᵥ の打ち消しなどによる値の雑音に達したら）収束とみなす
                 double change = Math.Abs(next - x);
-                if (change <= 2 * Epsilon * x || (change <= 1e-10 * x && change >= 0.5 * previousChange))
+                if (change <= 2 * MachineEpsilon * x || (change <= 1e-10 * x && change >= 0.5 * previousChange))
                 {
                     return next;
                 }

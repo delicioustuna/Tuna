@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -8,7 +11,6 @@ public static partial class XMath
         private const double AiryAiAtZero = 0.3550280538878172;
         private const double MinusAiryAiPrimeAtZero = 0.2588194037928068;
         private const double OneOverSqrt3 = 0.5773502691896258;
-        private const double Sqrt3 = 1.7320508075688772;
 
         /// <summary>
         /// Computes the Airy function of the first kind, <c>Ai(x)</c>.
@@ -183,7 +185,7 @@ public static partial class XMath
                 gTerm *= x3 / ((3.0 * k) * (3 * k + 1));
                 f += fTerm;
                 g += gTerm;
-                if (Math.Abs(fTerm) + Math.Abs(gTerm) <= Epsilon * 0.25 * (Math.Abs(f) + Math.Abs(g)))
+                if (Math.Abs(fTerm) + Math.Abs(gTerm) <= MachineEpsilon * 0.25 * (Math.Abs(f) + Math.Abs(g)))
                 {
                     break;
                 }

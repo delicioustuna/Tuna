@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -112,7 +114,7 @@ public static partial class XMath
                 double newton = f / f1;
                 double step = newton / (1 - 0.5 * newton * f2 / f1);
                 x -= step;
-                if (Math.Abs(step) <= 2 * Epsilon * Math.Abs(x))
+                if (Math.Abs(step) <= 2 * MachineEpsilon * Math.Abs(x))
                 {
                     break;
                 }

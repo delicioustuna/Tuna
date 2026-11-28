@@ -20,7 +20,7 @@ double q95 = normal.InverseCdf(0.95);
 double sample = normal.Sample(new Pcg64DxsmRandom(seed: 1));
 ```
 
-単体分布・多変量分布の `LogPdf` / `LogPmf`（および対応する分布の `LogCdf`・`LogSf`）には、自動微分に対応する静的オーバーロードがあります。観測ベクトルの対数尤度は 1 回の演算としてテープに記録されます。ロバスト回帰でスチューデントの t 分布を尤度に、コーシー分布を尺度の事前分布に用いる例や、MCMC サンプラーとの連携方法については [確率分布の自動微分](distribution-differentiation.md) および [MCMC への接続](distribution-differentiation.md#mcmc-への接続) を参照してください。
+単体分布・多変量分布の `LogPdf` / `LogPmf`（および対応する分布の `LogCdf`・`LogSf`）には、自動微分に対応する静的オーバーロードがあります。観測ベクトルの対数尤度は合計（`LogPdf` / `LogPmf`）および観測ごとの値（`LogPdfPointwise` / `LogPmfPointwise`）を共通・観測ごとのパラメータ混在で 1 回の演算としてテープに記録できます。ロバスト回帰でスチューデントの t 分布を尤度に、コーシー分布を尺度の事前分布に用いる例や、MCMC サンプラーとの連携方法については [確率分布の自動微分](distribution-differentiation.md) および [MCMC への接続](distribution-differentiation.md#mcmc-への接続) を参照してください。
 
 API 一覧: [Tuna.Statistics.md](api/Tuna.Statistics.md)
 
@@ -68,7 +68,7 @@ API 一覧: [Tuna.Integration.md](api/Tuna.Integration.md)
 
 ## 5. `Tuna.Differentiation` — 自動微分
 
-逆モード自動微分（テープベース）を提供します。スカラー（`ScalarNode`）、ベクトル・行列・3 階テンソル・埋め込み・連立一次方程式・LU / Cholesky / QR / 対称固有値 / SVD 分解（`VectorNode<T>`, `MatrixNode<T>`, `TensorNode<T>`）、および `[ElementwiseOperation]` / `IDifferentiableOperation<T>` によるユーザー定義演算に対応しています。演算は `XMath` / `XMath.Special` の拡張メンバーとして提供されるため、`using static Tuna.XMath;` ではなく `XMath.Sin(x)`・`XMath.Sum(v)` のように修飾して呼び出してください。
+逆モード自動微分（テープベース）を提供します。スカラー（`ScalarNode`）、ベクトル・行列・3 階テンソル・埋め込み・連立一次方程式・LU / Cholesky / QR / 対称固有値 / SVD 分解（`VectorNode<T>`, `MatrixNode<T>`, `TensorNode<T>`）、共通または点ごとの一括入力（`ScalarSetNode<T>`, `VectorSetNode<T>`）、および `[ElementwiseOperation]` / `IDifferentiableOperation<T>` によるユーザー定義演算に対応しています。演算は `XMath` / `XMath.Special` の拡張メンバーとして提供されるため、`using static Tuna.XMath;` ではなく `XMath.Sin(x)`・`XMath.Sum(v)` のように修飾して呼び出してください。
 
 ```csharp
 using Tuna;

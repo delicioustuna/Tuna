@@ -168,7 +168,7 @@ public abstract class ContinuousWavelet
         public override double FourierFactor { get; } =
             4 * Math.PI / (centralFrequency + Math.Sqrt(2 + centralFrequency * centralFrequency));
 
-        public override double EFoldingTime => Math.Sqrt(2);
+        public override double EFoldingTime => XMath.Constants.Sqrt2;
     }
 
     private sealed class PaulWavelet : ContinuousWavelet
@@ -182,7 +182,7 @@ public abstract class ContinuousWavelet
         public PaulWavelet(int order) : base($"Paul({order.ToString(CultureInfo.InvariantCulture)})")
         {
             this.order = order;
-            double spectral = Math.Sqrt(2), temporal = 1 / Math.Sqrt(Math.PI);
+            double spectral = XMath.Constants.Sqrt2, temporal = XMath.Constants.OneOverSqrtPi;
             for (int k = 1; k <= order; k++)
             {
                 spectral *= Math.Sqrt(2.0 / ((2.0 * k - 1) * k));
@@ -272,6 +272,6 @@ public abstract class ContinuousWavelet
 
         public override double FourierFactor { get; }
 
-        public override double EFoldingTime => Math.Sqrt(2);
+        public override double EFoldingTime => XMath.Constants.Sqrt2;
     }
 }

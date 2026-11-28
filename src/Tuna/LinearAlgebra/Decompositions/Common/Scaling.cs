@@ -3,14 +3,11 @@ namespace Tuna.LinearAlgebra;
 // LAPACK dsyev / dgesvd 相当のスケーリング（2 のべき乗でスケーリングし丸め誤差なしにオーバーフロー・アンダーフローを回避）。
 internal static class Scaling
 {
-    private const double SafeMin = 2.2250738585072014e-308;
-    private const double Epsilon = 2.220446049250313e-16;
-
     // 非スケーリング範囲の下限 √(safmin/ε)。
-    private static readonly double LowerBound = Math.Sqrt(SafeMin / Epsilon);
+    private static readonly double LowerBound = Math.Sqrt(NumericConstants.MinNormal / NumericConstants.MachineEpsilon);
 
     // 非スケーリング範囲の上限 √(ε/safmin)。
-    private static readonly double UpperBound = Math.Sqrt(Epsilon / SafeMin);
+    private static readonly double UpperBound = Math.Sqrt(NumericConstants.MachineEpsilon / NumericConstants.MinNormal);
 
     // 下三角部分の最大絶対値が範囲外なら 2 のべき乗でスケーリングし、掛けた倍率（未適用なら 1）を返す。
     internal static double ScaleLowerSymmetric(int n, Span<double> a, int lda)

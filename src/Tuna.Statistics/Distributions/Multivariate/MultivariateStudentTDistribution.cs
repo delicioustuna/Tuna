@@ -86,8 +86,8 @@ public sealed class MultivariateStudentTDistribution : IMultivariateContinuousDi
     {
         double halfLogDeterminant = MultivariateMath.SumLogDiagonal(factor, d);
         double normalization = double.IsPositiveInfinity(nu)
-            ? -d * DistributionMath.LnSqrt2Pi
-            : DistributionMath.LogGammaShiftCorrection(0.5 * nu, 0.5 * d) - d * DistributionMath.LnSqrt2Pi;
+            ? -d * XMath.Constants.LnSqrtTwoPi
+            : DistributionMath.LogGammaShiftCorrection(0.5 * nu, 0.5 * d) - d * XMath.Constants.LnSqrtTwoPi;
         return (Math.Log(nu), halfLogDeterminant, normalization);
     }
 
@@ -323,7 +323,7 @@ public sealed class MultivariateStudentTDistribution : IMultivariateContinuousDi
         if (!IsNormal)
         {
             // V = 2G ~ χ²(ν), w = sqrt(ν / V).
-            double logV = DistributionMath.Ln2 + Sampling.LogStandardGamma(random, 0.5 * _degreesOfFreedom);
+            double logV = XMath.Constants.Ln2 + Sampling.LogStandardGamma(random, 0.5 * _degreesOfFreedom);
             double w = Math.Exp(0.5 * (_logDegreesOfFreedom - logV));
             bool finite = true;
             for (int i = 0; i < t.Length; i++)

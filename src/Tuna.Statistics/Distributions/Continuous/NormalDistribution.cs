@@ -53,7 +53,7 @@ public readonly partial struct NormalDistribution : IContinuousDistribution
     public double ExcessKurtosis => 0;
 
     /// <inheritdoc/>
-    public double Entropy => 0.5 + DistributionMath.LnSqrt2Pi + Math.Log(_standardDeviation);
+    public double Entropy => 0.5 + XMath.Constants.LnSqrtTwoPi + Math.Log(_standardDeviation);
 
     /// <inheritdoc/>
     public double Median => _mean;

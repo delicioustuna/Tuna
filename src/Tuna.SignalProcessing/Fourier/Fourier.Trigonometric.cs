@@ -803,7 +803,7 @@ public static partial class Fourier
         Complex[] work = ArrayPool<Complex>.Shared.Rent(Math.Max(plan.WorkLength, 1));
         var input = buffer.AsSpan(0, n);
         var result = buffer.AsSpan(n, n);
-        double root2 = Math.Sqrt(2);
+        double root2 = XMath.Constants.Sqrt2;
 
         // 直交化の端点補正（SciPy norm="ortho" の定義）: 入力側は DCT-I/III・DST-III、出力側は DCT-I/II・DST-II の端点を √2 倍/除算する。
         bool correctInput = options.Orthonormal && (actual == 3 || (actual == 1 && !sine));

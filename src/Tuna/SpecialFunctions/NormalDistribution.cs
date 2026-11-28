@@ -1,17 +1,12 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
 {
     public static partial class Special
     {
-        private const double InvSqrt2 = 0.7071067811865476;
-
-        // 1/√2 の倍精度表現との残差（1/√2 - InvSqrt2）
-        private const double InvSqrt2Lo = -4.833646656726457e-17;
-
-        private const double Sqrt2 = 1.4142135623730951;
-        private const double InvSqrt2Pi = 0.3989422804014327;
-        private const double SqrtHalfPi = 1.2533141373155003;
         private const double LogQuarter = -1.3862943611198906;
         private const double LogThreeQuarters = -0.2876820724517809;
         private const double LogMinNormal = -708.3964185322641;
@@ -39,7 +34,7 @@ public static partial class XMath
                 return x;
             }
 
-            return ScaledExpMinusHalfSquare(x, InvSqrt2Pi);
+            return ScaledExpMinusHalfSquare(x, OneOverSqrtTwoPi);
         }
 
         /// <summary>
@@ -69,7 +64,7 @@ public static partial class XMath
             }
 
             double lo = Math.FusedMultiplyAdd(half, x, -hi);
-            return (-LnSqrt2Pi - lo) - hi;
+            return (-LnSqrtTwoPi - lo) - hi;
         }
 
         /// <summary>
@@ -307,8 +302,8 @@ public static partial class XMath
             // t の丸め誤差の補正は erfcx の最後の丸めの前に入れる
             double hi = x * x;
             double lo = Math.FusedMultiplyAdd(x, x, -hi);
-            double t = x * InvSqrt2;
-            double tLo = Math.FusedMultiplyAdd(x, InvSqrt2, -t) + x * InvSqrt2Lo;
+            double t = x * OneOverSqrt2;
+            double tLo = Math.FusedMultiplyAdd(x, OneOverSqrt2, -t) + x * OneOverSqrt2Lo;
             return ScaleByExpMinusHalf(0.5 * ErfcxPositive(t, tLo, -0.5 * lo), hi);
         }
 
@@ -339,8 +334,8 @@ public static partial class XMath
         // erfcx(x/√2)（x ≥ 0, 有限）。t = x/√2 の丸め誤差 tLo（積の丸めと 1/√2 の残差）を 1 次補正する
         private static double NormalErfcx(double x)
         {
-            double t = x * InvSqrt2;
-            double tLo = Math.FusedMultiplyAdd(x, InvSqrt2, -t) + x * InvSqrt2Lo;
+            double t = x * OneOverSqrt2;
+            double tLo = Math.FusedMultiplyAdd(x, OneOverSqrt2, -t) + x * OneOverSqrt2Lo;
             return ErfcxPositive(t, tLo, 0);
         }
 
@@ -363,7 +358,7 @@ public static partial class XMath
             double residual = (product - d) + (Math.FusedMultiplyAdd(x, rest, productLo) - dLo);
 
             // f(x) = Φ(x) - 1/2 - d、f'(x) = φ(x)、f''/f' = -x
-            double step = residual / (InvSqrt2Pi * Math.Exp(-0.5 * u));
+            double step = residual / (OneOverSqrtTwoPi * Math.Exp(-0.5 * u));
             return x - step / (1 + 0.5 * x * step);
         }
 
@@ -390,7 +385,7 @@ public static partial class XMath
             }
 
             // g(x) = Q(x) - q、g'(x) = -φ(x)、g''/g' = -x。g/g' = -(M(x) - q/φ(x))（ミルズ比 M(x) = √(π/2) erfcx(x/√2)）
-            double step = -SqrtHalfPi * (NormalErfcx(x) - 2 * q * ExpHalfSquare(x));
+            double step = -SqrtPiOver2 * (NormalErfcx(x) - 2 * q * ExpHalfSquare(x));
             return x - step / (1 + 0.5 * x * step);
         }
 
@@ -418,7 +413,7 @@ public static partial class XMath
                 x = Sqrt2 * Math.Sqrt(l);
                 for (int i = 0; i < 3; i++)
                 {
-                    x = Sqrt2 * Math.Sqrt(l - (Math.Log(x) + LnSqrt2Pi));
+                    x = Sqrt2 * Math.Sqrt(l - (Math.Log(x) + LnSqrtTwoPi));
                 }
             }
 
@@ -427,7 +422,7 @@ public static partial class XMath
                 // d ln Q/dx = -φ(x)/Q(x) = -1/M(x)。ミルズ比 M(x) = √(π/2) erfcx(x/√2)。
                 // 2 次の項から、ステップ後の誤差は step²/(2x) 程度。|step| ≤ 1e-9 x なら倍精度の丸めより十分小さい
                 double residual = LogNormalUpperTail(x) - logQ;
-                double step = residual * SqrtHalfPi * Erfcx(x * InvSqrt2);
+                double step = residual * SqrtPiOver2 * Erfcx(x * OneOverSqrt2);
                 x += step;
                 if (!(Math.Abs(step) > 1e-9 * x))
                 {

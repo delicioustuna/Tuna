@@ -63,7 +63,7 @@ public sealed partial class MultivariateNormalDistribution
 
             double status = MultivariateMath.Standardize(new ReadOnlyVectorSpan<double>(observations), m, factor, z);
             double value = status == 0
-                ? -n * DistributionMath.LnSqrt2Pi - MultivariateMath.SumLogDiagonal(factor, n) - MultivariateMath.HalfSquaredNorm(z)
+                ? -n * XMath.Constants.LnSqrtTwoPi - MultivariateMath.SumLogDiagonal(factor, n) - MultivariateMath.HalfSquaredNorm(z)
                 : double.IsNaN(status) ? double.NaN : double.NegativeInfinity;
             if (!(PackedLogPdf.RequiresGradient(mean) || PackedLogPdf.RequiresGradient(lowerFactor) || PackedLogPdf.RequiresGradient(x)))
             {

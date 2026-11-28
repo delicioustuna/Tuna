@@ -60,7 +60,16 @@ internal sealed partial class ArrayStore<T>
         return Values(output + 1 + index);
     }
 
-    public void DiscardOperationSlots(int output) => DiscardOperationSlots(output, output);
+    public void DiscardOperationSlots(int output)
+    {
+        long limit = RetentionFactor * Math.Max(peakBorrowed, borrowed);
+        DiscardOperationSlots(output, output);
+        if (retained > limit)
+        {
+            // Forward failures can churn through array lengths within the same epoch.
+            TrimSpares(limit, discardEmptySpares: true);
+        }
+    }
 
     public void DiscardOperationSavedSlots(int output)
     {

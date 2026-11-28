@@ -63,7 +63,7 @@ public readonly partial struct GumbelDistribution : IContinuousDistribution
     public double Mean => DistributionMath.Unstandardize(_location, _scale, XMath.Special.EulerGamma);
 
     /// <inheritdoc/>
-    public double Variance => 1.6449340668482264 * _scale * _scale;
+    public double Variance => XMath.Constants.PiSquaredOver6 * _scale * _scale;
 
     /// <inheritdoc/>
     public double StandardDeviation => 1.282549830161864 * _scale;
@@ -95,7 +95,7 @@ public readonly partial struct GumbelDistribution : IContinuousDistribution
         double t = Math.Exp(-z);
         // exp(-t) underflows to 0 for t > 746; guard avoids Inf * 0 = NaN when t = +Inf.
         double standard = t > 746 ? 0 : t * Math.Exp(-t);
-        if (standard >= DistributionMath.MinNormal)
+        if (standard >= NumericConstants.MinNormal)
         {
             return standard / _scale;
         }
@@ -126,7 +126,7 @@ public readonly partial struct GumbelDistribution : IContinuousDistribution
         double z = Standardize(x);
         double t = Math.Exp(-z);
         // When t is subnormal, ln(1 - exp(-t)) = ln(t) + O(t) = -z within floating-point precision.
-        return t >= DistributionMath.MinNormal ? DistributionMath.Log1mExp(-t) : -z;
+        return t >= NumericConstants.MinNormal ? DistributionMath.Log1mExp(-t) : -z;
     }
 
     private double FromNegativeLogP(double negativeLogP) =>

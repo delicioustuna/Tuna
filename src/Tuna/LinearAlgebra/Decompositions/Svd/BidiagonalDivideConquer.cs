@@ -3,8 +3,6 @@ namespace Tuna.LinearAlgebra;
 // 上二重対角行列の分割統治 SVD（LAPACK dbdsdc / dlasd0–dlasd4 相当、Gu–Eisenstat 直交性回復付き）。
 internal static class BidiagonalDivideConquer
 {
-    private const double Epsilon = 1.1102230246251565e-16;
-
     // LAPACK の SMLSIZ と同じ 25。これ以下の部分問題は QR 法（BidiagonalSvd）で解く。
     internal const int LeafSize = 25;
 
@@ -386,7 +384,7 @@ internal static class BidiagonalDivideConquer
                 dmax = Math.Max(dmax, sv[t]);
             }
 
-            double tol = 8 * Epsilon * Math.Max(dmax, Math.Max(Math.Abs(alpha), Math.Abs(beta)));
+            double tol = 8 * NumericConstants.UnitRoundoff * Math.Max(dmax, Math.Max(Math.Abs(alpha), Math.Abs(beta)));
             if (Math.Abs(z[0]) <= tol)
             {
                 z[0] = tol;

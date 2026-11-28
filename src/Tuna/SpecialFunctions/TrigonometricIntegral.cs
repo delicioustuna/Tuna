@@ -1,4 +1,5 @@
 using System.Numerics;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -92,7 +93,7 @@ public static partial class XMath
                     term *= x2 / ((2.0 * k) * (2 * k + 1));
                     double t = term / (2 * k + 1);
                     value += t;
-                    if (t <= Epsilon * value * 0.5)
+                    if (t <= MachineEpsilon * value * 0.5)
                     {
                         break;
                     }
@@ -153,7 +154,7 @@ public static partial class XMath
                     term *= x2 / ((2.0 * k - 1) * (2 * k));
                     double t = term / (2 * k);
                     sum += t;
-                    if (t <= Epsilon * sum * 0.5)
+                    if (t <= MachineEpsilon * sum * 0.5)
                     {
                         break;
                     }
@@ -183,7 +184,7 @@ public static partial class XMath
                     c = b + a / c;
                     Complex delta = c * d;
                     h *= delta;
-                    if (Math.Abs(delta.Real - 1) + Math.Abs(delta.Imaginary) <= Epsilon)
+                    if (Math.Abs(delta.Real - 1) + Math.Abs(delta.Imaginary) <= MachineEpsilon)
                     {
                         break;
                     }
@@ -214,7 +215,7 @@ public static partial class XMath
                     ciSum += (k / 2) % 2 == 0 ? term : -term;
                 }
 
-                if (k >= 2 && term <= Epsilon * si * 0.5)
+                if (k >= 2 && term <= MachineEpsilon * si * 0.5)
                 {
                     break;
                 }

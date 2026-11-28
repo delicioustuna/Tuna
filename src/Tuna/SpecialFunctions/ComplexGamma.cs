@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -282,7 +284,7 @@ public static partial class XMath
             Complex reflected = Complex.Conjugate(ComplexLogGammaUpper(1 - x, y));
 
             // iπz = -πy + iπx
-            double re = LnTwoPi - Math.PI * y - logModulus - reflected.Real;
+            double re = LnTau - Math.PI * y - logModulus - reflected.Real;
             double im = Math.PI * x - 0.5 * Math.PI - logArgument - reflected.Imaginary;
             return new Complex(re, im);
         }
@@ -320,7 +322,7 @@ public static partial class XMath
 
             // (z - 1/2) ln z - z の実部・虚部
             double xm = z.Real - 0.5;
-            double re = xm * logModulus - z.Imaginary * argument - z.Real + LnSqrt2Pi;
+            double re = xm * logModulus - z.Imaginary * argument - z.Real + LnSqrtTwoPi;
             double im = z.Imaginary * logModulus + xm * argument - z.Imaginary;
 
             Complex inverse = 1 / z;

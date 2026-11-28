@@ -8,9 +8,6 @@ namespace Tuna.LinearAlgebra;
 /// </summary>
 internal static class SchurBlocks
 {
-    private const double Epsilon = 2.220446049250313e-16;
-    private const double SafeMin = 2.2250738585072014e-308;
-
     // LAPACK dlanv2
     // 固有値が実数なら上三角（c = 0）、複素数なら対角成分が等しく bc < 0 の形にする。
     // [a b; c d] ← [cs -sn; sn cs]ᵀ [a b; c d] [cs -sn; sn cs]。
@@ -22,7 +19,7 @@ internal static class SchurBlocks
         out double rt1r, out double rt1i, out double rt2r, out double rt2i, out double cs, out double sn)
     {
         const double Multiplier = 4;
-        double safmn2 = Math.ScaleB(1.0, (int)(Math.Log2(SafeMin / Epsilon) / 2));
+        double safmn2 = Math.ScaleB(1.0, (int)(Math.Log2(NumericConstants.MinNormal / NumericConstants.MachineEpsilon) / 2));
         double safmx2 = 1 / safmn2;
         if (c == 0)
         {
@@ -51,7 +48,7 @@ internal static class SchurBlocks
             double bcmis = Math.Min(Math.Abs(b), Math.Abs(c)) * Math.CopySign(1.0, b) * Math.CopySign(1.0, c);
             double scale = Math.Max(Math.Abs(p), bcmax);
             double z = p / scale * p + bcmax / scale * bcmis;
-            if (z >= Multiplier * Epsilon)
+            if (z >= Multiplier * NumericConstants.MachineEpsilon)
             {
                 // 実固有値
                 z = p + Math.CopySign(Math.Sqrt(scale) * Math.Sqrt(z), p);
@@ -257,8 +254,8 @@ internal static class SchurBlocks
             }
         }
 
-        double smlnum = SafeMin / Epsilon;
-        double thresh = Math.Max(10 * Epsilon * dnorm, smlnum);
+        double smlnum = NumericConstants.MinNormal / NumericConstants.MachineEpsilon;
+        double thresh = Math.Max(10 * NumericConstants.MachineEpsilon * dnorm, smlnum);
         Span<double> x = stackalloc double[4];
         SolveSylvester(n1, n2, dm, 4, dm[(n1 + n1 * 4)..], 4, dm[(n1 * 4)..], 4, out double scale, x, 2);
 
@@ -443,8 +440,8 @@ internal static class SchurBlocks
             }
         }
 
-        double smlnum = SafeMin / Epsilon;
-        smin = Math.Max(Epsilon * smin, smlnum);
+        double smlnum = NumericConstants.MinNormal / NumericConstants.MachineEpsilon;
+        smin = Math.Max(NumericConstants.MachineEpsilon * smin, smlnum);
 
         // 未知数 X[i, j] の番号は i + j·n1
         for (int j = 0; j < n2; j++)

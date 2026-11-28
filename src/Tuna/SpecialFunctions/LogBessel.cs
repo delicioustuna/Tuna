@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -134,7 +137,7 @@ public static partial class XMath
             {
                 term *= t / (k * (nu + k));
                 sum += term;
-                if (term <= sum * Epsilon * 0.5)
+                if (term <= sum * MachineEpsilon * 0.5)
                 {
                     break;
                 }
@@ -195,7 +198,7 @@ public static partial class XMath
                 c = b + a / c;
                 double delta = c * d;
                 f *= delta;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }

@@ -1,5 +1,8 @@
 # Tuna
 
+[![NuGet](https://img.shields.io/nuget/v/Tuna)](https://www.nuget.org/packages/Tuna)
+[![Releases](https://img.shields.io/github/release/delicioustuna/Tuna)](https://github.com/delicioustuna/Tuna/releases)
+
 [English](README.md)
 
 **T**iny **U**tilities for **N**umerical **A**nalysis — .NET 10 向けの、純 C#・SIMD 最適化数値計算ライブラリです。
@@ -13,18 +16,38 @@ Tuna はネイティブ依存なしで高速な線形代数・特殊関数・決
 - **アロケーションを抑えられる API 設計**: `XMath` の要素別演算や線形代数演算では、結果を新規確保するオーバーロード、`destination` を受け取るオーバーロード、`XMath.InPlace` によるインプレース版を一貫して提供しています。行列分解も内部バッファを再利用した再計算（`Recompute`）に対応します。
 - **モジュール化されたパッケージ構成**: コアパッケージ `Tuna` を基盤とし、用途に応じた拡張パッケージ（`Tuna.*`）だけを選択して利用できます。
 
+## インストール
+
+[NuGet](https://www.nuget.org/packages/Tuna) からインストールできます（.NET 10 が必要です）。
+
+```bash
+dotnet add package Tuna
+```
+
+必要に応じて拡張パッケージを追加します。
+
+```bash
+dotnet add package Tuna.Statistics
+dotnet add package Tuna.SignalProcessing
+dotnet add package Tuna.Optimization
+dotnet add package Tuna.Integration
+dotnet add package Tuna.Differentiation
+dotnet add package Tuna.Probabilistic
+dotnet add package Tuna.NeuralNetwork
+```
+
 ## パッケージ構成
 
-| パッケージ | 主な機能 |
-| --- | --- |
-| [`Tuna`](src/Tuna) | コア: `Vector<T>`・`Matrix<T>`・`Tensor<T>`、`XMath`、BLAS・行列分解（LU / Cholesky / QR / 固有値 / SVD）、特殊関数、疑似乱数・準乱数 |
-| [`Tuna.Statistics`](src/Tuna.Statistics) | 連続・離散・多変量の確率分布（PDF / CDF / 分位点 / サンプリング） |
-| [`Tuna.SignalProcessing`](src/Tuna.SignalProcessing) | 1D/2D FFT、実数 FFT、DCT / DST、畳み込み、相関、離散 / 連続ウェーブレット変換 |
-| [`Tuna.Optimization`](src/Tuna.Optimization) | L-BFGS / L-BFGS-B、SGD / Adam / AdamW、近接勾配法（FISTA / ADMM）、大域最適化、遺伝的アルゴリズム |
-| [`Tuna.Integration`](src/Tuna.Integration) | 1 次元適応数値積分、多次元適応積分、準モンテカルロ積分 |
-| [`Tuna.Differentiation`](src/Tuna.Differentiation) | テープベースの逆モード自動微分（スカラー・ベクトル・行列・テンソル・行列分解） |
-| [`Tuna.Probabilistic`](src/Tuna.Probabilistic) | MCMC サンプラー（HMC / NUTS / スライス / アンサンブル / レプリカ交換）と収束診断（$\hat{R}$, ESS, MCSE） |
-| [`Tuna.NeuralNetwork`](src/Tuna.NeuralNetwork) | 2D 畳み込み、Mamba ブロック、正規化層、SafeTensors 読み取り |
+| パッケージ | NuGet | 主な機能 |
+| --- | --- | --- |
+| [`Tuna`](src/Tuna) | [![NuGet](https://img.shields.io/nuget/v/Tuna)](https://www.nuget.org/packages/Tuna) | コア: `Vector<T>`・`Matrix<T>`・`Tensor<T>`、`XMath`、BLAS・行列分解（LU / Cholesky / QR / 固有値 / SVD）、特殊関数、疑似乱数・準乱数 |
+| [`Tuna.Statistics`](src/Tuna.Statistics) | [![NuGet](https://img.shields.io/nuget/v/Tuna.Statistics)](https://www.nuget.org/packages/Tuna.Statistics) | 連続・離散・多変量の確率分布（PDF / CDF / 分位点 / サンプリング） |
+| [`Tuna.SignalProcessing`](src/Tuna.SignalProcessing) | [![NuGet](https://img.shields.io/nuget/v/Tuna.SignalProcessing)](https://www.nuget.org/packages/Tuna.SignalProcessing) | 1D/2D FFT、実数 FFT、DCT / DST、畳み込み、相関、離散 / 連続ウェーブレット変換 |
+| [`Tuna.Optimization`](src/Tuna.Optimization) | [![NuGet](https://img.shields.io/nuget/v/Tuna.Optimization)](https://www.nuget.org/packages/Tuna.Optimization) | L-BFGS / L-BFGS-B、SGD / Adam / AdamW、近接勾配法（FISTA / ADMM）、大域最適化、遺伝的アルゴリズム |
+| [`Tuna.Integration`](src/Tuna.Integration) | [![NuGet](https://img.shields.io/nuget/v/Tuna.Integration)](https://www.nuget.org/packages/Tuna.Integration) | 1 次元適応数値積分、多次元適応積分、準モンテカルロ積分 |
+| [`Tuna.Differentiation`](src/Tuna.Differentiation) | [![NuGet](https://img.shields.io/nuget/v/Tuna.Differentiation)](https://www.nuget.org/packages/Tuna.Differentiation) | テープベースの逆モード自動微分（スカラー・ベクトル・行列・テンソル・行列分解） |
+| [`Tuna.Probabilistic`](src/Tuna.Probabilistic) | [![NuGet](https://img.shields.io/nuget/v/Tuna.Probabilistic)](https://www.nuget.org/packages/Tuna.Probabilistic) | MCMC サンプラー（HMC / NUTS / スライス / アンサンブル / レプリカ交換）と収束診断（$\hat{R}$, ESS, MCSE） |
+| [`Tuna.NeuralNetwork`](src/Tuna.NeuralNetwork) | [![NuGet](https://img.shields.io/nuget/v/Tuna.NeuralNetwork)](https://www.nuget.org/packages/Tuna.NeuralNetwork) | 2D 畳み込み、Mamba ブロック、正規化層、SafeTensors 読み取り |
 
 ## クイックスタート
 

@@ -53,7 +53,7 @@ public sealed class MatrixNormalDistribution : IMatrixContinuousDistribution
         _columnFactor = MultivariateMath.PositiveDefiniteFactor(_columnCovariance, p, nameof(columnCovariance));
         _rows = n;
         _columns = p;
-        _logNormalization = -((double)n * p) * DistributionMath.LnSqrt2Pi
+        _logNormalization = -((double)n * p) * XMath.Constants.LnSqrtTwoPi
             - p * MultivariateMath.SumLogDiagonal(_rowFactor, n) - n * MultivariateMath.SumLogDiagonal(_columnFactor, p);
     }
 

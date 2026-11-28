@@ -4,8 +4,6 @@ namespace Tuna.Differentiation;
 
 public static partial class XMathExtensions
 {
-    private const double Ln2 = 0.6931471805599453;
-
     extension(XMath)
     {
         /// <summary>
@@ -151,7 +149,7 @@ public static partial class XMathExtensions
             {
                 derivative = double.NegativeInfinity;
             }
-            else if (raw < -Ln2)
+            else if (raw < -XMath.Constants.Ln2)
             {
                 // For x < -ln 2, eˣ < 1/2 so 1 - eˣ has no cancellation, and this preserves subnormal tails down to x ≈ -745
                 // (whereas -1/expm1(-x) overflows its denominator for x < -709.78).

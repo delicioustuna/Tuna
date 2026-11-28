@@ -14,12 +14,6 @@ internal static class LuKernels
     /// </summary>
     private const int LeafSize = 16;
 
-    // LAPACK の sfmin
-    /// <summary>
-    /// 逆数を掛けてもオーバーフローしない最小の絶対値
-    /// </summary>
-    private const double SafeMinimum = 2.2250738585072014e-308;
-
     /// <summary>
     /// <c>m × n</c>（<c>m ≥ n</c>）の行列を分解し、<c>L</c>（単位下三角、対角は格納しない）と <c>U</c> で上書きする
     /// </summary>
@@ -86,7 +80,7 @@ internal static class LuKernels
                     }
                 }
 
-                if (Math.Abs(pivot) >= SafeMinimum)
+                if (Math.Abs(pivot) >= NumericConstants.MinNormal)
                 {
                     Level1Kernels.Scale(1.0 / pivot, column[(j + 1)..]);
                 }

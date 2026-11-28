@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -7,7 +9,7 @@ public static partial class XMath
     public static partial class Special
     {
         // 級数・漸化式の相対誤差の見積もり許容値（超える場合は別手法を試す）
-        private const double Hypergeometric1F1Tolerance = 4 * Epsilon;
+        private const double Hypergeometric1F1Tolerance = 4 * MachineEpsilon;
 
         // 漸近展開を試す最小の x（これ未満では項が減少する前に発散する）
         private const double Hypergeometric1F1AsymptoticMin = 8;
@@ -236,7 +238,7 @@ public static partial class XMath
         {
             if (x >= Hypergeometric1F1AsymptoticMin && Hypergeometric1F1TryAsymptotic(a, aLo, b, x, out double asymptotic, out exponent))
             {
-                error = Epsilon;
+                error = MachineEpsilon;
                 return asymptotic;
             }
 
@@ -490,7 +492,7 @@ public static partial class XMath
             double result = sum.Hi + sum.Lo;
             error = k >= MaxIterations || !double.IsFinite(result) || result == 0
                 ? double.PositiveInfinity
-                : (maxTerm / Math.Abs(result)) * (k + 2) * 9.860761315262648e-32 + 0.5 * Epsilon;
+                : (maxTerm / Math.Abs(result)) * (k + 2) * 9.860761315262648e-32 + 0.5 * MachineEpsilon;
             if (k >= MaxIterations)
             {
                 return (double.NaN, 0);
@@ -515,7 +517,7 @@ public static partial class XMath
             }
 
             exponent = exactExponent;
-            error = Epsilon;
+            error = MachineEpsilon;
             return exact;
         }
 
@@ -729,7 +731,7 @@ public static partial class XMath
 
             // 劣勢な項との比 |Γ(a)/Γ(b-a)| x^(b-2a) e^(-x)
             double logRatio = LogGamma(a) - LogGamma(d) + (b - 2 * a) * Math.Log(x) - x;
-            if (!(logRatio < Math.Log(Epsilon / 16)))
+            if (!(logRatio < Math.Log(MachineEpsilon / 16)))
             {
                 return false;
             }
@@ -754,7 +756,7 @@ public static partial class XMath
 
                 term = next;
                 sum += term;
-                if (Math.Abs(term) <= 0.125 * Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= 0.125 * MachineEpsilon * Math.Abs(sum))
                 {
                     converged = true;
                     break;

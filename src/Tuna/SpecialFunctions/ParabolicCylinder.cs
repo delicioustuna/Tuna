@@ -1,3 +1,5 @@
+using static Tuna.XMath.Constants;
+
 namespace Tuna;
 
 public static partial class XMath

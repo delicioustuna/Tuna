@@ -176,7 +176,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
     public double Entropy => XMath.Special.EulerGamma * (1 - 1 / _shape) + Math.Log(_scale) - Math.Log(_shape) + 1;
 
     /// <inheritdoc/>
-    public double Median => Quantile(DistributionMath.Ln2);
+    public double Median => Quantile(XMath.Constants.Ln2);
 
     /// <inheritdoc/>
     public double SupportMinimum => 0;
@@ -187,7 +187,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
     private double Power(double x)
     {
         double z = x / _scale;
-        if (z >= DistributionMath.MinNormal && z < double.PositiveInfinity)
+        if (z >= NumericConstants.MinNormal && z < double.PositiveInfinity)
         {
             return Math.Pow(z, _shape);
         }
@@ -198,7 +198,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
     private double LogPower(double x)
     {
         double z = x / _scale;
-        return z >= DistributionMath.MinNormal && z < double.PositiveInfinity
+        return z >= NumericConstants.MinNormal && z < double.PositiveInfinity
             ? _shape * Math.Log(z)
             : _shape * (Math.Log(x) - Math.Log(_scale));
     }
@@ -206,7 +206,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
     private double QuantileFromLog(double logW)
     {
         double value = _scale * Math.Exp(logW / _shape);
-        return value >= DistributionMath.MinNormal && value < double.PositiveInfinity
+        return value >= NumericConstants.MinNormal && value < double.PositiveInfinity
             ? value
             : Math.Exp(Math.Log(_scale) + logW / _shape);
     }
@@ -214,7 +214,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
     private double Quantile(double w)
     {
         double value = _scale * Math.Pow(w, 1 / _shape);
-        if (value >= DistributionMath.MinNormal && value < double.PositiveInfinity || w == 0 || double.IsPositiveInfinity(w))
+        if (value >= NumericConstants.MinNormal && value < double.PositiveInfinity || w == 0 || double.IsPositiveInfinity(w))
         {
             return value;
         }
@@ -242,7 +242,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
 
         double z = x / _scale;
         double value = _shape / _scale * Math.Pow(z, _shape - 1) * Math.Exp(-Math.Pow(z, _shape));
-        return double.IsFinite(value) && value >= DistributionMath.MinNormal ? value : Math.Exp(LogPdf(x));
+        return double.IsFinite(value) && value >= NumericConstants.MinNormal ? value : Math.Exp(LogPdf(x));
     }
 
     /// <inheritdoc/>
@@ -283,7 +283,7 @@ public readonly partial struct WeibullDistribution : IContinuousDistribution
 
         double w = Power(x);
         // When w = (x/λ)^k is subnormal, ln(1 - e^-w) = ln w - w/2 + ... agrees with ln w.
-        return w < DistributionMath.MinNormal ? LogPower(x) : DistributionMath.Log1mExp(-w);
+        return w < NumericConstants.MinNormal ? LogPower(x) : DistributionMath.Log1mExp(-w);
     }
 
     /// <inheritdoc/>

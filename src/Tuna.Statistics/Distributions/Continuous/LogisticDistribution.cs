@@ -50,7 +50,7 @@ public readonly partial struct LogisticDistribution : IContinuousDistribution
     public double Variance => Math.PI * Math.PI / 3 * _scale * _scale;
 
     /// <inheritdoc/>
-    public double StandardDeviation => Math.PI / Math.Sqrt(3) * _scale;
+    public double StandardDeviation => Math.PI / XMath.Constants.Sqrt3 * _scale;
 
     /// <inheritdoc/>
     public double Skewness => 0;

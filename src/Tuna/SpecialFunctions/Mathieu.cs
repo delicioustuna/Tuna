@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -115,7 +118,7 @@ public static partial class XMath
             if (q == 0)
             {
                 int m0 = MathieuOrder(kind, index);
-                return m0 == 0 ? InvSqrt2 : MathieuHarmonic(m0, x, cosine);
+                return m0 == 0 ? OneOverSqrt2 : MathieuHarmonic(m0, x, cosine);
             }
 
             MathieuCharacteristic(kind, index, q, true, out double[]? coefficients);
@@ -278,7 +281,7 @@ public static partial class XMath
         // 固有値に対する単位固有ベクトルをねじれ分解（twisted factorization）で求める（tail は末尾成分と最大成分の比）
         private static double[] MathieuEigenvector(int kind, double q, int size, double eigenvalue, out double tail)
         {
-            double sqrt2Q = Math.Sqrt(2) * q;
+            double sqrt2Q = Sqrt2 * q;
             double OffDiagonal(int i) => kind == 0 && i == 0 ? sqrt2Q : q;
 
             var plus = new double[size];
@@ -364,7 +367,7 @@ public static partial class XMath
         {
             if (kind == 0)
             {
-                x[0] *= InvSqrt2;
+                x[0] *= OneOverSqrt2;
             }
 
             double s = 0;

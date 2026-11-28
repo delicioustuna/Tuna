@@ -6,6 +6,45 @@ namespace Tuna.Statistics.Distributions;
 public readonly partial struct BernoulliDistribution
 {
     /// <summary>
+    /// Records the sum of Bernoulli log masses with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、ベルヌーイ分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations. / パラメータベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPmf(ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, probability);
+
+    /// <summary>
+    /// Records the Bernoulli log mass for each observation as a single operation.
+    /// <para>ベルヌーイ分布の観測ごとの対数確率質量を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log masses in observation order. / 入力順に並べた観測ごとの対数確率質量。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations, or no tape is available. / パラメータベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPmfPointwise(ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, probability, tape: tape);
+
+    private static void ValidateSharedLikelihoodParameters(double? probability, double? unusedSecond, double? unusedThird) =>
+        _ = new BernoulliDistribution(probability ?? 0, forDifferentiation: true);
+
+    private static LikelihoodEvaluation EvaluateLikelihoodPoint(long observation, double probability, double _, double __, LikelihoodGradients gradients)
+    {
+        var distribution = new BernoulliDistribution(probability, forDifferentiation: true);
+        return new(distribution.LogPmf(observation),
+            new((gradients & LikelihoodGradients.First) != 0 ? distribution.LogPmfProbabilityDerivative(observation) : 0));
+    }
+
+    /// <summary>
     /// Records the Bernoulli log probability mass and its derivative with respect to the success probability.
     /// <para>ベルヌーイ分布の対数確率質量と成功確率に関する微分を記録します。</para>
     /// </summary>
@@ -27,14 +66,15 @@ public readonly partial struct BernoulliDistribution
             return value;
         }
 
-        double derivative = k switch
-        {
-            0 => -1 / distribution._q,
-            1 => 1 / Math.Abs(distribution._p),
-            _ => 0,
-        };
-        return ScalarNode.Record(value, [(probability, derivative)]);
+        return ScalarNode.Record(value, [(probability, distribution.LogPmfProbabilityDerivative(k))]);
     }
+
+    private double LogPmfProbabilityDerivative(long k) => k switch
+    {
+        0 => -1 / _q,
+        1 => 1 / Math.Abs(_p),
+        _ => 0,
+    };
 
     /// <summary>
     /// Records the Bernoulli log likelihood of independent observations as a single operation.

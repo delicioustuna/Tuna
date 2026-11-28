@@ -144,17 +144,18 @@ public class TensorTests
     [Fact]
     public void AsMatrixRejectsColumnCountsBeyondInt32()
     {
-        // 横に並べた列数 65536·65536 は int に収まらない。要素のない形状でも、1要素のブロードキャストでも、形状を黙って変えない
-        var empty = new Tensor<double>(0, 65536, 65536);
+        // 横に並べた列数が int の上限を超える空のテンソルと、1 要素のブロードキャストビュー
+        var empty = new Tensor<double>(0, 2, int.MaxValue);
         Assert.Throws<InvalidOperationException>(() => empty.AsMatrix());
         Assert.Throws<InvalidOperationException>(() => empty.AsTensorSpan().AsReadOnly().AsMatrix());
         var one = new Vector<double>([42]);
         Assert.Equal(4294967296, (long)one.Broadcast(65536).Broadcast(65536).FlattenedLength);
         Assert.Throws<InvalidOperationException>(() => one.Broadcast(65536).Broadcast(65536).AsMatrix());
 
-        // 行列にできない形状でも、要素ごとの演算は行列ごとに計算する
-        var sum = XMath.Add(empty, empty);
-        Assert.Equal(new[] { 0, 65536, 65536 }, Shape(sum.Lengths));
+        Assert.Equal(empty.Lengths, XMath.Add(empty, empty).Lengths);
+        Assert.Equal(empty.Lengths, XMath.Multiply(empty, 2.0).Lengths);
+        XMath.InPlace.Multiply(empty, 2.0);
+        Assert.Throws<ArgumentException>(() => XMath.Multiply(empty, 2.0, new Tensor<double>(0, 2, 1)));
     }
 
     [Fact]

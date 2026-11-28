@@ -470,7 +470,7 @@ public static partial class Wavelets
 
     private static (double[] Low, double[] High) MaximalOverlapFilters(DiscreteWavelet wavelet)
     {
-        double root = Math.Sqrt(2.0);
+        double root = XMath.Constants.Sqrt2;
         var low = wavelet.ReconstructionLow.ToArray();
         var high = wavelet.ReconstructionHigh.ToArray();
         for (int l = 0; l < low.Length; l++)

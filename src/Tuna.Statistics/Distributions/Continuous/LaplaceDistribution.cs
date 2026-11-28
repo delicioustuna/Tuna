@@ -50,7 +50,7 @@ public readonly partial struct LaplaceDistribution : IContinuousDistribution
     public double Variance => 2 * _scale * _scale;
 
     /// <inheritdoc/>
-    public double StandardDeviation => Math.Sqrt(2) * _scale;
+    public double StandardDeviation => XMath.Constants.Sqrt2 * _scale;
 
     /// <inheritdoc/>
     public double Skewness => 0;
@@ -59,7 +59,7 @@ public readonly partial struct LaplaceDistribution : IContinuousDistribution
     public double ExcessKurtosis => 3;
 
     /// <inheritdoc/>
-    public double Entropy => 1 + DistributionMath.Ln2 + Math.Log(_scale);
+    public double Entropy => 1 + XMath.Constants.Ln2 + Math.Log(_scale);
 
     /// <inheritdoc/>
     public double Median => _location;
@@ -76,7 +76,7 @@ public readonly partial struct LaplaceDistribution : IContinuousDistribution
     public double Pdf(double x) => 0.5 * Math.Exp(-Math.Abs(Standardize(x))) / _scale;
 
     /// <inheritdoc/>
-    public double LogPdf(double x) => -Math.Abs(Standardize(x)) - DistributionMath.Ln2 - Math.Log(_scale);
+    public double LogPdf(double x) => -Math.Abs(Standardize(x)) - XMath.Constants.Ln2 - Math.Log(_scale);
 
     /// <inheritdoc/>
     public double Cdf(double x)
@@ -96,14 +96,14 @@ public readonly partial struct LaplaceDistribution : IContinuousDistribution
     public double LogCdf(double x)
     {
         double t = Standardize(x);
-        return t < 0 ? t - DistributionMath.Ln2 : DistributionMath.Log1p(-0.5 * Math.Exp(-t));
+        return t < 0 ? t - XMath.Constants.Ln2 : DistributionMath.Log1p(-0.5 * Math.Exp(-t));
     }
 
     /// <inheritdoc/>
     public double LogSf(double x)
     {
         double t = Standardize(x);
-        return t > 0 ? -t - DistributionMath.Ln2 : DistributionMath.Log1p(-0.5 * Math.Exp(t));
+        return t > 0 ? -t - XMath.Constants.Ln2 : DistributionMath.Log1p(-0.5 * Math.Exp(t));
     }
 
     /// <inheritdoc/>
@@ -140,9 +140,9 @@ public readonly partial struct LaplaceDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        return logP <= -DistributionMath.Ln2
-            ? DistributionMath.Unstandardize(_location, _scale, logP + DistributionMath.Ln2)
-            : DistributionMath.Unstandardize(_location, _scale, -(DistributionMath.Ln2 + DistributionMath.Log1mExp(logP)));
+        return logP <= -XMath.Constants.Ln2
+            ? DistributionMath.Unstandardize(_location, _scale, logP + XMath.Constants.Ln2)
+            : DistributionMath.Unstandardize(_location, _scale, -(XMath.Constants.Ln2 + DistributionMath.Log1mExp(logP)));
     }
 
     /// <inheritdoc/>
@@ -153,9 +153,9 @@ public readonly partial struct LaplaceDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        return logQ <= -DistributionMath.Ln2
-            ? DistributionMath.Unstandardize(_location, _scale, -(logQ + DistributionMath.Ln2))
-            : DistributionMath.Unstandardize(_location, _scale, DistributionMath.Ln2 + DistributionMath.Log1mExp(logQ));
+        return logQ <= -XMath.Constants.Ln2
+            ? DistributionMath.Unstandardize(_location, _scale, -(logQ + XMath.Constants.Ln2))
+            : DistributionMath.Unstandardize(_location, _scale, XMath.Constants.Ln2 + DistributionMath.Log1mExp(logQ));
     }
 
     private double SampleCore(IRandomSource random)

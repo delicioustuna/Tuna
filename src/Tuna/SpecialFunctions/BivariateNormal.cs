@@ -1,3 +1,5 @@
+using static Tuna.XMath.Constants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -99,7 +101,7 @@ public static partial class XMath
                 }
             }
 
-            return NormalCdf(h) * NormalCdf(k) + 0.5 * asr * sum * InvTwoPi;
+            return NormalCdf(h) * NormalCdf(k) + 0.5 * asr * sum * OneOverTwoPi;
         }
 
         // 0.925 ≤ ρ < 1 向け Genz (2004) の差表示:
@@ -121,7 +123,7 @@ public static partial class XMath
             double exponential = Math.Exp(-0.5 * (bs / as2 + hk));
             double p1 = 1 - c * (bs - as2) * (1 - d * bs / 5) / 3 + c * d * as2 * as2 / 5;
             double p2 = 1 - c * bs * (1 - d * bs / 5) / 3;
-            double mills = SqrtHalfPi * Erfcx(b / a * InvSqrt2);
+            double mills = SqrtPiOver2 * Erfcx(b / a * OneOverSqrt2);
             double analytic = exponential * (a * p1 - b * mills * p2);
 
             // 残余積分。第 1 項の指数は -b²/(2s²) - hk/(1 + r) ≤ 0 にまとめることでオーバーフローを防ぐ
@@ -142,7 +144,7 @@ public static partial class XMath
                 }
             }
 
-            return (analytic + halfA * remainder) * InvTwoPi;
+            return (analytic + halfA * remainder) * OneOverTwoPi;
         }
 
         // Φ(upper) - Φ(lower) (lower < upper) を裾確率の差として計算する

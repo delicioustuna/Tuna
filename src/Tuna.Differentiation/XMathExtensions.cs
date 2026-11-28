@@ -72,6 +72,45 @@ public static partial class XMathExtensions
         }
 
         /// <summary>
+        /// Computes the differentiable wedge product <c>u vᵀ − v uᵀ</c>.
+        /// <para>微分可能なウェッジ積 <c>u vᵀ − v uᵀ</c> を計算します。</para>
+        /// </summary>
+        /// <typeparam name="T">The element type (<see langword="float"/> or <see langword="double"/>). / 要素型（<see langword="float"/> または <see langword="double"/>）。</typeparam>
+        /// <param name="u">The first vector node. / 第 1 ベクトルノード。</param>
+        /// <param name="v">The second vector node. / 第 2 ベクトルノード。</param>
+        /// <returns>A <c>u.Length × u.Length</c> matrix node. Empty vectors produce a 0 × 0 node. / <c>u.Length × u.Length</c> の行列ノード。空のベクトルに対しては 0 × 0 のノード。</returns>
+        /// <remarks>
+        /// <para>For the output adjoint <c>G</c>, backpropagation uses its off-diagonal entries to accumulate <c>(G − Gᵀ) v</c> into the gradient of <paramref name="u"/> and <c>−(G − Gᵀ) u</c> into the gradient of <paramref name="v"/>.</para>
+        /// <para>When both nodes refer to the same differentiable vector region, finite inputs and finite off-diagonal adjoints produce a zero contribution. For non-finite operands, the contributions are combined using IEEE 754 arithmetic before accumulation.</para>
+        /// <para>出力の随伴を <c>G</c> とすると、逆伝播では <c>G</c> の非対角成分を使い、<paramref name="u"/> の勾配に <c>(G − Gᵀ) v</c>、<paramref name="v"/> の勾配に <c>−(G − Gᵀ) u</c> を加算します。</para>
+        /// <para>両ノードが同じ微分可能なベクトル領域を参照する場合、入力と随伴の非対角成分が有限なら勾配への寄与は 0 です。非有限値を含む場合は、両入力からの寄与を IEEE 754 演算で合成してから加算します。</para>
+        /// </remarks>
+        /// <exception cref="ArgumentException">The vector nodes have different lengths. / ベクトルノードの長さが一致しない場合。</exception>
+        /// <exception cref="InvalidOperationException">An input node is uninitialized, stale or belongs to a different tape, or recording requires a reset. / 入力ノードが未初期化、世代が古い、別のテープに属する、または記録を続けるためにテープのリセットが必要な場合。</exception>
+        /// <exception cref="OverflowException">The number of result elements exceeds <see cref="int.MaxValue"/>. / 結果の要素数が <see cref="int.MaxValue"/> を超える場合。</exception>
+        public static MatrixNode<T> Wedge<T>(VectorNode<T> u, VectorNode<T> v) where T : unmanaged, IFloatingPointIeee754<T>
+        {
+            Tape tape = Owner(u.Tape, u.Generation, v.Tape, v.Generation);
+            int n = u.Length;
+            if (n != v.Length)
+            {
+                throw new ArgumentException("The vectors must have the same length.", nameof(v));
+            }
+
+            var store = tape.Store<T>();
+            bool record = store.RequiresGradient(u.View.Slot) || store.RequiresGradient(v.View.Slot);
+            tape.EnsureCanApply(record);
+            int slot = store.AddPooled(n, n, record);
+            XMath.Wedge(store.VectorView(u.View), store.VectorView(v.View), store.WritableMatrix(slot));
+            if (record)
+            {
+                tape.AppendArrayRecord<T>(ArrayOperation.Wedge, slot, u.View, v.View);
+            }
+
+            return new(tape, ArrayView.Whole(slot, n, n));
+        }
+
+        /// <summary>
         /// Computes the cross product <c>u × v</c> of two three-dimensional vector nodes.
         /// <para>2 つの 3 次元ベクトルノードの外積 <c>u × v</c> を計算します。</para>
         /// </summary>

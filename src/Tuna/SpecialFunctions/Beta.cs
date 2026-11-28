@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -118,7 +121,7 @@ public static partial class XMath
                     // スターリング展開で ln Γ の主要項を解析的に打ち消す。
                     // large + small のオーバーフローを避けるため ln(small/(large + small)) = -ln(1 + large/small) とする
                     double sum = large + small;
-                    return LnSqrt2Pi - 0.5 * Math.Log(small) - small * Log1p(large / small)
+                    return LnSqrtTwoPi - 0.5 * Math.Log(small) - small * Log1p(large / small)
                         - (large - 0.5) * Log1p(small / large)
                         + StirlingCorrection(large) + StirlingCorrection(small) - StirlingCorrection(sum);
                 }

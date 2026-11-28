@@ -7,7 +7,6 @@ public static partial class XMath
 {
     internal const double SeluAlpha = 1.6732632423543772848170429916717;
     internal const double SeluScale = 1.0507009873554804934193349852946;
-    private const double InverseSqrt2 = 0.70710678118654752440084436210485;
 
     // 負の裾の指数シフト量 c（整数なので x + c に丸め誤差が生じない）と e⁻ᶜ。
     internal const double TailExpShift = 64;
@@ -98,7 +97,7 @@ public static partial class XMath
             return T.CreateTruncating(-0.0);
         }
 
-        return T.CreateTruncating(v < GeluTailBelow ? GeluNegativeTail(v) : 0.5 * v * XMath.Special.Erfc(-v * InverseSqrt2));
+        return T.CreateTruncating(v < GeluTailBelow ? GeluNegativeTail(v) : 0.5 * v * XMath.Special.Erfc(-v * Constants.OneOverSqrt2));
     }
 
     // 負の裾の GELU: (x/2)·erfcx(-x/√2)·e^(-x²/2)。x² = hi + lo に誤差なく分割し、シフト付きで正規化数のまま評価してから最後に非正規化数へ丸める。
@@ -107,7 +106,7 @@ public static partial class XMath
         double hi = v * v;
         double lo = Math.FusedMultiplyAdd(v, v, -hi);
         double gaussian = Math.Exp(TailExpShift - 0.5 * hi) * (1 - 0.5 * lo);
-        return 0.5 * v * XMath.Special.Erfcx(-v * InverseSqrt2) * gaussian * TailExpUnshift;
+        return 0.5 * v * XMath.Special.Erfcx(-v * Constants.OneOverSqrt2) * gaussian * TailExpUnshift;
     }
 
     /// <summary>

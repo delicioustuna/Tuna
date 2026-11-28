@@ -234,7 +234,7 @@ public readonly partial struct NegativeBinomialDistribution : IDiscreteDistribut
 
         // For r < 1, r/n can become subnormal and 1/r in S(r) can overflow; group -S(r) - (1/2) ln(n/r) via StirlingRemainderShifted.
         return DistributionMath.StirlingRemainder(n) - DistributionMath.StirlingRemainderShifted(_r, failures) - DistributionMath.StirlingRemainder(failures)
-            - 0.5 * (DistributionMath.LnTwoPi + Math.Log(failures)) - DistributionMath.Bd0(_r, n * _p) - DistributionMath.Bd0(failures, n * _q);
+            - 0.5 * (NumericConstants.LnTau + Math.Log(failures)) - DistributionMath.Bd0(_r, n * _p) - DistributionMath.Bd0(failures, n * _q);
     }
 
     /// <summary>

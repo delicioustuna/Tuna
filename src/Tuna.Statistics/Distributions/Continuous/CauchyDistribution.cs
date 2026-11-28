@@ -85,7 +85,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
     {
         double t = Math.Abs(Standardize(x));
         double peak = 1 / (Math.PI * _scale);
-        if (peak < DistributionMath.MinNormal)
+        if (peak < NumericConstants.MinNormal)
         {
             // When πγ overflows or 1/(πγ) is subnormal, compute standard density first and divide by γ once.
             double standard = t > 1e150 ? 1 / Math.PI / t / t : 1 / (Math.PI * (1 + t * t));
@@ -98,7 +98,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
     /// <inheritdoc/>
     public double LogPdf(double x)
     {
-        return LogPdfValue(Standardize(x), -DistributionMath.LnPi - Math.Log(_scale));
+        return LogPdfValue(Standardize(x), -XMath.Constants.LnPi - Math.Log(_scale));
     }
 
     private static double LogPdfValue(double t, double constant) => constant - LogOnePlusSquare(Math.Abs(t));
@@ -145,7 +145,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
 
     private double Quantile(double p, bool upper)
     {
-        if (p > 0 && p < DistributionMath.MinNormal)
+        if (p > 0 && p < NumericConstants.MinNormal)
         {
             // For subnormal p, tan(πp) = πp within relative ε; scale by 2^64 before unstandardizing to avoid intermediate overflow.
             double m = -1 / (Math.PI * Math.ScaleB(p, 64));
@@ -170,7 +170,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logP > -DistributionMath.Ln2)
+        if (logP > -XMath.Constants.Ln2)
         {
             return InverseSf(-DistributionMath.Expm1(logP));
         }
@@ -181,7 +181,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
         }
 
         // Asymptotic tail -1/tan(πp) ≈ -1/(πp) evaluated in log-space to avoid overflow when scale is small.
-        return DistributionMath.UnstandardizeFromLog(_location, _scale, true, -DistributionMath.LnPi - logP);
+        return DistributionMath.UnstandardizeFromLog(_location, _scale, true, -XMath.Constants.LnPi - logP);
     }
 
     /// <inheritdoc/>
@@ -192,7 +192,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logQ > -DistributionMath.Ln2)
+        if (logQ > -XMath.Constants.Ln2)
         {
             return InverseCdf(-DistributionMath.Expm1(logQ));
         }
@@ -202,7 +202,7 @@ public readonly partial struct CauchyDistribution : IContinuousDistribution
             return InverseSf(Math.Exp(logQ));
         }
 
-        return DistributionMath.UnstandardizeFromLog(_location, _scale, false, -DistributionMath.LnPi - logQ);
+        return DistributionMath.UnstandardizeFromLog(_location, _scale, false, -XMath.Constants.LnPi - logQ);
     }
 
     /// <inheritdoc/>

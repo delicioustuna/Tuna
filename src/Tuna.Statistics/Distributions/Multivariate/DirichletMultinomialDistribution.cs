@@ -164,7 +164,7 @@ public sealed class DirichletMultinomialDistribution : IMultivariateDiscreteDist
         bool small = a0 < 1;
         double divisor = small ? a0 : 1;
         double counts = DistributionMath.StirlingRemainder(n);
-        double logs = 0.5 * (DistributionMath.LnTwoPi + Math.Log(n));
+        double logs = 0.5 * (NumericConstants.LnTau + Math.Log(n));
         double concentrations = (small ? DistributionMath.StirlingRemainderShiftedWithoutLog(a0, n) : DistributionMath.StirlingRemainderShifted(a0, n))
             - DistributionMath.StirlingRemainder(total);
         // For x_i = 0, bd0(0, T*α_i) + bd0(α_i, U*α_i) = α_i * ln(1 + n/α₀).
@@ -184,7 +184,7 @@ public sealed class DirichletMultinomialDistribution : IMultivariateDiscreteDist
             double w = a + count;
             double share = w / total;
             counts -= DistributionMath.StirlingRemainder(count);
-            logs -= 0.5 * (DistributionMath.LnTwoPi + Math.Log(count));
+            logs -= 0.5 * (NumericConstants.LnTau + Math.Log(count));
             if (small)
             {
                 concentrations += DistributionMath.StirlingRemainder(w) - DistributionMath.StirlingRemainderShiftedWithoutLog(a, count) + Math.Log(a / divisor);
@@ -206,12 +206,12 @@ public sealed class DirichletMultinomialDistribution : IMultivariateDiscreteDist
     private static double ConcentrationDeviance(double a, double count, double a0, double share, double t, double u)
     {
         double m = a0 * share;
-        if (m < DistributionMath.MinNormal)
+        if (m < NumericConstants.MinNormal)
         {
             return a * (Math.Log(a / a0) - Math.Log(share)) + (m - a);
         }
 
-        if (u >= DistributionMath.MinNormal && m >= 0.5 * a && m <= 2 * a)
+        if (u >= NumericConstants.MinNormal && m >= 0.5 * a && m <= 2 * a)
         {
             return -a * DistributionMath.Log1pmx((count * u - a * t) / a);
         }

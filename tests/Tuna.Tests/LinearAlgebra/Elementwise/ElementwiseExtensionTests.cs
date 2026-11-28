@@ -114,6 +114,16 @@ public class ElementwiseExtensionTests
     }
 
     [Fact]
+    public void ZipPreservesEmptyStridedMatrixShape()
+    {
+        var empty = new ReadOnlyMatrixSpan<double>([], [0, int.MaxValue], [0, 2]);
+        var binary = Zip<Atan2>(empty, empty);
+        var ternary = Zip<Lerp>(empty, empty, empty);
+        Assert.Equal((0, int.MaxValue), (binary.Rows, binary.Columns));
+        Assert.Equal((0, int.MaxValue), (ternary.Rows, ternary.Columns));
+    }
+
+    [Fact]
     public void ZipAllowsExactAliasButRejectsPartialOverlapAndShapeMismatch()
     {
         var x = new DoubleVector([1, 2, 3, 4]);

@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -160,7 +163,7 @@ public static partial class XMath
                 reciprocals += inverse;
                 double weight = term * reciprocals;
                 weighted += weight;
-                if (term <= sum * Epsilon && weight <= weighted * Epsilon)
+                if (term <= sum * MachineEpsilon && weight <= weighted * MachineEpsilon)
                 {
                     break;
                 }
@@ -206,7 +209,7 @@ public static partial class XMath
                 derivative += deltaDerivative;
 
                 // a が整数では、値の係数が 0 になる箇所でも形状微分は続く。
-                if (Math.Abs(delta - 1) <= Epsilon && Math.Abs(deltaDerivative) <= Epsilon * Math.Abs(derivative))
+                if (Math.Abs(delta - 1) <= MachineEpsilon && Math.Abs(deltaDerivative) <= MachineEpsilon * Math.Abs(derivative))
                 {
                     break;
                 }
@@ -233,8 +236,8 @@ public static partial class XMath
                 sum += delta;
                 double deltaDerivative = -delta / denominator;
                 sumDerivative += deltaDerivative;
-                if (Math.Abs(delta) <= Epsilon * Math.Abs(sum)
-                    && Math.Abs(deltaDerivative) <= Epsilon * Math.Abs(sumDerivative))
+                if (Math.Abs(delta) <= MachineEpsilon * Math.Abs(sum)
+                    && Math.Abs(deltaDerivative) <= MachineEpsilon * Math.Abs(sumDerivative))
                 {
                     break;
                 }
@@ -334,8 +337,8 @@ public static partial class XMath
             double absoluteEta = Math.Abs(eta);
             // t² = aη²/2 の微分は -ln(x/a)。x = a では上側の極限を使う。
             double etaDerivative = eta == 0 ? -inverse : -(offset / eta) * inverse;
-            double t = absoluteEta * (sqrtA * InvSqrt2);
-            double tDerivative = eta == 0 ? -InvSqrt2 / sqrtA : -(logRatio / absoluteEta) * InvSqrt2 / sqrtA;
+            double t = absoluteEta * (sqrtA * OneOverSqrt2);
+            double tDerivative = eta == 0 ? -OneOverSqrt2 / sqrtA : -(logRatio / absoluteEta) * OneOverSqrt2 / sqrtA;
 
             double sum = 0;
             double sumDerivative = 0;
@@ -358,7 +361,7 @@ public static partial class XMath
 
             bool directUpper = offset >= 0;
             double sign = directUpper ? 1 : -1;
-            double scale = InvSqrt2Pi / sqrtA;
+            double scale = OneOverSqrtTwoPi / sqrtA;
             double remainder = sum * scale;
             double factor = 0.5 * Erfcx(t) + sign * remainder;
             double scaledDerivative = -tDerivative * OneOverSqrtPi + sign * (sumDerivative * scale + logRatio * remainder);

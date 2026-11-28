@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -137,7 +139,7 @@ public static partial class XMath
                 double gaussian = Math.Exp(-0.5 * q2);
                 if (gaussian >= MinNormal)
                 {
-                    return gaussian * (1 - 0.5 * q2Lo) * (OneOverSqrtPi * InvSqrt2) / sigma;
+                    return gaussian * (1 - 0.5 * q2Lo) * (OneOverSqrtPi * OneOverSqrt2) / sigma;
                 }
 
                 // 標準密度 e^(-u) が非正規化数や 0 になっても、小さい σ で割った密度は表現できる場合がある。
@@ -149,18 +151,18 @@ public static partial class XMath
                 double u = 0.5 * q2;
                 double exponent = -u - shiftHi;
                 double exponentLo = ((-u - exponent) - shiftHi) - shiftLo;
-                return Math.Exp(exponent) * (1 + exponentLo) * (1 - 0.5 * q2Lo) * (OneOverSqrtPi * InvSqrt2) / mantissa;
+                return Math.Exp(exponent) * (1 + exponentLo) * (1 - 0.5 * q2Lo) * (OneOverSqrtPi * OneOverSqrt2) / mantissa;
             }
 
             if (sigma > VoigtLargeWidth)
             {
                 // σ√2 がオーバーフローしうる。z = (x + iγ)/(σ√2) は比として作り、密度は最後に σ で割る（非正規化数への丸めは 1 回）。
                 // このとき |z| ≤ √2·2^(1024-1018) なので漸近形の分岐には入らない
-                Complex largeW = FaddeevaUpperHalfPlane(x / sigma * InvSqrt2, gamma / sigma * InvSqrt2);
-                return largeW.Real * (OneOverSqrtPi * InvSqrt2) / sigma;
+                Complex largeW = FaddeevaUpperHalfPlane(x / sigma * OneOverSqrt2, gamma / sigma * OneOverSqrt2);
+                return largeW.Real * (OneOverSqrtPi * OneOverSqrt2) / sigma;
             }
 
-            double scale = sigma * Math.Sqrt(2);
+            double scale = sigma * Sqrt2;
             double modulus = double.Hypot(x, gamma);
             if (modulus > 1e7 * scale)
             {

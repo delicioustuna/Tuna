@@ -489,7 +489,7 @@ internal abstract class HamiltonianChain<TDensity> where TDensity : IDifferentia
             return double.IsNaN(value) ? double.NegativeInfinity : value;
         }
 
-        double logHalf = Math.Log(0.5);
+        double logHalf = -XMath.Constants.Ln2;
         double logRatio = LogRatio(epsilon);
         int direction = logRatio > logHalf ? 1 : -1;
         for (int k = 0; k < 100; k++)

@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -226,7 +228,7 @@ public static partial class XMath
             if (HypergeometricUInTemmeRegion(b, x))
             {
                 temme = HypergeometricUTemmeAny(a, b, x, out temmeExponent, out temmeError);
-                if (temmeError <= 64 * Epsilon)
+                if (temmeError <= 64 * MachineEpsilon)
                 {
                     exponent = temmeExponent;
                     return temme;
@@ -238,7 +240,7 @@ public static partial class XMath
                 // b > x では a の漸化式で U が劣勢解にならない範囲があり（b - x が大きいほど広い）、Miller 法や下向きの漸化式の精度が落ちる。
                 // Temme 型の級数は x/b がそれほど小さくなくても打ち消しが小さいことが多いので、見積もり誤差が十分小さければ採用する
                 temme = HypergeometricUTemmeAny(a, b, x, out temmeExponent, out temmeError);
-                if (temmeError <= 64 * Epsilon)
+                if (temmeError <= 64 * MachineEpsilon)
                 {
                     exponent = temmeExponent;
                     return temme;
@@ -247,7 +249,7 @@ public static partial class XMath
 
             // Miller 法（a ≥ 2 では主な方法。a < 2 でも U(a₀) の誤差を拡大しないので多くの場合に安定）
             double value = HypergeometricUMiller(a, b, x, out exponent, out double error);
-            if (error <= 64 * Epsilon)
+            if (error <= 64 * MachineEpsilon)
             {
                 return value;
             }
@@ -264,7 +266,7 @@ public static partial class XMath
                 }
             }
 
-            if (double.IsNaN(temme) && !(error <= 64 * Epsilon) && x <= HypergeometricUTemmeFallbackMax)
+            if (double.IsNaN(temme) && !(error <= 64 * MachineEpsilon) && x <= HypergeometricUTemmeFallbackMax)
             {
                 // 漸化式が不安定なら、領域外でも Temme 型の級数を試す（見積もり誤差で比べる）
                 temme = HypergeometricUTemmeAny(a, b, x, out temmeExponent, out temmeError);
@@ -277,7 +279,7 @@ public static partial class XMath
                 error = temmeError;
             }
 
-            if (!(error <= 64 * Epsilon) && !IsInteger(a) && !IsInteger(b))
+            if (!(error <= 64 * MachineEpsilon) && !IsInteger(a) && !IsInteger(b))
             {
                 // どれも打ち消しが大きい。2 つの M を直接求める接続公式を試す
                 double connection = HypergeometricUConnection(a, b, x, out long connectionExponent, out double connectionError);
@@ -348,7 +350,7 @@ public static partial class XMath
             }
 
             // 各項の相対誤差はおよそ 8ε（M と 3 つのガンマ関数、冪）
-            error = 8 * Epsilon * magnitude / Math.Abs(result) + 2 * Epsilon;
+            error = 8 * MachineEpsilon * magnitude / Math.Abs(result) + 2 * MachineEpsilon;
             return result;
         }
 
@@ -448,8 +450,8 @@ public static partial class XMath
             }
 
             double deviation = Math.Abs(ratio - ScaleB(check, Math.Clamp(checkExponent - exponent, -4000, 4000))) / Math.Abs(ratio);
-            double recurrenceError = deviation > 1e-3 || double.IsNaN(deviation) ? double.PositiveInfinity : 8 * Epsilon * deviation;
-            error = baseError + recurrenceError + 4 * startError + 2 * Epsilon;
+            double recurrenceError = deviation > 1e-3 || double.IsNaN(deviation) ? double.PositiveInfinity : 8 * MachineEpsilon * deviation;
+            error = baseError + recurrenceError + 4 * startError + 2 * MachineEpsilon;
             exponent += baseExponent;
             return baseValue * ratio;
         }
@@ -545,7 +547,7 @@ public static partial class XMath
             var sum = DoubleDoubleAdd(term1, term2);
             double value = sum.Hi + sum.Lo;
             double magnitude = Math.Abs(term1.Hi) + Math.Abs(term2.Hi);
-            error = value == 0 ? double.PositiveInfinity : (baseError + 4 * Epsilon) * magnitude / Math.Abs(value) + 2 * Epsilon;
+            error = value == 0 ? double.PositiveInfinity : (baseError + 4 * MachineEpsilon) * magnitude / Math.Abs(value) + 2 * MachineEpsilon;
             exponent = baseExponent + common;
             return value;
         }
@@ -582,7 +584,7 @@ public static partial class XMath
                 && HypergeometricUTryAsymptotic(a0, b, x, out double current, out long currentExponent)
                 && HypergeometricUTryAsymptotic(a0 + 1, b, x, out next, out long nextExponent))
             {
-                error = 4 * Epsilon;
+                error = 4 * MachineEpsilon;
                 return ConfluentAlignPair(current, currentExponent, ref next, nextExponent, out exponent);
             }
 
@@ -590,7 +592,7 @@ public static partial class XMath
             {
                 current = HypergeometricUTemmeAny(a0, b, x, out currentExponent, out double currentError);
                 next = HypergeometricUTemmeAny(a0 + 1, b, x, out nextExponent, out double nextError);
-                if (Math.Max(currentError, nextError) <= 64 * Epsilon)
+                if (Math.Max(currentError, nextError) <= 64 * MachineEpsilon)
                 {
                     error = Math.Max(currentError, nextError);
                     return ConfluentAlignPair(current, currentExponent, ref next, nextExponent, out exponent);
@@ -598,7 +600,7 @@ public static partial class XMath
             }
 
             // 台形則の誤差は数 ε（積分値の大きさに対する丸め）
-            error = 8 * Epsilon;
+            error = 8 * MachineEpsilon;
             return HypergeometricUQuadrature(a0, b, x, out next, out exponent);
         }
 
@@ -635,7 +637,7 @@ public static partial class XMath
 
                 double delta = c * d;
                 f *= delta;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     return j;
                 }
@@ -674,7 +676,7 @@ public static partial class XMath
 
                 term = next;
                 sum += term;
-                if (Math.Abs(term) <= 0.125 * Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= 0.125 * MachineEpsilon * Math.Abs(sum))
                 {
                     converged = true;
                     break;
@@ -836,7 +838,7 @@ public static partial class XMath
                 double size = Math.Max(Math.Abs(sumA.Hi) + Math.Abs(sumB.Hi), Math.Abs(termA.Hi) + Math.Abs(termB.Hi) + Math.Abs(gB.Hi));
                 if (k + 1 > -a && Math.Abs(rh.Hi) < 0.5
                     && Math.Abs(termA.Hi) * Math.Abs(d0) + (Math.Abs(termB.Hi) + Math.Abs(gB.Hi)) * Math.Abs(g0)
-                        <= 0.0625 * Epsilon * Math.Abs(d0 * sumA.Hi + g0 * sumB.Hi))
+                        <= 0.0625 * MachineEpsilon * Math.Abs(d0 * sumA.Hi + g0 * sumB.Hi))
                 {
                     break;
                 }
@@ -923,7 +925,7 @@ public static partial class XMath
                 return result;
             }
 
-            error = 4 * Epsilon * (alignedRegularError + Math.Abs(singular)) / Math.Abs(result) + 2 * Epsilon;
+            error = 4 * MachineEpsilon * (alignedRegularError + Math.Abs(singular)) / Math.Abs(result) + 2 * MachineEpsilon;
             return result;
         }
 
@@ -984,7 +986,7 @@ public static partial class XMath
                 double p = 1 - 2 * (k + 1);
                 double contribution = StirlingSeriesCoefficients[k] * powerOfY * ConfluentExpRatio(p * w) * p * wOverEps;
                 logOverEps += contribution;
-                if (Math.Abs(contribution) <= 0.25 * Epsilon * Math.Abs(logOverEps))
+                if (Math.Abs(contribution) <= 0.25 * MachineEpsilon * Math.Abs(logOverEps))
                 {
                     break;
                 }

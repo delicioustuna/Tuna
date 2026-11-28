@@ -14,8 +14,6 @@ namespace Tuna.LinearAlgebra;
 /// </summary>
 internal static class TridiagonalDivideConquer
 {
-    private const double Epsilon = 1.1102230246251565e-16;
-
     // LAPACK の SMLSIZ と同じ 25
     /// <summary>
     /// これ以下の大きさの部分問題は QL 法で解く
@@ -308,7 +306,7 @@ internal static class TridiagonalDivideConquer
             dmax = Math.Max(dmax, Math.Abs(d[j]));
         }
 
-        double tol = 8 * Epsilon * Math.Max(dmax, zmax);
+        double tol = 8 * NumericConstants.UnitRoundoff * Math.Max(dmax, zmax);
         int k = 0;
         int nd = 0;
         if (rho * zmax <= tol)
@@ -736,7 +734,7 @@ internal static class TridiagonalDivideConquer
 
         // 初期値が求まらなければ区間の中点から始める
         double tau = guess > lo && guess < hi ? guess : 0.5 * (lo + hi);
-        double eps = 2 * Epsilon;
+        double eps = 2 * NumericConstants.UnitRoundoff;
         for (int iter = 0; iter < 100; iter++)
         {
             double f = rhoinv + Evaluate(k, i, shifted, z, tau, out double psi, out double dpsi, out double phi, out double dphi);

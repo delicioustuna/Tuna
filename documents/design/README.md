@@ -6,7 +6,7 @@
 
 ## 目次
 
-- [XMath の API 設計と Source Generator](xmath-and-generators.md) — 3 形式のオーバーロード設計、入れ子サブドメインと拡張コンテナの命名方針、型推論とオーバーロード生成、エイリアシング規則、近似演算のポリシー
+- [XMath の API 設計と Source Generator](xmath-and-generators.md) — 3 形式のオーバーロード設計、入れ子サブドメインと拡張コンテナの命名方針、型推論とオーバーロード生成、エイリアシング規則、近似演算のポリシー、数学定数（`XMath.Constants`）の設計
 - [線形代数・SIMD・並列化の設計](linear-algebra-and-simd.md) — 決定的な SIMD カーネル、ペアワイズ加算木、JIT 最適化属性の方針、4M 複素 GEMM、二段階三重対角化、owner-computes 列分担、`Recompute`
 - [特殊関数の実装方針](special-functions.md) — `XMath.Special` の配置設計、定義域外と極の扱い、静的初期化順、倍々精度（double-double）と漸近展開の使い分け
 - [疑似乱数・準乱数の設計](random-and-quasirandom.md) — PCG64 DXSM / Philox の再現性とストリーム設計、Sobol' 列の Gray code・半 ULP シフト・Matoušek スクランブル

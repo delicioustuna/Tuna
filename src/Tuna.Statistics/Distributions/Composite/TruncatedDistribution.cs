@@ -329,10 +329,10 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
         }
 
         double f = _distribution.Pdf(x);
-        if (_mass > 0 && f >= DistributionMath.MinNormal)
+        if (_mass > 0 && f >= NumericConstants.MinNormal)
         {
             double density = f / _mass;
-            if (density >= DistributionMath.MinNormal && density < double.PositiveInfinity)
+            if (density >= NumericConstants.MinNormal && density < double.PositiveInfinity)
             {
                 return density;
             }
@@ -422,7 +422,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
         double logFraction = logMass - _logMass;
 
         // For probabilities above 1/2, ln(1 - Sf(x)) avoids precision loss near 1.
-        return logFraction > -DistributionMath.Ln2 ? DistributionMath.Log1p(-Sf(x)) : Math.Min(0, logFraction);
+        return logFraction > -XMath.Constants.Ln2 ? DistributionMath.Log1p(-Sf(x)) : Math.Min(0, logFraction);
     }
 
     /// <inheritdoc/>
@@ -445,7 +445,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
 
         UpperMass(x, out double logMass);
         double logFraction = logMass - _logMass;
-        return logFraction > -DistributionMath.Ln2 ? DistributionMath.Log1p(-Cdf(x)) : Math.Min(0, logFraction);
+        return logFraction > -XMath.Constants.Ln2 ? DistributionMath.Log1p(-Cdf(x)) : Math.Min(0, logFraction);
     }
 
     /// <inheritdoc/>
@@ -508,7 +508,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
             return _upper;
         }
 
-        return logP <= -DistributionMath.Ln2
+        return logP <= -XMath.Constants.Ln2
             ? LowerQuantile(Math.Exp(logP), logP)
             : UpperQuantile(-DistributionMath.Expm1(logP), DistributionMath.Log1mExp(logP));
     }
@@ -531,7 +531,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
             return _lower;
         }
 
-        return logQ <= -DistributionMath.Ln2
+        return logQ <= -XMath.Constants.Ln2
             ? UpperQuantile(Math.Exp(logQ), logQ)
             : LowerQuantile(-DistributionMath.Expm1(logQ), DistributionMath.Log1mExp(logQ));
     }
@@ -652,7 +652,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
         // Compute linear mass directly without exp(logMass) to avoid ε|ln| amplification.
         logMass = Math.Log(total) + shift;
         double linear = total * Math.Exp(shift);
-        return linear >= DistributionMath.MinNormal ? linear : 0;
+        return linear >= NumericConstants.MinNormal ? linear : 0;
     }
 
     private double LowerQuantile(double p, double logP)
@@ -683,7 +683,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
             double logTarget = logP + _logMass;
             double logCdf = XMath.LogAddExp(_lowerLogCdf, logTarget);
             double logReference;
-            if (logCdf <= -DistributionMath.Ln2)
+            if (logCdf <= -XMath.Constants.Ln2)
             {
                 x = _distribution.InverseLogCdf(logCdf);
                 logReference = _lowerLogCdf;
@@ -728,7 +728,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
             double logTarget = logQ + _logMass;
             double logSf = XMath.LogAddExp(_upperLogSf, logTarget);
             double logReference;
-            if (logSf <= -DistributionMath.Ln2)
+            if (logSf <= -XMath.Constants.Ln2)
             {
                 x = _distribution.InverseLogSf(logSf);
                 logReference = _upperLogSf;
@@ -762,7 +762,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
             double logFraction = logMass - _logMass;
             double density = Math.Exp(logDensity);
             double step;
-            if (mass > 0 && _mass > 0 && probability >= DistributionMath.MinNormal && density >= DistributionMath.MinNormal)
+            if (mass > 0 && _mass > 0 && probability >= NumericConstants.MinNormal && density >= NumericConstants.MinNormal)
             {
                 step = (Math.Min(1, mass / _mass) - probability) / density;
             }
@@ -781,7 +781,7 @@ public readonly struct TruncatedDistribution<TDistribution> : IContinuousDistrib
                 break;
             }
 
-            bool done = Math.Abs(next - x) <= 2 * DistributionMath.Epsilon * Math.Abs(x);
+            bool done = Math.Abs(next - x) <= 2 * NumericConstants.MachineEpsilon * Math.Abs(x);
             x = next;
             if (done)
             {

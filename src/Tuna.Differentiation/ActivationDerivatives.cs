@@ -12,9 +12,6 @@ internal static class ActivationDerivatives
     internal const double SeluScale = 1.0507009873554804934193349852946;
     internal const double SeluScaleAlpha = 1.7580993408473768599402175208123;
 
-    private const double InverseSqrt2 = 0.70710678118654752440084436210485;
-    private const double InverseSqrt2Pi = 0.39894228040143267793994605993438;
-
     // Double-double representation of k = 2*sqrt(2/pi) and c = 0.044715 for z = k*(x + c*x^3).
     private const double GeluTanhScaleHigh = 1.5957691216057308;
     private const double GeluTanhScaleLow = -9.96930880911092e-17;
@@ -44,10 +41,10 @@ internal static class ActivationDerivatives
         if (x >= 0)
         {
             double gaussian = Math.Exp(-0.5 * hi) * (1 - 0.5 * lo);
-            return 0.5 * XMath.Special.Erfc(-x * InverseSqrt2) + x * gaussian * InverseSqrt2Pi;
+            return 0.5 * XMath.Special.Erfc(-x * XMath.Constants.OneOverSqrt2) + x * gaussian * XMath.Constants.OneOverSqrtTwoPi;
         }
 
-        double bracket = 0.5 * XMath.Special.Erfcx(-x * InverseSqrt2) + x * InverseSqrt2Pi;
+        double bracket = 0.5 * XMath.Special.Erfcx(-x * XMath.Constants.OneOverSqrt2) + x * XMath.Constants.OneOverSqrtTwoPi;
         // Shift exponent by +64 below -37.5 so exp(-x^2/2) stays normal until the final product.
         return x < -37.5
             ? Math.Exp(TailShift - 0.5 * hi) * (1 - 0.5 * lo) * bracket * TailUnshift

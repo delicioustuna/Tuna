@@ -86,7 +86,7 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
         get
         {
             double a = _alpha, b = _beta, s = a + b;
-            double logarithms = 0.5 * (DistributionMath.LnTwoPi + Math.Log(a / s) + Math.Log(b / s) - Math.Log(s));
+            double logarithms = 0.5 * (NumericConstants.LnTau + Math.Log(a / s) + Math.Log(b / s) - Math.Log(s));
             double rational = 0.5 - 0.5 / a - 0.5 / b + 1 / s;
             double stirling = DistributionMath.StirlingRemainder(a) + DistributionMath.StirlingRemainder(b)
                 - DistributionMath.StirlingRemainder(s);
@@ -133,7 +133,7 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
 
         double y = 1 - x;
         double prefix = XMath.Special.BetaPrefix(_alpha, _beta, x, y);
-        if (prefix >= DistributionMath.MinNormal && prefix < double.PositiveInfinity && x >= DistributionMath.MinNormal)
+        if (prefix >= NumericConstants.MinNormal && prefix < double.PositiveInfinity && x >= NumericConstants.MinNormal)
         {
             return prefix / x / y;
         }
@@ -191,7 +191,7 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
         }
 
         double x = XMath.Special.InverseRegularizedIncompleteBeta(_alpha, _beta, p);
-        if (x < DistributionMath.MinNormal && p > 0)
+        if (x < NumericConstants.MinNormal && p > 0)
         {
             return Math.Exp(LowerLogQuantileFromLog(_alpha, _beta, Math.Log(p)));
         }
@@ -208,7 +208,7 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
         }
 
         double x = XMath.Special.InverseRegularizedIncompleteBetaComplement(_alpha, _beta, q);
-        if (x < DistributionMath.MinNormal && q < 1)
+        if (x < NumericConstants.MinNormal && q < 1)
         {
             return Math.Exp(LowerLogQuantileFromLog(_alpha, _beta, DistributionMath.Log1p(-q)));
         }
@@ -224,7 +224,7 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logP > -DistributionMath.Ln2)
+        if (logP > -XMath.Constants.Ln2)
         {
             return InverseSf(-DistributionMath.Expm1(logP));
         }
@@ -245,7 +245,7 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logQ > -DistributionMath.Ln2)
+        if (logQ > -XMath.Constants.Ln2)
         {
             return InverseCdf(-DistributionMath.Expm1(logQ));
         }
@@ -267,9 +267,9 @@ public readonly partial struct BetaDistribution : IContinuousDistribution
             return double.NegativeInfinity;
         }
 
-        double logMinNormal = Math.Log(DistributionMath.MinNormal);
+        double logMinNormal = Math.Log(NumericConstants.MinNormal);
         // Asymptotic initial guess from I_x(a, b) ≈ x^a / (a B(a, b)).
-        double guess = Math.Min((logP + Math.Log(a) + XMath.Special.LogBeta(a, b)) / a, -DistributionMath.Epsilon);
+        double guess = Math.Min((logP + Math.Log(a) + XMath.Special.LogBeta(a, b)) / a, -NumericConstants.MachineEpsilon);
         return DistributionMath.SolveIncreasing(
             (double t, out double derivative) =>
             {

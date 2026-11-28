@@ -69,9 +69,6 @@ public sealed class FistaOptions
 /// </remarks>
 public sealed class Fista
 {
-    private const double MachineEpsilon = 2.220446049250313e-16;
-    private const double SqrtMachineEpsilon = 1.4901161193847656e-8;
-
     private readonly double gradientTolerance;
     private readonly int maxIterations;
     private readonly long maxEvaluations;
@@ -225,14 +222,14 @@ public sealed class Fista
                 {
                     double excess = ftrial - fy - linear - squared / (2 * step);
                     double magnitude = Math.Abs(fy) + Math.Abs(ftrial);
-                    if (excess <= 4 * MachineEpsilon * magnitude)
+                    if (excess <= 4 * NumericConstants.MachineEpsilon * magnitude)
                     {
                         break;
                     }
 
                     // 差が値の丸め誤差に埋もれうる大きさなら、勾配の差による判定 (∇f(x⁺) − ∇f(y))ᵀ(x⁺ − y) ≤ ‖x⁺ − y‖²/t に切り替える
                     // （Becker, Candès &amp; Grant 2011 §5.3。二次関数では値による判定と同じ）
-                    if (excess <= SqrtMachineEpsilon * magnitude && evaluations < maxEvaluations)
+                    if (excess <= NumericConstants.SqrtMachineEpsilon * magnitude && evaluations < maxEvaluations)
                     {
                         double value = EvaluateWithGradient(smooth, trial, trialGradient, ref evaluations);
                         if (double.IsFinite(value) && Curvature(trialGradient, gy, trial, y) <= squared / step)

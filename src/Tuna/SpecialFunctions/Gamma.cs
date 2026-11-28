@@ -1,3 +1,5 @@
+using static Tuna.XMath.Constants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -304,7 +306,7 @@ public static partial class XMath
             }
 
             double lnx = Math.Log(x);
-            return x * (lnx - 1) - 0.5 * lnx + LnSqrt2Pi + StirlingCorrection(x);
+            return x * (lnx - 1) - 0.5 * lnx + LnSqrtTwoPi + StirlingCorrection(x);
         }
 
         /// <summary>

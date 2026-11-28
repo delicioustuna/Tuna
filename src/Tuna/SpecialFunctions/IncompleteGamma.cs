@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -213,7 +216,7 @@ public static partial class XMath
                 {
                     double t = term / (a + n);
                     sum += t;
-                    if (n > pole && n > 0 && Math.Abs(t) <= Epsilon * Math.Abs(sum))
+                    if (n > pole && n > 0 && Math.Abs(t) <= MachineEpsilon * Math.Abs(sum))
                     {
                         break;
                     }
@@ -454,7 +457,7 @@ public static partial class XMath
                 ap += 1;
                 term *= x / ap;
                 sum += term;
-                double tolerance = sum * Epsilon;
+                double tolerance = sum * MachineEpsilon;
                 // 残りの項の比は x/(ap+1) 以下なので、等比級数で残差を抑える。
                 if (term <= tolerance && (!boundRemainder || term <= tolerance * (1 - x / (ap + 1))))
                 {
@@ -491,7 +494,7 @@ public static partial class XMath
                 d = 1 / d;
                 double delta = d * c;
                 h *= delta;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }
@@ -513,7 +516,7 @@ public static partial class XMath
                 term *= -x / n;
                 double t = term / (a + n);
                 sum += t;
-                if (Math.Abs(t) <= Epsilon * Math.Abs(sum))
+                if (Math.Abs(t) <= MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }
@@ -549,7 +552,7 @@ public static partial class XMath
             if (a > 1)
             {
                 // Wilson–Hilferty 近似。z は正規分布の p 分位点
-                double z = useQ ? Math.Sqrt(2) * InverseErfc(2 * q) : -Math.Sqrt(2) * InverseErfc(2 * p);
+                double z = useQ ? Sqrt2 * InverseErfc(2 * q) : -Sqrt2 * InverseErfc(2 * p);
                 double t = 1 - 1 / (9 * a) + z / (3 * Math.Sqrt(a));
                 x = a * t * t * t;
                 if (!(x > 0) || !double.IsFinite(x))
@@ -617,7 +620,7 @@ public static partial class XMath
                 }
 
                 // 収束の判定は区間の判定より先に行う（x は直前に区間の端になっているので、収束すると next が端に一致する）
-                if (Math.Abs(next - x) <= 4 * Epsilon * x)
+                if (Math.Abs(next - x) <= 4 * MachineEpsilon * x)
                 {
                     return next;
                 }
@@ -659,7 +662,7 @@ public static partial class XMath
                 double slope = -Math.Exp(LogGammaPrefix(a, x) - logQx);
                 double step = -error / slope;
                 double next = x * Math.Exp(step);
-                if (Math.Abs(step) <= 4 * Epsilon)
+                if (Math.Abs(step) <= 4 * MachineEpsilon)
                 {
                     return next;
                 }

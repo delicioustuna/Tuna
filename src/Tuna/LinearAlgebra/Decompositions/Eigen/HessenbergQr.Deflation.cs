@@ -71,7 +71,7 @@ internal static partial class HessenbergQr
             }
 
             // 下端から収縮を判定する。収縮できないブロックは窓の上側（ilst）へ移す
-            double smlnum = 2.2250738585072014e-308 * ((high - low + 1) / Epsilon);
+            double smlnum = NumericConstants.MinNormal * ((high - low + 1) / NumericConstants.MachineEpsilon);
             int ns = nw;
             int ilst = 0;
             while (ilst < ns)
@@ -85,7 +85,7 @@ internal static partial class HessenbergQr
                         foo = Math.Abs(s);
                     }
 
-                    if (Math.Abs(s * u[(ns - 1) * nw]) <= Math.Max(smlnum, Epsilon * foo))
+                    if (Math.Abs(s * u[(ns - 1) * nw]) <= Math.Max(smlnum, NumericConstants.MachineEpsilon * foo))
                     {
                         ns--;
                     }
@@ -108,7 +108,7 @@ internal static partial class HessenbergQr
                         foo = Math.Abs(s);
                     }
 
-                    if (Math.Max(Math.Abs(s * u[(ns - 1) * nw]), Math.Abs(s * u[(ns - 2) * nw])) <= Math.Max(smlnum, Epsilon * foo))
+                    if (Math.Max(Math.Abs(s * u[(ns - 1) * nw]), Math.Abs(s * u[(ns - 2) * nw])) <= Math.Max(smlnum, NumericConstants.MachineEpsilon * foo))
                     {
                         ns -= 2;
                     }

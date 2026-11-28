@@ -2,7 +2,6 @@ namespace Tuna.LinearAlgebra;
 
 public sealed partial class SingularValueDecomposition
 {
-    private const double Epsilon = 2.220446049250313e-16;
     private const int StackLimit = 256;
     private static readonly double LargeQuotient = Math.ScaleB(1.0, 1000);
     private static readonly double SmallRightHandSide = Math.ScaleB(1.0, -970);
@@ -154,7 +153,7 @@ public sealed partial class SingularValueDecomposition
 
     private (Matrix<double> U, Matrix<double> V, int Rank) RequireFactors(double? tolerance)
     {
-        double relativeTolerance = tolerance ?? (_maxDimension * Epsilon);
+        double relativeTolerance = tolerance ?? (_maxDimension * NumericConstants.MachineEpsilon);
         if (!double.IsFinite(relativeTolerance) || relativeTolerance < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(tolerance), "The tolerance must be finite and nonnegative.");

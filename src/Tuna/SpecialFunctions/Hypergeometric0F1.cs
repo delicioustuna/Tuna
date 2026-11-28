@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -141,7 +144,7 @@ public static partial class XMath
 
                 double delta = c * d;
                 f *= delta;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }
@@ -234,7 +237,7 @@ public static partial class XMath
                 double denominator = (b + k) * (k + 1);
                 term *= double.IsInfinity(denominator) ? x / (b + k) / (k + 1) : x / denominator;
                 sum += term;
-                if (Math.Abs(term) <= 0.5 * Epsilon * Math.Abs(sum) && k + 1 > -b)
+                if (Math.Abs(term) <= 0.5 * MachineEpsilon * Math.Abs(sum) && k + 1 > -b)
                 {
                     break;
                 }

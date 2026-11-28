@@ -12,8 +12,6 @@ namespace Tuna.Optimization.Gradient;
 /// </remarks>
 public sealed class Lbfgs : LineSearchMinimizer
 {
-    private static readonly double Epsilon = double.BitIncrement(1.0) - 1.0;
-
     private readonly CurvaturePairs pairs;
     private readonly double[] alpha;
 
@@ -51,7 +49,7 @@ public sealed class Lbfgs : LineSearchMinimizer
     {
         double sy = Blas.Dot(s, y);
         double yy = Blas.Dot(y, y);
-        if (sy > Epsilon * yy && double.IsFinite(sy) && double.IsFinite(yy))
+        if (sy > NumericConstants.MachineEpsilon * yy && double.IsFinite(sy) && double.IsFinite(yy))
         {
             pairs.Add(s, y, sy, yy);
         }

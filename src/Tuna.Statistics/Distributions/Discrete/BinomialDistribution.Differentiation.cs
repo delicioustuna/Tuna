@@ -6,6 +6,102 @@ namespace Tuna.Statistics.Distributions;
 public readonly partial struct BinomialDistribution
 {
     /// <summary>
+    /// Records the sum of binomial log masses with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、二項分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="trials">The shared trial count. / 全観測で共通の試行回数。</param>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector input has a different length from the observations. / 入力ベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A trial count is outside <c>[0, MaxTrials]</c>. / 試行回数が <c>[0, MaxTrials]</c> の範囲外の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPmf(long trials, ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, BinomialLikelihoodEvaluator.Shared(trials), probability);
+
+    /// <summary>
+    /// Records the binomial log mass for each observation as a single operation.
+    /// <para>二項分布の観測ごとの対数確率質量を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="trials">The shared trial count. / 全観測で共通の試行回数。</param>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log masses in observation order. / 入力順に並べた観測ごとの対数確率質量。</returns>
+    /// <exception cref="ArgumentException">A vector input has a different length from the observations, or no tape is available. / 入力ベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A trial count is outside <c>[0, MaxTrials]</c>. / 試行回数が <c>[0, MaxTrials]</c> の範囲外の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPmfPointwise(long trials, ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, BinomialLikelihoodEvaluator.Shared(trials), probability, tape: tape);
+
+    /// <summary>
+    /// Records the sum of binomial log masses with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、二項分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="trials">One trial count per observation. / 観測ごとの試行回数。</param>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector input has a different length from the observations. / 入力ベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A trial count is outside <c>[0, MaxTrials]</c>. / 試行回数が <c>[0, MaxTrials]</c> の範囲外の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPmf(ReadOnlyVectorSpan<long> trials, ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, BinomialLikelihoodEvaluator.PerObservation(trials, observations.Length), probability);
+
+    /// <summary>
+    /// Records the binomial log mass for each observation as a single operation.
+    /// <para>二項分布の観測ごとの対数確率質量を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="trials">One trial count per observation. / 観測ごとの試行回数。</param>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log masses in observation order. / 入力順に並べた観測ごとの対数確率質量。</returns>
+    /// <exception cref="ArgumentException">A vector input has a different length from the observations, or no tape is available. / 入力ベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="ArgumentOutOfRangeException">A trial count is outside <c>[0, MaxTrials]</c>. / 試行回数が <c>[0, MaxTrials]</c> の範囲外の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPmfPointwise(ReadOnlyVectorSpan<long> trials, ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, BinomialLikelihoodEvaluator.PerObservation(trials, observations.Length), probability, tape: tape);
+
+    private readonly ref struct BinomialLikelihoodEvaluator(long commonTrials, ReadOnlyVectorSpan<long> trials) : ILikelihoodEvaluator<long>
+    {
+        private readonly ReadOnlyVectorSpan<long> perObservation = trials;
+
+        internal static BinomialLikelihoodEvaluator Shared(long trials)
+        {
+            ValidateTrialCount(trials);
+            return new(trials, default);
+        }
+
+        internal static BinomialLikelihoodEvaluator PerObservation(ReadOnlyVectorSpan<long> trials, int observationCount)
+        {
+            if (trials.Length != observationCount)
+            {
+                throw new ArgumentException("The trial counts must match the number of observations.", nameof(trials));
+            }
+
+            return new(0, trials);
+        }
+
+        public LikelihoodEvaluation Evaluate(int index, long observation, double first, double second, double third, LikelihoodGradients gradients)
+        {
+            long trials = perObservation.IsEmpty ? commonTrials : perObservation[index];
+            return PointwiseLogLikelihood.Mass(new BinomialDistribution(trials, first, forDifferentiation: true), observation, gradients, Gradient);
+        }
+
+        public void ValidateShared(double? first, double? second, double? third) =>
+            _ = new BinomialDistribution(commonTrials, first.GetValueOrDefault(), forDifferentiation: true);
+    }
+
+    /// <summary>
     /// Records the binomial log mass and its derivatives.
     /// <para>二項分布の対数質量とその微分を記録します。</para>
     /// </summary>

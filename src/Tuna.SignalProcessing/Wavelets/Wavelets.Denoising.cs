@@ -10,9 +10,6 @@ public static partial class Wavelets
     // Standard normal 75th percentile Phi^-1(0.75); MAD of N(0, sigma^2) equals sigma * Phi^-1(0.75).
     private const double NormalQuartile = 0.6744897501960817;
 
-    // IEEE 754 binary64 machine epsilon (2^-52).
-    private const double MachineEpsilon = 2.220446049250313e-16;
-
     /// <summary>
     /// Denoises a 1D signal by wavelet thresholding using BayesShrink and soft thresholding.
     /// <para>BayesShrink と軟判定しきい値処理により、1 次元信号のノイズを除去します。</para>
@@ -393,7 +390,7 @@ public static partial class Wavelets
     private static double BayesThreshold(double meanSquare, double noiseLevel)
     {
         double variance = noiseLevel * noiseLevel;
-        return variance / Math.Sqrt(Math.Max(meanSquare - variance, MachineEpsilon));
+        return variance / Math.Sqrt(Math.Max(meanSquare - variance, NumericConstants.MachineEpsilon));
     }
 
     private static int AddMagnitude(double value, double[] magnitudes, int count, string name)

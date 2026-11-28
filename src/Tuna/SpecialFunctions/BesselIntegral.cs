@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -13,10 +16,6 @@ public static partial class XMath
 
         // x < 1.5 では IntegralBesselK0 に冪級数を用い、それ以上では π/2 - ∫ₓ^∞ K₀ を使う
         private const double BesselIntegralK0SeriesLimit = 1.5;
-
-        // ln 2 およびオイラー定数 γ の倍精度表現との誤差 (double-double 下位成分)
-        private const double BesselIntegralLn2Lo = 2.3190468138462996e-17;
-        private const double BesselIntegralEulerGammaLo = -4.942915152430645e-18;
 
         /// <summary>
         /// Computes the integral of the Bessel function of the first kind, <c>∫₀ˣ J₀(t) dt</c>.
@@ -267,7 +266,7 @@ public static partial class XMath
             {
                 double next = s * (k + 0.5) * (k + 0.5) * r;
                 next = modified ? next : -next;
-                if (Math.Abs(next) > Math.Abs(s) || Math.Abs(next) <= 0.125 * Epsilon)
+                if (Math.Abs(next) > Math.Abs(s) || Math.Abs(next) <= 0.125 * MachineEpsilon)
                 {
                     break;
                 }
@@ -282,7 +281,7 @@ public static partial class XMath
             {
                 double next = p * (k * (double)k - 0.25) * r;
                 next = modified ? next : -next;
-                if (Math.Abs(next) > Math.Abs(p) || x * Math.Abs(next) <= 0.125 * Epsilon * Math.Abs(x * sum))
+                if (Math.Abs(next) > Math.Abs(p) || x * Math.Abs(next) <= 0.125 * MachineEpsilon * Math.Abs(x * sum))
                 {
                     break;
                 }
@@ -324,7 +323,7 @@ public static partial class XMath
         {
             int e = Math.ILogB(x) - 1;
             double m = Math.ScaleB(x, -Math.ILogB(x));
-            if (m >= Math.Sqrt(2))
+            if (m >= Sqrt2)
             {
                 m *= 0.5;
                 e++;
@@ -349,9 +348,9 @@ public static partial class XMath
             }
 
             double productHi = e * Ln2;
-            double productLo = Math.FusedMultiplyAdd(e, Ln2, -productHi) + e * BesselIntegralLn2Lo;
+            double productLo = Math.FusedMultiplyAdd(e, Ln2, -productHi) + e * Ln2Lo;
             var log = DoubleDoubleAdd((2 * atanh.Hi, 2 * atanh.Lo), DoubleDoubleNormalize(productHi, productLo));
-            return DoubleDoubleAdd(log, DoubleDoubleNormalize(EulerGamma, BesselIntegralEulerGammaLo));
+            return DoubleDoubleAdd(log, DoubleDoubleNormalize(EulerGamma, EulerGammaLo));
         }
     }
 }

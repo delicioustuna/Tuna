@@ -47,7 +47,7 @@ public sealed partial class LkjCorrelationDistribution : IMatrixContinuousDistri
         for (int k = 1; k < dimension; k++)
         {
             double beta = shape + 0.5 * (dimension - k - 1);
-            logC += (dimension - k) * (0.5 * DistributionMath.LnPi - 0.5 * Math.Log(beta) - DistributionMath.LogGammaHalfStepCorrection(beta));
+            logC += (dimension - k) * (0.5 * XMath.Constants.LnPi - 0.5 * Math.Log(beta) - DistributionMath.LogGammaHalfStepCorrection(beta));
         }
 
         return -logC;

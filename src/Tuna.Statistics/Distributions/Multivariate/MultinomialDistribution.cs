@@ -130,7 +130,7 @@ public sealed class MultinomialDistribution : IMultivariateDiscreteDistribution
         // Accumulate Stirling remainders, log(2π*count)/2, and Loader deviance bd0 separately so single-bin outcomes cancel to exact 0.
         double n = _trials;
         double stirling = DistributionMath.StirlingRemainder(n);
-        double logs = 0.5 * (DistributionMath.LnTwoPi + Math.Log(n));
+        double logs = 0.5 * (NumericConstants.LnTau + Math.Log(n));
         double deviance = 0;
         for (int i = 0; i < x.Length; i++)
         {
@@ -148,7 +148,7 @@ public sealed class MultinomialDistribution : IMultivariateDiscreteDistribution
 
             double count = x[i];
             stirling -= DistributionMath.StirlingRemainder(count);
-            logs -= 0.5 * (DistributionMath.LnTwoPi + Math.Log(count));
+            logs -= 0.5 * (NumericConstants.LnTau + Math.Log(count));
             deviance += DistributionMath.Bd0(count, m);
         }
 

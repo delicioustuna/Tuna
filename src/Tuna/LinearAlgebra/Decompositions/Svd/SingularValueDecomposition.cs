@@ -67,7 +67,7 @@ public sealed partial class SingularValueDecomposition
     /// Gets the numerical rank, defined as the count of singular values strictly greater than <c>max(m, n)·ε·σ_max</c>.
     /// <para>数値ランク（<c>σᵢ &gt; max(m, n)·ε·σ_max</c> を満たす特異値の個数）を取得します。</para>
     /// </summary>
-    public int Rank => CountAboveCutoff(_maxDimension * Epsilon);
+    public int Rank => CountAboveCutoff(_maxDimension * NumericConstants.MachineEpsilon);
 
     /// <summary>
     /// Computes the thin singular value decomposition of <paramref name="a"/>.

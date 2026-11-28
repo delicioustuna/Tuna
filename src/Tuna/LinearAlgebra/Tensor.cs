@@ -404,6 +404,15 @@ public sealed class Tensor<TElement> where TElement : unmanaged, INumberBase<TEl
     public static Tensor<TElement> operator *(Tensor<TElement> a, TElement scalar) => XMath.Multiply(a, scalar);
 
     /// <summary>
+    /// Divides each element of a tensor by a scalar.
+    /// <para>テンソルの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="a">The input tensor. / 入力テンソル。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new tensor containing the quotients. / 各要素の商を格納した新しいテンソル。</returns>
+    public static Tensor<TElement> operator /(Tensor<TElement> a, TElement scalar) => XMath.Divide(a, scalar);
+
+    /// <summary>
     /// Computes the batched matrix product <c>C[i, j, k] = Σ_l A[i, l, k]·B[l, j, k]</c> (without summing over <c>k</c>).
     /// <para>行列ごとのバッチ積 <c>C[i, j, k] = Σ_l A[i, l, k]·B[l, j, k]</c>（<c>k</c> についての和は取りません）を計算します。</para>
     /// </summary>
@@ -432,6 +441,13 @@ public sealed class Tensor<TElement> where TElement : unmanaged, INumberBase<TEl
     /// </summary>
     /// <param name="scalar">The scalar multiplier. / 掛けるスカラー値。</param>
     public void operator *=(TElement scalar) => XMath.InPlace.Multiply(this, scalar);
+
+    /// <summary>
+    /// Divides each element of this tensor by a scalar in place.
+    /// <para>このテンソルの各要素をインプレースでスカラー除算します。</para>
+    /// </summary>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    public void operator /=(TElement scalar) => XMath.InPlace.Divide(this, scalar);
 
     /// <summary>
     /// Returns a string representation containing the element type and tensor shape.

@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -295,7 +297,7 @@ public static partial class XMath
                 power *= x;
                 double term = power * Math.Pow(k, -s);
                 sum += term;
-                if (k > peak && Math.Abs(term) <= 0.0625 * Epsilon * Math.Abs(sum))
+                if (k > peak && Math.Abs(term) <= 0.0625 * MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }
@@ -343,7 +345,7 @@ public static partial class XMath
                 }
 
                 sum += (k & 1) == 0 ? magnitude : -magnitude;
-                if (magnitude <= 0.0625 * Epsilon * Math.Abs(sum))
+                if (magnitude <= 0.0625 * MachineEpsilon * Math.Abs(sum))
                 {
                     return sum;
                 }
@@ -387,8 +389,8 @@ public static partial class XMath
                     double a = k + 1 - s;
                     if (k > m && a >= 2)
                     {
-                        double envelope = 2 * Math.Exp(LogGamma(a) - a * LnTwoPi) * PolylogZetaBound(a) * Math.Abs(factor);
-                        if (envelope <= 0.0625 * Epsilon * Math.Abs(sum))
+                        double envelope = 2 * Math.Exp(LogGamma(a) - a * LnTau) * PolylogZetaBound(a) * Math.Abs(factor);
+                        if (envelope <= 0.0625 * MachineEpsilon * Math.Abs(sum))
                         {
                             break;
                         }
@@ -461,7 +463,7 @@ public static partial class XMath
                 scale = Math.Max(scale, Math.Abs(bracket));
 
                 // 残りの和 Σ_(m'>m) |zₘ'|ᵖ は |zₘ|ˢ/(2π|s|) 程度以下
-                if (magnitude * Math.Max(1, r / (2 * Math.PI * Math.Abs(s))) <= 0.03125 * Epsilon * scale)
+                if (magnitude * Math.Max(1, r / (2 * Math.PI * Math.Abs(s))) <= 0.03125 * MachineEpsilon * scale)
                 {
                     break;
                 }
@@ -487,7 +489,7 @@ public static partial class XMath
             // Re[-zˢ/(2πis)] = -|z|ˢ sin(sθ)/(2πs)。s → 0 でも sin(sθ)/s は桁落ちしない
             double st = s * theta;
             double sinOverS = Math.Abs(st) < 1e-4 ? theta * (1 - st * st / 6) : Math.Sin(st) / s;
-            double tail = -magnitude * r * sinOverS * InvTwoPi + 0.5 * magnitude * Math.Cos(p * theta);
+            double tail = -magnitude * r * sinOverS * OneOverTwoPi + 0.5 * magnitude * Math.Cos(p * theta);
 
             // Re[-B₂ₖ/(2k)! (s-1)↓(2k-1) (2πi)²ᵏ⁻¹ zˢ⁻²ᵏ] = (-1)ᵏ⁺¹ B₂ₖ/(2k)! (s-1)↓(2k-1) (2π)²ᵏ⁻¹ |z|ˢ⁻²ᵏ sin((s-2k)θ)
             double falling = p;
@@ -505,7 +507,7 @@ public static partial class XMath
 
                 double term = ((k & 1) == 1 ? coefficient : -coefficient) * Math.Sin((s - 2 * k) * theta);
                 tail += term;
-                if (bound <= 0.03125 * Epsilon * Math.Max(scale, Math.Abs(tail)))
+                if (bound <= 0.03125 * MachineEpsilon * Math.Max(scale, Math.Abs(tail)))
                 {
                     break;
                 }
@@ -590,7 +592,7 @@ public static partial class XMath
                 }
 
                 tail += value;
-                if (magnitude <= 0.0625 * Epsilon * Math.Abs(sum + tail))
+                if (magnitude <= 0.0625 * MachineEpsilon * Math.Abs(sum + tail))
                 {
                     break;
                 }
@@ -678,7 +680,7 @@ public static partial class XMath
                 }
 
                 correction += 2 * term.Real;
-                if (magnitude <= 0.0625 * Epsilon * Math.Abs(trapezoid))
+                if (magnitude <= 0.0625 * MachineEpsilon * Math.Abs(trapezoid))
                 {
                     break;
                 }

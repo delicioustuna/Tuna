@@ -71,7 +71,7 @@ public readonly partial struct ExponentialDistribution : IContinuousDistribution
     public double Entropy => 1 - Math.Log(_rate);
 
     /// <inheritdoc/>
-    public double Median => DistributionMath.Ln2 / _rate;
+    public double Median => XMath.Constants.Ln2 / _rate;
 
     /// <inheritdoc/>
     public double SupportMinimum => 0;

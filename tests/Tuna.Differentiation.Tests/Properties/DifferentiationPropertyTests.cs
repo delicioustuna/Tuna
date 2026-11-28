@@ -48,6 +48,37 @@ public class DifferentiationPropertyTests
     }
 
     [Fact]
+    public void WedgePullbackSatisfiesTheAdjointIdentity()
+    {
+        Gen.Select(Gen.Int[0, 37], Gen.Int[0, 100000]).Sample((n, seed) =>
+        {
+            var random = new Random(seed);
+            var u = Vector<double>.Generate(n, _ => random.Next(-8, 9) / 8.0);
+            var v = Vector<double>.Generate(n, _ => random.Next(-8, 9) / 8.0);
+            var du = Vector<double>.Generate(n, _ => random.Next(-8, 9) / 8.0);
+            var dv = Vector<double>.Generate(n, _ => random.Next(-8, 9) / 8.0);
+            var g = Matrix<double>.Generate(n, n, (_, _) => random.Next(-8, 9) / 8.0);
+            var tape = new Tape();
+            var un = tape.Leaf(u);
+            var vn = tape.Leaf(v);
+            var wedge = XMath.Wedge(un, vn);
+            tape.Backward(XMath.Sum(XMath.ColumnSums(XMath.Hadamard(wedge, tape.Constant(g)))));
+
+            double expected = 0;
+            for (int j = 0; j < n; j++)
+            {
+                for (int i = 0; i < n; i++)
+                {
+                    double dw = du[i] * v[j] - v[i] * du[j] + u[i] * dv[j] - dv[i] * u[j];
+                    expected += g[i, j] * dw;
+                }
+            }
+
+            Assert.Equal(expected, XMath.Dot(tape.GetGradient(un), du) + XMath.Dot(tape.GetGradient(vn), dv));
+        }, iter: 200, seed: "1760ad101002");
+    }
+
+    [Fact]
     public void ScalarGraph_ReverseModeGradientMatchesCentralFiniteDifferenceAndTapeReset()
     {
         var gen = Gen.Select(

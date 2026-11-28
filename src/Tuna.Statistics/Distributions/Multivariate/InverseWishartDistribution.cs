@@ -53,8 +53,8 @@ public sealed class InverseWishartDistribution : IMatrixContinuousDistribution
         _dimension = p;
         _degreesOfFreedom = degreesOfFreedom;
         double halfLogDeterminant = MultivariateMath.SumLogDiagonal(_factor, p);
-        _logNormalization = -(p + 1) * halfLogDeterminant + 0.5 * p * (p + 1.0) * DistributionMath.Ln2
-            - 0.25 * p * (p - 1.0) * DistributionMath.LnPi;
+        _logNormalization = -(p + 1) * halfLogDeterminant + 0.5 * p * (p + 1.0) * XMath.Constants.Ln2
+            - 0.25 * p * (p - 1.0) * XMath.Constants.LnPi;
     }
 
     /// <summary>

@@ -88,7 +88,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
             return shape + XMath.Special.LogGamma(shape) + (1 - shape) * XMath.Special.Digamma(shape);
         }
 
-        return 0.5 * (DistributionMath.LnTwoPi + Math.Log(shape)) + 0.5 - 0.5 / shape
+        return 0.5 * (NumericConstants.LnTau + Math.Log(shape)) + 0.5 - 0.5 / shape
             + DistributionMath.StirlingRemainder(shape) + (shape - 1) * DistributionMath.DigammaRemainder(shape);
     }
 
@@ -101,7 +101,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
     /// <inheritdoc/>
     public double SupportMaximum => double.PositiveInfinity;
 
-    private static bool IsRegular(double y) => y >= DistributionMath.MinNormal && y < double.PositiveInfinity;
+    private static bool IsRegular(double y) => y >= NumericConstants.MinNormal && y < double.PositiveInfinity;
 
     /// <inheritdoc/>
     public double Pdf(double x)
@@ -125,7 +125,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
         if (IsRegular(y))
         {
             double prefix = XMath.Special.GammaPrefix(_shape, y);
-            if (prefix >= DistributionMath.MinNormal && prefix < double.PositiveInfinity)
+            if (prefix >= NumericConstants.MinNormal && prefix < double.PositiveInfinity)
             {
                 return prefix / x;
             }
@@ -165,7 +165,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
     private double LogLowerProbability(double x)
     {
         double y = x / _scale;
-        return y >= DistributionMath.MinNormal
+        return y >= NumericConstants.MinNormal
             ? XMath.Special.LogRegularizedGammaP(_shape, y)
             : DistributionMath.LogRegularizedGammaPFromLog(_shape, Math.Log(x) - Math.Log(_scale));
     }
@@ -179,7 +179,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
         }
 
         double y = x / _scale;
-        return y >= DistributionMath.MinNormal ? XMath.Special.RegularizedGammaP(_shape, y) : Math.Exp(LogLowerProbability(x));
+        return y >= NumericConstants.MinNormal ? XMath.Special.RegularizedGammaP(_shape, y) : Math.Exp(LogLowerProbability(x));
     }
 
     /// <inheritdoc/>
@@ -191,7 +191,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
         }
 
         double y = x / _scale;
-        return y >= DistributionMath.MinNormal ? XMath.Special.RegularizedGammaQ(_shape, y) : -DistributionMath.Expm1(LogLowerProbability(x));
+        return y >= NumericConstants.MinNormal ? XMath.Special.RegularizedGammaQ(_shape, y) : -DistributionMath.Expm1(LogLowerProbability(x));
     }
 
     /// <inheritdoc/>
@@ -214,7 +214,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
         }
 
         double y = x / _scale;
-        return y >= DistributionMath.MinNormal
+        return y >= NumericConstants.MinNormal
             ? XMath.Special.LogRegularizedGammaQ(_shape, y)
             : DistributionMath.Log1mExp(LogLowerProbability(x));
     }
@@ -228,7 +228,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
         }
 
         double y = XMath.Special.InverseRegularizedGammaP(_shape, p);
-        if (y < DistributionMath.MinNormal && p > 0)
+        if (y < NumericConstants.MinNormal && p > 0)
         {
             return LowerQuantileFromLog(Math.Log(p));
         }
@@ -245,7 +245,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
         }
 
         double y = XMath.Special.InverseRegularizedGammaQ(_shape, q);
-        if (y < DistributionMath.MinNormal && q < 1)
+        if (y < NumericConstants.MinNormal && q < 1)
         {
             return LowerQuantileFromLog(DistributionMath.Log1p(-q));
         }
@@ -261,7 +261,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logP > -DistributionMath.Ln2)
+        if (logP > -XMath.Constants.Ln2)
         {
             return InverseSf(-DistributionMath.Expm1(logP));
         }
@@ -282,7 +282,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logQ > -DistributionMath.Ln2)
+        if (logQ > -XMath.Constants.Ln2)
         {
             return InverseCdf(-DistributionMath.Expm1(logQ));
         }
@@ -294,12 +294,12 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
 
         // For tiny shapes, Q(k, y) ≈ k*E₁(y) is tiny even for tiny y (e.g., k = 1e-308, logQ = -703 => y = 1e-208);
         // linear-space solver StandardUpperQuantileFromLog cannot reach near 0, so route through InverseSf or lower-tail log solve.
-        if (logQ >= Math.Log(DistributionMath.MinNormal))
+        if (logQ >= Math.Log(NumericConstants.MinNormal))
         {
             return InverseSf(Math.Exp(logQ));
         }
 
-        if (logQ > XMath.Special.LogRegularizedGammaQ(_shape, DistributionMath.MinNormal))
+        if (logQ > XMath.Special.LogRegularizedGammaQ(_shape, NumericConstants.MinNormal))
         {
             return LowerQuantileFromLog(DistributionMath.Log1mExp(logQ));
         }
@@ -331,7 +331,7 @@ public readonly partial struct GammaDistribution : IContinuousDistribution
             }
         }
 
-        double logMinNormal = Math.Log(DistributionMath.MinNormal);
+        double logMinNormal = Math.Log(NumericConstants.MinNormal);
         return DistributionMath.SolveIncreasing(
             (double t, out double derivative) =>
             {

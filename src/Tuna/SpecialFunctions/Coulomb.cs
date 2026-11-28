@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -223,7 +225,7 @@ public static partial class XMath
                 }
 
                 // 項は m ≈ √(2|η|ρ) + ρ を過ぎると急減する。2 項連続で ε/4 未満で打ち切る
-                double tolerance = 0.25 * Epsilon * absoluteSum;
+                double tolerance = 0.25 * MachineEpsilon * absoluteSum;
                 if (Math.Abs(next) <= tolerance && Math.Abs(previous) <= tolerance && m > 2)
                 {
                     return absoluteSum / Math.Abs(sum);
@@ -281,7 +283,7 @@ public static partial class XMath
                     absoluteSum += Math.Abs(d2);
 
                     // 3項続けて小さくなったら打ち切る（係数の漸化式は3項前まで参照するので、1項だけ小さい偶然を除く）
-                    if (n >= 4 && Math.Abs(d2) + Math.Abs(d0) + Math.Abs(dm1) <= 0.125 * Epsilon * absoluteSum)
+                    if (n >= 4 && Math.Abs(d2) + Math.Abs(d0) + Math.Abs(dm1) <= 0.125 * MachineEpsilon * absoluteSum)
                     {
                         converged = true;
                         break;
@@ -340,7 +342,7 @@ public static partial class XMath
             }
 
             double n = Math.Round(logBase / Ln2);
-            double mantissa = Math.Exp(Math.FusedMultiplyAdd(-n, Ln2, logBase) - n * ScorerLn2Lo);
+            double mantissa = Math.Exp(Math.FusedMultiplyAdd(-n, Ln2, logBase) - n * Ln2Lo);
             exponent = (long)n;
             for (int j = 1; j <= floor; j++)
             {
@@ -388,7 +390,7 @@ public static partial class XMath
             double ratio = small / big;
             double logAbs = Math.Log(big) + 0.5 * Log1p(ratio * ratio);
             double arg = Math.Atan2(y, zx);
-            double modulus = (zx - 0.5) * logAbs + (ay == 0 ? 0 : ay * Math.Atan(zx / ay)) - zx + LnSqrt2Pi;
+            double modulus = (zx - 0.5) * logAbs + (ay == 0 ? 0 : ay * Math.Atan(zx / ay)) - zx + LnSqrtTwoPi;
             double imaginary = (zx - 0.5) * arg + y * (logAbs - 1);
 
             Complex inverse = Complex.Reciprocal(new Complex(zx, y));
@@ -446,7 +448,7 @@ public static partial class XMath
                     sign = -sign;
                 }
 
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     ratio = h;
                     return true;
@@ -497,7 +499,7 @@ public static partial class XMath
                 dd = Complex.Reciprocal(dd);
                 Complex delta = cc * dd;
                 denominator *= delta;
-                if (Math.Abs(delta.Real - 1) + Math.Abs(delta.Imaginary) <= Epsilon)
+                if (Math.Abs(delta.Real - 1) + Math.Abs(delta.Imaginary) <= MachineEpsilon)
                 {
                     converged = true;
                     break;
@@ -549,7 +551,7 @@ public static partial class XMath
 
                 sum += term;
                 previous = magnitude;
-                if (magnitude <= 0.25 * Epsilon * Complex.Abs(sum))
+                if (magnitude <= 0.25 * MachineEpsilon * Complex.Abs(sum))
                 {
                     converged = true;
                     break;

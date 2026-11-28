@@ -144,8 +144,8 @@ public sealed partial class WishartDistribution : IMatrixContinuousDistribution
     }
 
     private static double LogNormalization(int p, double halfLogDeterminant) =>
-        -(p + 1) * halfLogDeterminant - 0.5 * p * (p + 1.0) * DistributionMath.Ln2
-        - 0.25 * p * (p - 1.0) * DistributionMath.LnPi;
+        -(p + 1) * halfLogDeterminant - 0.5 * p * (p + 1.0) * XMath.Constants.Ln2
+        - 0.25 * p * (p - 1.0) * XMath.Constants.LnPi;
 
     private static double FactorLogPdf(double nu, ReadOnlySpan<double> factor, int p, double logNormalization, Span<double> a)
     {

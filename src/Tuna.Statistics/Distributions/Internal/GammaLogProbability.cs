@@ -12,6 +12,22 @@ internal enum LogProbability
 
 internal static class GammaLogProbability
 {
+    internal static LikelihoodEvaluation Density<TDistribution>(TDistribution distribution, double shape, double scale,
+        double observation, LikelihoodGradients gradients, bool inverse, bool halfShape = false)
+        where TDistribution : struct, IContinuousDistribution
+    {
+        double value = distribution.LogPdf(observation);
+        if (gradients == LikelihoodGradients.None)
+        {
+            return new(value);
+        }
+
+        double factor = halfShape ? 0.5 : 1;
+        var (dShape, dScale, _) = Derivatives(shape * factor, scale, observation, value, LogProbability.Density, inverse,
+            (gradients & LikelihoodGradients.First) != 0);
+        return new(value, new(factor * dShape), new(dScale));
+    }
+
     internal static ScalarNode Record<TDistribution>(
         TDistribution distribution, ScalarNode shape, ScalarNode scale, ScalarNode x, LogProbability kind, bool inverse, bool halfShape = false)
         where TDistribution : struct, IContinuousDistribution
@@ -79,13 +95,13 @@ internal static class GammaLogProbability
         double numerator = inverse ? scale : x;
         double denominator = inverse ? x : scale;
         double y = numerator / denominator;
-        double logY = y >= DistributionMath.MinNormal && double.IsFinite(y)
+        double logY = y >= NumericConstants.MinNormal && double.IsFinite(y)
             ? Math.Log(y) : Math.Log(numerator) - Math.Log(denominator);
 
         if (kind == LogProbability.Density)
         {
             // 差を取る前に両方を同じ 2 の冪で拡大し、非正規化数の丸めで残差が失われるのを防ぐ。
-            if (Math.Min(numerator, denominator) < DistributionMath.MinNormal && Math.Max(numerator, denominator) < 1e292)
+            if (Math.Min(numerator, denominator) < NumericConstants.MinNormal && Math.Max(numerator, denominator) < 1e292)
             {
                 numerator = Math.ScaleB(numerator, 52);
                 denominator = Math.ScaleB(denominator, 52);
@@ -94,7 +110,7 @@ internal static class GammaLogProbability
             double dShape = 0;
             if (shapeGradient)
             {
-                dShape = y >= DistributionMath.MinNormal && double.IsFinite(y)
+                dShape = y >= NumericConstants.MinNormal && double.IsFinite(y)
                     ? XMath.Special.GammaShapePrefixDerivative(shape, y, lower: false)
                         + DistributionMath.Log1p(Math.FusedMultiplyAdd(-y, denominator, numerator) / numerator)
                     : logY - XMath.Special.Digamma(shape);
@@ -127,7 +143,7 @@ internal static class GammaLogProbability
         }
 
         double dTailShape = 0, logSlope;
-        if (y < DistributionMath.MinNormal)
+        if (y < NumericConstants.MinNormal)
         {
             // 下側は P(a,y) ≈ yᵃ / Γ(a+1)。y を丸めず、対数の比から微分を求める。
             double logP = DistributionMath.LogRegularizedGammaPFromLog(shape, logY);

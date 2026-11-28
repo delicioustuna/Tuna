@@ -129,11 +129,11 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
         {
             if (IsNormal)
             {
-                return 0.5 + DistributionMath.LnSqrt2Pi + Math.Log(_scale);
+                return 0.5 + XMath.Constants.LnSqrtTwoPi + Math.Log(_scale);
             }
 
             double half = 0.5 * _degreesOfFreedom;
-            return (half + 0.5) * DistributionMath.DigammaHalfStep(half) + DistributionMath.LnSqrt2Pi
+            return (half + 0.5) * DistributionMath.DigammaHalfStep(half) + XMath.Constants.LnSqrtTwoPi
                 - DistributionMath.LogGammaHalfStepCorrection(half) + Math.Log(_scale);
         }
     }
@@ -201,7 +201,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
     private static (double FirstDegrees, double FirstValue, double SecondDegrees, double SecondValue) normalizationCache;
 
     private static double ComputeLogPdfConstant(double degreesOfFreedom) =>
-        DistributionMath.LogGammaHalfStepCorrection(0.5 * degreesOfFreedom) - DistributionMath.LnSqrt2Pi;
+        DistributionMath.LogGammaHalfStepCorrection(0.5 * degreesOfFreedom) - XMath.Constants.LnSqrtTwoPi;
 
     private double LogPdfValue(double t, double constant, double logScale) =>
         constant - 0.5 * (_degreesOfFreedom + 1) * LogOnePlusRatio(t) - logScale;
@@ -248,14 +248,14 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
             double x = 1 / (1 + ratio);
             if (x <= 0.5)
             {
-                return XMath.Special.LogRegularizedIncompleteBeta(0.5 * nu, 0.5, x) - DistributionMath.Ln2;
+                return XMath.Special.LogRegularizedIncompleteBeta(0.5 * nu, 0.5, x) - XMath.Constants.Ln2;
             }
 
             double y = ratio / (1 + ratio);
-            return XMath.Special.LogRegularizedIncompleteBetaComplement(0.5, 0.5 * nu, y) - DistributionMath.Ln2;
+            return XMath.Special.LogRegularizedIncompleteBetaComplement(0.5, 0.5 * nu, y) - XMath.Constants.Ln2;
         }
 
-        return LogTailFromLogX(a) - DistributionMath.Ln2;
+        return LogTailFromLogX(a) - XMath.Constants.Ln2;
     }
 
     private double LogTailFromLogX(double a)
@@ -346,7 +346,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
 
         double nu = _degreesOfFreedom;
         double x = XMath.Special.InverseRegularizedIncompleteBeta(0.5 * nu, 0.5, r);
-        if (x < DistributionMath.MinNormal)
+        if (x < NumericConstants.MinNormal)
         {
             return DistributionMath.UnstandardizeFromLog(_location, _scale, negative, LogTwoSidedQuantileFromLog(Math.Log(r)));
         }
@@ -418,7 +418,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
             return DistributionMath.Unstandardize(_location, _scale, XMath.Special.InverseNormalLogCdf(logP));
         }
 
-        if (logP > -DistributionMath.Ln2)
+        if (logP > -XMath.Constants.Ln2)
         {
             return InverseSf(-DistributionMath.Expm1(logP));
         }
@@ -428,7 +428,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
             return InverseCdf(Math.Exp(logP));
         }
 
-        return DistributionMath.UnstandardizeFromLog(_location, _scale, true, LogTwoSidedQuantileFromLog(logP + DistributionMath.Ln2));
+        return DistributionMath.UnstandardizeFromLog(_location, _scale, true, LogTwoSidedQuantileFromLog(logP + XMath.Constants.Ln2));
     }
 
     /// <inheritdoc/>
@@ -444,7 +444,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
             return DistributionMath.Unstandardize(_location, _scale, XMath.Special.InverseNormalLogSf(logQ));
         }
 
-        if (logQ > -DistributionMath.Ln2)
+        if (logQ > -XMath.Constants.Ln2)
         {
             return InverseCdf(-DistributionMath.Expm1(logQ));
         }
@@ -454,7 +454,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
             return InverseSf(Math.Exp(logQ));
         }
 
-        return DistributionMath.UnstandardizeFromLog(_location, _scale, false, LogTwoSidedQuantileFromLog(logQ + DistributionMath.Ln2));
+        return DistributionMath.UnstandardizeFromLog(_location, _scale, false, LogTwoSidedQuantileFromLog(logQ + XMath.Constants.Ln2));
     }
 
     /// <inheritdoc/>
@@ -483,7 +483,7 @@ public readonly partial struct StudentTDistribution : IContinuousDistribution
         }
 
         // V = 2G ~ χ²(ν), T = Z * sqrt(ν / V) evaluated in log-space to avoid underflow for tiny ν.
-        double logV = DistributionMath.Ln2 + Sampling.LogStandardGamma(random, 0.5 * _degreesOfFreedom);
+        double logV = XMath.Constants.Ln2 + Sampling.LogStandardGamma(random, 0.5 * _degreesOfFreedom);
         return DistributionMath.Unstandardize(_location, _scale, z * Math.Exp(0.5 * (Math.Log(_degreesOfFreedom) - logV)));
     }
 }

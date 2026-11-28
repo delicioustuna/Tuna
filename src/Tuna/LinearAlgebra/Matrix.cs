@@ -625,6 +625,15 @@ public sealed class Matrix<TElement> where TElement : unmanaged, INumberBase<TEl
     public static Matrix<TElement> operator *(Matrix<TElement> a, TElement scalar) => XMath.Multiply(a, scalar);
 
     /// <summary>
+    /// Divides each element of a matrix by a scalar.
+    /// <para>行列の各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="a">The input matrix. / 入力行列。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new matrix containing the quotients. / 各要素の商を格納した新しい行列。</returns>
+    public static Matrix<TElement> operator /(Matrix<TElement> a, TElement scalar) => XMath.Divide(a, scalar);
+
+    /// <summary>
     /// Computes the matrix product <c>a * b</c>.
     /// <para>行列積 <c>a * b</c> を計算します。</para>
     /// </summary>
@@ -657,6 +666,13 @@ public sealed class Matrix<TElement> where TElement : unmanaged, INumberBase<TEl
     /// </summary>
     /// <param name="scalar">The scalar multiplier. / 掛けるスカラー値。</param>
     public void operator *=(TElement scalar) => XMath.InPlace.Multiply(this, scalar);
+
+    /// <summary>
+    /// Divides each element of this matrix by a scalar in place.
+    /// <para>この行列の各要素をインプレースでスカラー除算します。</para>
+    /// </summary>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    public void operator /=(TElement scalar) => XMath.InPlace.Divide(this, scalar);
 
     /// <summary>
     /// Explicitly converts a two-dimensional array to a new <see cref="Matrix{TElement}"/> by copying its elements.

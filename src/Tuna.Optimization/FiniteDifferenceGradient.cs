@@ -14,9 +14,8 @@ namespace Tuna.Optimization;
 /// </remarks>
 public sealed class FiniteDifferenceGradient : IDifferentiableObjectiveFunction
 {
-    private static readonly double Epsilon = double.BitIncrement(1.0) - 1.0;
-    private static readonly double CentralScale = Math.Cbrt(Epsilon);
-    private static readonly double OneSidedScale = Math.Sqrt(Epsilon);
+    private const double OneSidedScale = NumericConstants.SqrtMachineEpsilon;
+    private static readonly double CentralScale = Math.Cbrt(NumericConstants.MachineEpsilon);
 
     private readonly Func<ReadOnlyVectorSpan<double>, double>? function;
     private readonly IObjectiveFunction? objective;

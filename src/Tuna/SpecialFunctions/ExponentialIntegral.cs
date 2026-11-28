@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -70,7 +72,7 @@ public static partial class XMath
                     c = b + an / c;
                     double delta = c * d;
                     h *= delta;
-                    if (Math.Abs(delta - 1) <= Epsilon)
+                    if (Math.Abs(delta - 1) <= MachineEpsilon)
                     {
                         break;
                     }
@@ -102,7 +104,7 @@ public static partial class XMath
                 }
 
                 sum += delta;
-                if (Math.Abs(delta) <= Math.Abs(sum) * Epsilon * 0.5)
+                if (Math.Abs(delta) <= Math.Abs(sum) * MachineEpsilon * 0.5)
                 {
                     break;
                 }
@@ -166,7 +168,7 @@ public static partial class XMath
                     factor *= x / k;
                     double term = factor / k;
                     sum += term;
-                    if (term <= Epsilon * sum * 0.5)
+                    if (term <= MachineEpsilon * sum * 0.5)
                     {
                         break;
                     }
@@ -200,7 +202,7 @@ public static partial class XMath
 
                 t = next;
                 series += t;
-                if (t <= Epsilon * series * 0.5)
+                if (t <= MachineEpsilon * series * 0.5)
                 {
                     break;
                 }

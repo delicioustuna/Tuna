@@ -1,6 +1,6 @@
 # 確率分布の自動微分
 
-`Tuna.Statistics.Distributions` の静的メソッドには、分布パラメータを先に、評価点や観測値を後に渡します。`Tape.Leaf` で微分対象となる引数のノードを作成します。定数の引数には数値をそのまま渡せます。戻り値は `ScalarNode` です。
+`Tuna.Statistics.Distributions` の静的メソッドには、分布パラメータを先に、評価点や観測値を後に渡します。`Tape.Leaf` で微分対象となる引数のノードを作成します。定数の引数には数値をそのまま渡せます。単点評価や合計を求めるメソッドは `ScalarNode`、観測ごとの値を求めるメソッドは `VectorNode<double>` を返します。
 
 ## 対応メソッド
 
@@ -22,9 +22,15 @@
 | ポアソン | `LogPmf`、`LogCdf`、`LogSf` | 率。観測値は `long` | `LogPmf` |
 | 幾何・二項 | `LogPmf`、`LogCdf`、`LogSf` | 成功確率。観測値と二項分布の試行回数は `long` | `LogPmf` |
 | 負の二項 | `LogPmf`、`LogCdf`、`LogSf` | 対数質量は成功回数と成功確率。対数累積・生存確率は成功確率 | `LogPmf` |
-| カテゴリカル | `LogPmf`、`LogCdf`、`LogSf` | `ReadOnlySpan<ScalarNode>` で渡す各カテゴリの重み | `LogPmf` |
+| カテゴリカル | `LogPmf`、`LogCdf`、`LogSf` | 各カテゴリの重み | `LogPmf`。`ReadOnlySpan<ScalarNode>` または `VectorSetNode<double>` で重みを指定 |
 
-計算値は、同じパラメータを持つ分布インスタンスで評価した値とビット単位で一致します。観測ベクトルを渡すオーバーロードは、全観測が同じスカラーパラメータを共有する独立同一分布（i.i.d.）向けで、各観測値の対数確率を入力順に合計し、テープに 1 回の演算として記録します（観測ごとに異なる位置パラメータを持つ回帰モデルなどでは、単一観測の `LogPdf` をループで加算してください）。テープにはパラメータごとの偏微分の合計を保存します。空の観測ベクトルでは値と勾配がともに 0 です。
+計算値は、同じパラメータを持つ分布インスタンスで評価した値とビット単位で一致します。観測ベクトルと共通のスカラーパラメータを渡す `LogPdf` / `LogPmf` は、独立同一分布（i.i.d.）の対数尤度を入力順に合計し、パラメータごとの偏微分の合計をテープに保存します。
+
+観測ごとに異なる分布パラメータには、観測数と同じ長さの `VectorNode<double>` を渡します。`ScalarSetNode<double>` への暗黙変換により、共通の `ScalarNode` や `double` と組み合わせられます。既知のベクトル値は `Tape.Constant` でノードにできます。`LogPdf` / `LogPmf` は対数尤度の合計、`LogPdfPointwise` / `LogPmfPointwise` は観測順の対数密度または対数確率質量を返します。いずれもバッチ全体を 1 回の演算として扱います。合計はモデルの学習に、観測ごとの値は重み付き尤度や WAIC、LOO-CV に使えます。
+
+ノードは同じテープから作成します。パラメータがすべてスカラー定数のときは、観測ごとの値を返すメソッドに `tape` を指定します。二項分布の試行回数は共通の `long` または観測数と同じ長さの `ReadOnlyVectorSpan<long>` で指定できます。カテゴリカル分布の `VectorSetNode<double>` には、共通の重みを `VectorNode<double>` で、観測ごとの重みを `MatrixNode<double>` で渡せます。重み行列の行はカテゴリ、列は観測に対応します。
+
+観測値が空でも、共通のスカラーパラメータやカテゴリの重みは定義域を検証します。一様分布では上下限がともに共通の場合、その大小関係と幅も検証します。入力が有効なら、合計と勾配は 0 になり、観測ごとの結果は空ベクトルになります。
 
 パラメータの有効範囲はコンストラクタと同じです。境界や特殊な入力では次のように振る舞います。
 
@@ -109,4 +115,4 @@ var model = LogDensities.FromAutomaticDifferentiation(
 
 対数密度の値だけを使う `RandomWalkMetropolis`、`SliceSampler`、`ParallelTempering` などでは、`DistributionParameterOutOfRangeException` は呼び出し元にそのまま送出されます。これらのサンプラーで定義域外を密度ゼロとして扱う場合は、モデルから `double.NegativeInfinity` を返してください。
 
-ロバスト回帰では、観測ごとの位置を `intercept + slope * features[i]` として `StudentTDistribution.LogPdf(4, location, scale, response[i])` を合計します。尺度にコーシー分布の事前分布を設定する場合は `CauchyDistribution.LogPdf(0, 5, scale)` を加えます。自由度も推定するモデルでは、第 1 引数に自由度のノードを渡します。ロバスト回帰を NUTS で実行する具体例は [AutomaticDifferentiationTests.cs](../tests/Tuna.Probabilistic.Tests/Probabilistic/AutomaticDifferentiationTests.cs) を参照してください。
+ロバスト回帰では、観測ごとの位置を `locations = intercept + slope * features` でベクトルとして求め、`StudentTDistribution.LogPdf(4, locations, scale, response)` で対数尤度を集計できます。尺度にコーシー分布の事前分布を設定する場合は `CauchyDistribution.LogPdf(0, 5, scale)` を加えます。自由度も推定するモデルでは、第 1 引数に自由度のノードを渡します。ロバスト回帰を NUTS で実行する具体例は [AutomaticDifferentiationTests.cs](../tests/Tuna.Probabilistic.Tests/Probabilistic/AutomaticDifferentiationTests.cs) を参照してください。

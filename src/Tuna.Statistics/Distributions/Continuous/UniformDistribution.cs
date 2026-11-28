@@ -94,7 +94,7 @@ public readonly partial struct UniformDistribution : IContinuousDistribution
     public double LogCdf(double x)
     {
         double p = Cdf(x);
-        if (p < DistributionMath.MinNormal && x > _lower)
+        if (p < NumericConstants.MinNormal && x > _lower)
         {
             // Take logs before dividing when the ratio underflows or becomes subnormal on very wide intervals.
             return Math.Log(x - _lower) - Math.Log(_width);
@@ -108,7 +108,7 @@ public readonly partial struct UniformDistribution : IContinuousDistribution
     public double LogSf(double x)
     {
         double q = Sf(x);
-        if (q < DistributionMath.MinNormal && x < _upper)
+        if (q < NumericConstants.MinNormal && x < _upper)
         {
             return Math.Log(_upper - x) - Math.Log(_width);
         }
@@ -146,7 +146,7 @@ public readonly partial struct UniformDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        return logP > -DistributionMath.Ln2 ? InverseSf(-DistributionMath.Expm1(logP)) : _lower + Offset(logP);
+        return logP > -XMath.Constants.Ln2 ? InverseSf(-DistributionMath.Expm1(logP)) : _lower + Offset(logP);
     }
 
     /// <inheritdoc/>
@@ -157,13 +157,13 @@ public readonly partial struct UniformDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        return logQ > -DistributionMath.Ln2 ? InverseCdf(-DistributionMath.Expm1(logQ)) : _upper - Offset(logQ);
+        return logQ > -XMath.Constants.Ln2 ? InverseCdf(-DistributionMath.Expm1(logQ)) : _upper - Offset(logQ);
     }
 
     private double Offset(double logP)
     {
         double p = Math.Exp(logP);
-        return p >= DistributionMath.MinNormal ? p * _width : Math.Exp(logP + Math.Log(_width));
+        return p >= NumericConstants.MinNormal ? p * _width : Math.Exp(logP + Math.Log(_width));
     }
 
     /// <inheritdoc/>

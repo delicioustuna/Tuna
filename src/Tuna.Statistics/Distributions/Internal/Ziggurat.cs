@@ -12,7 +12,7 @@ internal static class Ziggurat
     private static readonly Table NormalTable = Table.Build(
         x => Math.Exp(-0.5 * x * x),
         y => Math.Sqrt(-2 * Math.Log(y)),
-        r => Math.Sqrt(Math.PI / 2) * XMath.Special.Erfc(r / Math.Sqrt(2)),
+        r => Math.Sqrt(Math.PI / 2) * XMath.Special.Erfc(r / XMath.Constants.Sqrt2),
         3, 4.5);
 
     private static readonly Table ExponentialTable = Table.Build(

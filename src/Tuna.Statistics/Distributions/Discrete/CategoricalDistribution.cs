@@ -166,7 +166,7 @@ public sealed partial class CategoricalDistribution : IDiscreteDistribution
 
             // Divide sequentially by variance and sqrt(variance) when σ³ would underflow or become subnormal.
             double cube = variance * Math.Sqrt(variance);
-            return cube >= DistributionMath.MinNormal ? CentralMoment(3) / cube : CentralMoment(3) / variance / Math.Sqrt(variance);
+            return cube >= NumericConstants.MinNormal ? CentralMoment(3) / cube : CentralMoment(3) / variance / Math.Sqrt(variance);
         }
     }
 
@@ -182,7 +182,7 @@ public sealed partial class CategoricalDistribution : IDiscreteDistribution
             }
 
             double square = variance * variance;
-            return (square >= DistributionMath.MinNormal ? CentralMoment(4) / square : CentralMoment(4) / variance / variance) - 3;
+            return (square >= NumericConstants.MinNormal ? CentralMoment(4) / square : CentralMoment(4) / variance / variance) - 3;
         }
     }
 

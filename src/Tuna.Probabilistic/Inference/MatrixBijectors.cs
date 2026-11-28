@@ -103,7 +103,7 @@ public static class MatrixBijectors
                 return jacobian;
             }
 
-            double result = order * Math.Log(2);
+            double result = order * XMath.Constants.Ln2;
             for (int row = 0; row < order; row++)
             {
                 int start = RowStart(row);
@@ -318,7 +318,7 @@ public static class MatrixBijectors
                 return 0.5 * XMath.Log1p<double>(-correlation * correlation);
             }
 
-            return Math.Log(2) - magnitude - XMath.Log1p<double>(Math.Exp(-2 * magnitude));
+            return XMath.Constants.Ln2 - magnitude - XMath.Log1p<double>(Math.Exp(-2 * magnitude));
         }
     }
 }

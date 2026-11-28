@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -15,7 +17,7 @@ public static partial class XMath
         private const int BesselMaxIterations = 10_000_000;
 
         // 原点付近の級数を使う引数上限。1/x は非正規化数でオーバーフローするため連分数・漸化式を避け、先頭 2 項で倍精度に収める ((x/2)⁴ ≤ 2⁻¹⁰⁸)
-        private const double BesselSmallArgument = 1.4901161193847656e-8;
+        private const double BesselSmallArgument = SqrtMachineEpsilon;
 
         // 1/Γ(1 + μ) = Σ cₖ μᵏ (k = 0, …, 26) の係数
         private static readonly double[] ReciprocalGammaTaylor =
@@ -506,7 +508,7 @@ public static partial class XMath
                     isign = -isign;
                 }
 
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }
@@ -532,7 +534,7 @@ public static partial class XMath
 
             if (rjl == 0)
             {
-                rjl = Epsilon;
+                rjl = MachineEpsilon;
             }
 
             double f = rjpl / rjl;
@@ -582,7 +584,7 @@ public static partial class XMath
                 temp = p * dlr - q * dli;
                 q = p * dli + q * dlr;
                 p = temp;
-                if (Math.Abs(dlr - 1) + Math.Abs(dli) <= Epsilon)
+                if (Math.Abs(dlr - 1) + Math.Abs(dli) <= MachineEpsilon)
                 {
                     break;
                 }
@@ -630,7 +632,7 @@ public static partial class XMath
             {
                 term *= t / (k * (nu + k));
                 sum += term;
-                if (Math.Abs(term) <= sum * Epsilon * 0.5)
+                if (Math.Abs(term) <= sum * MachineEpsilon * 0.5)
                 {
                     break;
                 }
@@ -683,19 +685,19 @@ public static partial class XMath
         private static void TemmeSeriesY(double xmu, double x, out double sum, out double sum1)
         {
             double pimu = Math.PI * xmu;
-            double fact = Math.Abs(pimu) < Epsilon ? 1 : pimu / Math.Sin(pimu);
+            double fact = Math.Abs(pimu) < MachineEpsilon ? 1 : pimu / Math.Sin(pimu);
 
             // d = -ln(x/2)。x/2 を作らないことで非正規化数での丸めを避ける
             double d = Ln2 - Math.Log(x);
             double e = xmu * d;
-            double fact2 = Math.Abs(e) < Epsilon ? 1 : Math.Sinh(e) / e;
+            double fact2 = Math.Abs(e) < MachineEpsilon ? 1 : Math.Sinh(e) / e;
             TemmeGammas(xmu, out double gam1, out double gam2, out double gampl, out double gammi);
             double ff = 2 / Math.PI * fact * (gam1 * Math.Cosh(e) + gam2 * fact2 * d);
             e = Math.Exp(e);
             double p = e / (gampl * Math.PI);
             double q = 1 / (e * Math.PI * gammi);
             double pimu2 = 0.5 * pimu;
-            double fact3 = Math.Abs(pimu2) < Epsilon ? 1 : Math.Sin(pimu2) / pimu2;
+            double fact3 = Math.Abs(pimu2) < MachineEpsilon ? 1 : Math.Sin(pimu2) / pimu2;
             double r = Math.PI * pimu2 * fact3 * fact3;
             double x2 = 0.5 * x;
             double c = 1;
@@ -714,7 +716,7 @@ public static partial class XMath
                 sum1 += delta1;
 
                 // |μ| = 1/2 付近では sum1 の収束が sum より遅いため両方を判定する
-                if (Math.Abs(delta) <= (1 + Math.Abs(sum)) * Epsilon && Math.Abs(delta1) <= Math.Abs(sum1) * Epsilon)
+                if (Math.Abs(delta) <= (1 + Math.Abs(sum)) * MachineEpsilon && Math.Abs(delta1) <= Math.Abs(sum1) * MachineEpsilon)
                 {
                     break;
                 }
@@ -725,10 +727,10 @@ public static partial class XMath
         private static void TemmeSeriesK(double xmu, double x, out double sum, out double sum1)
         {
             double pimu = Math.PI * xmu;
-            double fact = Math.Abs(pimu) < Epsilon ? 1 : pimu / Math.Sin(pimu);
+            double fact = Math.Abs(pimu) < MachineEpsilon ? 1 : pimu / Math.Sin(pimu);
             double d = Ln2 - Math.Log(x);
             double e = xmu * d;
-            double fact2 = Math.Abs(e) < Epsilon ? 1 : Math.Sinh(e) / e;
+            double fact2 = Math.Abs(e) < MachineEpsilon ? 1 : Math.Sinh(e) / e;
             TemmeGammas(xmu, out double gam1, out double gam2, out double gampl, out double gammi);
             double ff = fact * (gam1 * Math.Cosh(e) + gam2 * fact2 * d);
             e = Math.Exp(e);
@@ -751,7 +753,7 @@ public static partial class XMath
                 sum1 += delta1;
 
                 // |μ| = 1/2 付近では sum1 の項の相対的な大きさが O(x) で、sum より遅く収束するので両方を判定する
-                if (Math.Abs(delta) <= Math.Abs(sum) * Epsilon && Math.Abs(delta1) <= Math.Abs(sum1) * Epsilon)
+                if (Math.Abs(delta) <= Math.Abs(sum) * MachineEpsilon && Math.Abs(delta1) <= Math.Abs(sum1) * MachineEpsilon)
                 {
                     break;
                 }
@@ -767,7 +769,7 @@ public static partial class XMath
             BesselHankelPhase(nu, x, out double cosChi, out double sinChi);
 
             // πx は x が大きいとオーバーフローするため、√(2/π) と √x に分離する
-            double amplitude = Math.Sqrt(2 / Math.PI) / Math.Sqrt(x);
+            double amplitude = SqrtTwoOverPi / Math.Sqrt(x);
             j = amplitude * (p * cosChi - q * sinChi);
             y = amplitude * (p * sinChi + q * cosChi);
         }
@@ -809,7 +811,7 @@ public static partial class XMath
                     q += term;
                 }
 
-                if (magnitude <= Epsilon * 0.25 || term == 0)
+                if (magnitude <= MachineEpsilon * 0.25 || term == 0)
                 {
                     break;
                 }
@@ -879,7 +881,7 @@ public static partial class XMath
                 c = b + 1 / c;
                 double delta = c * d;
                 h = delta * h;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }
@@ -977,7 +979,7 @@ public static partial class XMath
                     h += delh;
                     double dels = q * delh;
                     s += dels;
-                    if (Math.Abs(dels / s) <= Epsilon)
+                    if (Math.Abs(dels / s) <= MachineEpsilon)
                     {
                         break;
                     }

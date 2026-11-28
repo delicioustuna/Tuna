@@ -149,6 +149,129 @@ public static partial class XMath
     }
 
     /// <summary>
+    /// Computes the wedge product <c>u vᵀ − v uᵀ</c> of two vectors of the same length.
+    /// <para>同じ長さの 2 つのベクトルのウェッジ積 <c>u vᵀ − v uᵀ</c> を計算します。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="u">The first vector. / 第 1 ベクトル。</param>
+    /// <param name="v">The second vector. / 第 2 ベクトル。</param>
+    /// <returns>A new <c>u.Length × u.Length</c> skew-symmetric matrix. / 新しい <c>u.Length × u.Length</c> の反対称行列。</returns>
+    /// <remarks>
+    /// <para>Empty vectors produce a 0 × 0 matrix. Off-diagonal entries come in opposite-sign pairs, and a diagonal entry is zero when both corresponding elements are finite.</para>
+    /// <para>For finite <see langword="double"/>, <see langword="float"/>, and <see cref="Half"/> operands, the difference of products uses extra precision to reduce cancellation and avoid intermediate overflow and underflow. Non-finite operands use ordinary multiplication and subtraction. Complex inputs use ordinary (non-conjugate) transposition.</para>
+    /// <para>入力の長さが 0 の場合は 0 × 0 の行列を返します。非対角成分は反対符号の組になり、対応する両方の要素が有限であれば対角成分は 0 になります。</para>
+    /// <para>有限な <see langword="double"/>、<see langword="float"/>、<see cref="Half"/> の積の差は、桁落ちや途中のオーバーフロー、アンダーフローを抑えて計算します。非有限値を含む成分には通常の乗算と減算を用います。複素数入力には共役転置ではなく通常の転置を用います。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">The vectors have different lengths. / ベクトルの長さが一致しない場合。</exception>
+    /// <exception cref="OverflowException">The number of result elements exceeds <see cref="int.MaxValue"/>. / 結果の要素数が <see cref="int.MaxValue"/> を超える場合。</exception>
+    [InferenceOverloads]
+    public static Matrix<T> Wedge<T>(ReadOnlyVectorSpan<T> u, ReadOnlyVectorSpan<T> v)
+        where T : unmanaged, INumberBase<T>
+    {
+        RequireWedgeLengths(u.Length, v.Length);
+        var result = Matrix<T>.Uninitialized(u.Length, u.Length);
+        WedgeCore(u, v, result);
+        return result;
+    }
+
+    /// <summary>
+    /// Writes the wedge product <c>u vᵀ − v uᵀ</c> of two vectors to <paramref name="destination"/>.
+    /// <para>2 つのベクトルのウェッジ積 <c>u vᵀ − v uᵀ</c> を <paramref name="destination"/> に書き込みます。</para>
+    /// </summary>
+    /// <typeparam name="T">The element type. / 要素型。</typeparam>
+    /// <param name="u">The first vector. / 第 1 ベクトル。</param>
+    /// <param name="v">The second vector. / 第 2 ベクトル。</param>
+    /// <param name="destination">A <c>u.Length × u.Length</c> matrix view to receive the product. / 結果を書き込む <c>u.Length × u.Length</c> の行列ビュー。</param>
+    /// <returns><paramref name="destination"/>. / <paramref name="destination"/>。</returns>
+    /// <remarks>
+    /// <para><paramref name="destination"/> must not overlap either input. The calculation follows <see cref="Wedge{T}(ReadOnlyVectorSpan{T}, ReadOnlyVectorSpan{T})"/>.</para>
+    /// <para><paramref name="destination"/> はいずれの入力とも領域が重なってはなりません。計算方法は <see cref="Wedge{T}(ReadOnlyVectorSpan{T}, ReadOnlyVectorSpan{T})"/> と同じです。</para>
+    /// </remarks>
+    /// <exception cref="ArgumentException">The vectors have different lengths, or <paramref name="destination"/> has the wrong shape or overlaps either input. / ベクトルの長さが一致しないか、<paramref name="destination"/> の形状が一致しない、あるいは入力と領域が重なる場合。</exception>
+    [InferenceOverloads]
+    public static MatrixSpan<T> Wedge<T>(scoped ReadOnlyVectorSpan<T> u, scoped ReadOnlyVectorSpan<T> v, MatrixSpan<T> destination)
+        where T : unmanaged, INumberBase<T>
+    {
+        int n = u.Length;
+        RequireWedgeLengths(n, v.Length);
+        if (destination.Rows != n || destination.Columns != n)
+        {
+            throw new ArgumentException("Destination shape must agree.", nameof(destination));
+        }
+
+        StridedKernels.RequireDisjoint(u.AsMatrix(), destination);
+        StridedKernels.RequireDisjoint(v.AsMatrix(), destination);
+        WedgeCore(u, v, destination);
+        return destination;
+    }
+
+    private static void RequireWedgeLengths(int uLength, int vLength)
+    {
+        if (uLength != vLength)
+        {
+            throw new ArgumentException("The vectors must have the same length.", "v");
+        }
+    }
+
+    private const int WedgeBlockSize = 16;
+
+    private static void WedgeCore<T>(ReadOnlyVectorSpan<T> u, ReadOnlyVectorSpan<T> v, MatrixSpan<T> destination)
+        where T : unmanaged, INumberBase<T>
+    {
+        int n = u.Length;
+        if (n > WedgeBlockSize && u.Stride == 1 && v.Stride == 1 && destination.TryGetDense(out var dense))
+        {
+            WedgeDense(u.Data, v.Data, dense);
+            return;
+        }
+
+        var output = destination.AsReadOnly();
+        for (int j = 0; j < n; j++)
+        {
+            T uj = u.ElementAt(j), vj = v.ElementAt(j);
+            Unsafe.AsRef(in output.ElementAt(j, j)) = WedgeDiagonal(uj, vj);
+            for (int i = 0; i < j; i++)
+            {
+                T value = DifferenceOfProducts(u.ElementAt(i), vj, v.ElementAt(i), uj);
+                Unsafe.AsRef(in output.ElementAt(i, j)) = value;
+                Unsafe.AsRef(in output.ElementAt(j, i)) = -value;
+            }
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void WedgeDense<T>(ReadOnlySpan<T> u, ReadOnlySpan<T> v, Span<T> destination)
+        where T : unmanaged, INumberBase<T>
+    {
+        int n = u.Length;
+        for (int j = 0; j < n; j++)
+        {
+            destination[j * n + j] = WedgeDiagonal(u[j], v[j]);
+        }
+
+        // 符号反転先の列をブロック内に限定し、書き込みの局所性を保つ。
+        for (int start = 0; start < n; start += WedgeBlockSize)
+        {
+            int end = Math.Min(start + WedgeBlockSize, n);
+            for (int j = start + 1; j < n; j++)
+            {
+                T uj = u[j], vj = v[j];
+                int column = j * n, mirror = start * n + j;
+                int stop = Math.Min(end, j);
+                for (int i = start; i < stop; i++, mirror += n)
+                {
+                    T value = DifferenceOfProducts(u[i], vj, v[i], uj);
+                    destination[column + i] = value;
+                    destination[mirror] = -value;
+                }
+            }
+        }
+    }
+
+    private static T WedgeDiagonal<T>(T u, T v) where T : unmanaged, INumberBase<T> =>
+        T.IsFinite(u) && T.IsFinite(v) ? T.Zero : u * v - v * u;
+
+    /// <summary>
     /// Computes the cross product <c>u × v</c> of two three-dimensional vectors.
     /// <para>2 つの 3 次元ベクトルの外積 <c>u × v</c> を計算します。</para>
     /// </summary>

@@ -282,6 +282,15 @@ public readonly ref struct ReadOnlyVectorSpan<T> where T : unmanaged, INumberBas
     public static Vector<T> operator *(ReadOnlyVectorSpan<T> x, T scalar) => XMath.Multiply(x, scalar);
 
     /// <summary>
+    /// Divides each element of a vector view by a scalar.
+    /// <para>ベクトルビューの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="x">The input vector view. / 入力ベクトルビュー。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new vector containing the quotients. / 各要素の商を格納した新しいベクトル。</returns>
+    public static Vector<T> operator /(ReadOnlyVectorSpan<T> x, T scalar) => XMath.Divide(x, scalar);
+
+    /// <summary>
     /// Computes the matrix-vector product <c>a * x</c>.
     /// <para>行列ベクトル積 <c>a * x</c> を計算します。</para>
     /// </summary>
@@ -544,6 +553,15 @@ public readonly ref struct VectorSpan<T> where T : unmanaged, INumberBase<T>
     /// <param name="scalar">The scalar multiplier. / 掛けるスカラー値。</param>
     /// <returns>A new vector containing <c>x * scalar</c>. / <c>x * scalar</c> を格納した新しいベクトル。</returns>
     public static Vector<T> operator *(VectorSpan<T> x, T scalar) => XMath.Multiply(x, scalar);
+
+    /// <summary>
+    /// Divides each element of a vector view by a scalar.
+    /// <para>ベクトルビューの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="x">The input vector view. / 入力ベクトルビュー。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new vector containing the quotients. / 各要素の商を格納した新しいベクトル。</returns>
+    public static Vector<T> operator /(VectorSpan<T> x, T scalar) => XMath.Divide(x, scalar);
 
     /// <summary>
     /// Computes the matrix-vector product <c>a * x</c>.

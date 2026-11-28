@@ -66,7 +66,7 @@ internal static class DiscreteMath
             return d.SupportMaximum;
         }
 
-        if (logP <= -DistributionMath.Ln2)
+        if (logP <= -XMath.Constants.Ln2)
         {
             return DistributionMath.SmallestSatisfying(k => d.LogCdf(k) >= logP, guess, d.SupportMinimum, d.SupportMaximum);
         }
@@ -90,7 +90,7 @@ internal static class DiscreteMath
             return d.SupportMaximum;
         }
 
-        if (logQ <= -DistributionMath.Ln2)
+        if (logQ <= -XMath.Constants.Ln2)
         {
             return DistributionMath.SmallestSatisfying(k => d.LogSf(k) <= logQ, guess, d.SupportMinimum, d.SupportMaximum);
         }
@@ -127,7 +127,7 @@ internal static class DiscreteMath
     {
         double s2 = skewness * skewness;
         double negentropy = s2 / 12 + excessKurtosis * excessKurtosis / 48 + 7 * s2 * s2 / 48 - s2 * excessKurtosis / 8;
-        return 0.5 * (DistributionMath.LnTwoPi + 1 + logVariance) - negentropy;
+        return 0.5 * (NumericConstants.LnTau + 1 + logVariance) - negentropy;
     }
 
     // Threshold on max(γ₁², |γ₂|) below which omitted Edgeworth terms fall under double rounding error.
@@ -194,6 +194,6 @@ internal static class DiscreteMath
         }
 
         // Geometric series tail bound assuming non-increasing ratio.
-        return term * ratio / (1 - ratio) <= 0.25 * DistributionMath.Epsilon * Math.Abs(sum);
+        return term * ratio / (1 - ratio) <= 0.25 * NumericConstants.MachineEpsilon * Math.Abs(sum);
     }
 }

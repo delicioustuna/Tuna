@@ -110,8 +110,8 @@ public static partial class XMath
     /// <param name="y">The divisor. / 除数。</param>
     /// <returns><c>x / y</c>. / <c>x / y</c>。</returns>
     /// <remarks>
-    /// <para>Vector and matrix overloads accept <paramref name="y"/> as either a scalar or a container/view of the same shape as <paramref name="x"/>.</para>
-    /// <para>ベクトル・行列オーバーロードでは、<paramref name="y"/> にスカラーまたは <paramref name="x"/> と同じ形状のベクトル・行列を指定できます。</para>
+    /// <para>Vector, matrix, and tensor overloads accept <paramref name="y"/> as a scalar or a container or view with the same shape as <paramref name="x"/>.</para>
+    /// <para>ベクトル・行列・テンソルのオーバーロードでは、<paramref name="y"/> にスカラーまたは <paramref name="x"/> と同じ形状のコンテナやビューを指定できます。</para>
     /// </remarks>
     [ElementwiseOperation(OperatorName = "DivideScalar", OperatorContainer = "Operators")]
     [ElementwiseOperation(Over = [nameof(x), nameof(y)], OperatorName = "Divide", OperatorContainer = "Operators")]

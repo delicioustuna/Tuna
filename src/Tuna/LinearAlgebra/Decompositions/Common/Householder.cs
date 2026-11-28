@@ -3,10 +3,6 @@ namespace Tuna.LinearAlgebra;
 // Householder 変換 H = I - τ v v^T および compact WY ブロック表現 I - V T V^T。
 internal static class Householder
 {
-    private const double SafeMin = 2.2250738585072014e-308;
-
-    private const double Epsilon = 2.220446049250313e-16;
-
     // 2^1021: |α - β| <= 2|β| がオーバーフローまたは逆数が非正規化数となりうる境界。
     private const double LargeBeta = 2.2471164185778949e307;
 
@@ -25,7 +21,7 @@ internal static class Householder
         }
 
         double beta = -Math.CopySign(Hypot(alpha, xnorm), alpha);
-        double smallNum = SafeMin / Epsilon;
+        double smallNum = NumericConstants.MinNormal / NumericConstants.MachineEpsilon;
         int rescaled = 0;
         if (Math.Abs(beta) < smallNum)
         {

@@ -6,8 +6,6 @@ namespace Tuna.SignalProcessing;
 // 角 2πk/n の丸め誤差や漸化式の誤差蓄積を避け、n/8 の倍数での厳密値と共役対称性を保つ。
 internal static class UnitRoots
 {
-    private static readonly double SqrtHalf = Math.Sqrt(0.5);
-
     internal static Complex Root(long k, long n)
     {
         k %= n;
@@ -38,7 +36,7 @@ internal static class UnitRoots
             // cos(π/2 − φ′) = sin(φ′) を利用して [0, π/4] で評価する
             if (r == 0)
             {
-                (c, s) = (SqrtHalf, SqrtHalf);
+                (c, s) = (XMath.Constants.OneOverSqrt2, XMath.Constants.OneOverSqrt2);
             }
             else
             {

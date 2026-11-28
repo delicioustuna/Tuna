@@ -1,3 +1,5 @@
+using static Tuna.XMath.Constants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -53,8 +55,8 @@ public static partial class XMath
                 if (ah <= 0.67)
                 {
                     // h と ah が小さいと右辺の 3 項はほぼ打ち消し合うので、Q = 1/2 - n（n = Φ - 1/2 = erf(x/√2)/2）を代入して 1/4 - n_h n_ah とする
-                    double nh = 0.5 * Erf(absH * InvSqrt2);
-                    double nah = 0.5 * Erf(ah * InvSqrt2);
+                    double nh = 0.5 * Erf(absH * OneOverSqrt2);
+                    double nah = 0.5 * Erf(ah * OneOverSqrt2);
                     value = 0.25 - nh * nah - reflected;
                 }
                 else
@@ -91,7 +93,7 @@ public static partial class XMath
             }
 
             // e^(-h²/2) は h² の丸め誤差を補正して掛け、値が非正規数になる裾でも丸めを最後の1回にする
-            return ScaledExpMinusHalfSquare(h, a * sum * InvTwoPi);
+            return ScaledExpMinusHalfSquare(h, a * sum * OneOverTwoPi);
         }
     }
 }

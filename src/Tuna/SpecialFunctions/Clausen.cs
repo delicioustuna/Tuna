@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -56,9 +59,9 @@ public static partial class XMath
             double lo = 0;
             if (periods != 0)
             {
-                double product = periods * (2 * PiHi);
-                double productError = Math.FusedMultiplyAdd(periods, 2 * PiHi, -product);
-                (hi, lo) = DoubleDoubleTwoSum(theta - product, -productError - periods * TwoPiLo);
+                double product = periods * (2 * Pi);
+                double productError = Math.FusedMultiplyAdd(periods, 2 * Pi, -product);
+                (hi, lo) = DoubleDoubleTwoSum(theta - product, -productError - periods * TauLo);
             }
 
             double sign = 1;
@@ -72,8 +75,8 @@ public static partial class XMath
                 return sign * ClausenNearZero(hi + lo);
             }
 
-            // x = π - |r| (PiHi - hi は丸め誤差なし)
-            double x = (PiHi - hi) + (PiLo - lo);
+            // x = π - |r| (Pi - hi は丸め誤差なし)
+            double x = (Pi - hi) + (PiLo - lo);
             return sign * ClausenNearPi(x);
         }
 

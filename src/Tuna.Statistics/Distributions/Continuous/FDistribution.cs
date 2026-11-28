@@ -50,7 +50,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
         _denominator = denominatorDegreesOfFreedom;
         _ratio = numeratorDegreesOfFreedom / denominatorDegreesOfFreedom;
         _logRatio = Math.Log(numeratorDegreesOfFreedom) - Math.Log(denominatorDegreesOfFreedom);
-        _ratioIsRegular = _ratio >= DistributionMath.MinNormal && _ratio < double.PositiveInfinity;
+        _ratioIsRegular = _ratio >= NumericConstants.MinNormal && _ratio < double.PositiveInfinity;
     }
 
     /// <summary>
@@ -144,7 +144,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
         get
         {
             double a = A, b = B, s = a + b;
-            double logarithms = DistributionMath.LnSqrt2Pi + 0.5 * (DistributionMath.Log1p(a / b) - Math.Log(a));
+            double logarithms = XMath.Constants.LnSqrtTwoPi + 0.5 * (DistributionMath.Log1p(a / b) - Math.Log(a));
             double rational = 0.5 - 0.5 / a + 0.5 / b;
             double stirling = DistributionMath.StirlingRemainder(a) + DistributionMath.StirlingRemainder(b)
                 - DistributionMath.StirlingRemainder(s);
@@ -167,7 +167,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
     private bool SmallCoordinate(double x, out double small)
     {
         double r = _ratio * x;
-        if (_ratioIsRegular && r >= DistributionMath.MinNormal && r < double.PositiveInfinity)
+        if (_ratioIsRegular && r >= NumericConstants.MinNormal && r < double.PositiveInfinity)
         {
             if (r <= 1)
             {
@@ -210,16 +210,16 @@ public readonly partial struct FDistribution : IContinuousDistribution
         }
 
         bool upper = SmallCoordinate(x, out double small);
-        if (small >= DistributionMath.MinNormal)
+        if (small >= NumericConstants.MinNormal)
         {
             // Pass the more accurate (smaller) coordinate first so the second argument matches 1 - small.
             double prefix = upper
                 ? XMath.Special.BetaPrefix(b, a, small, 1 - small)
                 : XMath.Special.BetaPrefix(a, b, small, 1 - small);
-            if (prefix >= DistributionMath.MinNormal && prefix < double.PositiveInfinity)
+            if (prefix >= NumericConstants.MinNormal && prefix < double.PositiveInfinity)
             {
                 double f = prefix / x;
-                if (f >= DistributionMath.MinNormal && f < double.PositiveInfinity)
+                if (f >= NumericConstants.MinNormal && f < double.PositiveInfinity)
                 {
                     return f;
                 }
@@ -249,7 +249,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
 
         double a = A, b = B;
         bool upper = SmallCoordinate(x, out double small);
-        if (small >= DistributionMath.MinNormal)
+        if (small >= NumericConstants.MinNormal)
         {
             double logPrefix = upper
                 ? XMath.Special.LogBetaPrefix(b, a, small, 1 - small)
@@ -282,12 +282,12 @@ public readonly partial struct FDistribution : IContinuousDistribution
         bool upper = SmallCoordinate(x, out double small);
         if (upper)
         {
-            return small >= DistributionMath.MinNormal
+            return small >= NumericConstants.MinNormal
                 ? XMath.Special.RegularizedIncompleteBetaComplement(b, a, small)
                 : -DistributionMath.Expm1(DistributionMath.LogRegularizedIncompleteBetaFromLog(b, a, LogSmallCoordinate(LogR(x), true)));
         }
 
-        return small >= DistributionMath.MinNormal
+        return small >= NumericConstants.MinNormal
             ? XMath.Special.RegularizedIncompleteBeta(a, b, small)
             : Math.Exp(DistributionMath.LogRegularizedIncompleteBetaFromLog(a, b, LogSmallCoordinate(LogR(x), false)));
     }
@@ -309,12 +309,12 @@ public readonly partial struct FDistribution : IContinuousDistribution
         bool upper = SmallCoordinate(x, out double small);
         if (upper)
         {
-            return small >= DistributionMath.MinNormal
+            return small >= NumericConstants.MinNormal
                 ? XMath.Special.RegularizedIncompleteBeta(b, a, small)
                 : Math.Exp(DistributionMath.LogRegularizedIncompleteBetaFromLog(b, a, LogSmallCoordinate(LogR(x), true)));
         }
 
-        return small >= DistributionMath.MinNormal
+        return small >= NumericConstants.MinNormal
             ? XMath.Special.RegularizedIncompleteBetaComplement(a, b, small)
             : -DistributionMath.Expm1(DistributionMath.LogRegularizedIncompleteBetaFromLog(a, b, LogSmallCoordinate(LogR(x), false)));
     }
@@ -336,12 +336,12 @@ public readonly partial struct FDistribution : IContinuousDistribution
         bool upper = SmallCoordinate(x, out double small);
         if (upper)
         {
-            return small >= DistributionMath.MinNormal
+            return small >= NumericConstants.MinNormal
                 ? XMath.Special.LogRegularizedIncompleteBetaComplement(b, a, small)
                 : DistributionMath.Log1mExp(DistributionMath.LogRegularizedIncompleteBetaFromLog(b, a, LogSmallCoordinate(LogR(x), true)));
         }
 
-        return small >= DistributionMath.MinNormal
+        return small >= NumericConstants.MinNormal
             ? XMath.Special.LogRegularizedIncompleteBeta(a, b, small)
             : DistributionMath.LogRegularizedIncompleteBetaFromLog(a, b, LogSmallCoordinate(LogR(x), false));
     }
@@ -363,12 +363,12 @@ public readonly partial struct FDistribution : IContinuousDistribution
         bool upper = SmallCoordinate(x, out double small);
         if (upper)
         {
-            return small >= DistributionMath.MinNormal
+            return small >= NumericConstants.MinNormal
                 ? XMath.Special.LogRegularizedIncompleteBeta(b, a, small)
                 : DistributionMath.LogRegularizedIncompleteBetaFromLog(b, a, LogSmallCoordinate(LogR(x), true));
         }
 
-        return small >= DistributionMath.MinNormal
+        return small >= NumericConstants.MinNormal
             ? XMath.Special.LogRegularizedIncompleteBetaComplement(a, b, small)
             : DistributionMath.Log1mExp(DistributionMath.LogRegularizedIncompleteBetaFromLog(a, b, LogSmallCoordinate(LogR(x), false)));
     }
@@ -377,7 +377,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
     {
         double odds = isV ? (1 - small) / small : small / (1 - small);
         double x = odds / _ratio;
-        if (_ratioIsRegular && x >= DistributionMath.MinNormal && x < double.PositiveInfinity)
+        if (_ratioIsRegular && x >= NumericConstants.MinNormal && x < double.PositiveInfinity)
         {
             return x;
         }
@@ -395,7 +395,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
     private double Quantile(double first, double second, double probability, bool isV)
     {
         double s = XMath.Special.InverseRegularizedIncompleteBeta(first, second, probability);
-        if (s < DistributionMath.MinNormal)
+        if (s < NumericConstants.MinNormal)
         {
             return FromLogCoordinate(isV, BetaDistribution.LowerLogQuantileFromLog(first, second, Math.Log(probability)));
         }
@@ -406,7 +406,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
         }
 
         double t = XMath.Special.InverseRegularizedIncompleteBetaComplement(second, first, probability);
-        if (t < DistributionMath.MinNormal)
+        if (t < NumericConstants.MinNormal)
         {
             return FromLogCoordinate(!isV, BetaDistribution.LowerLogQuantileFromLog(second, first, DistributionMath.Log1p(-probability)));
         }
@@ -431,7 +431,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logP > -DistributionMath.Ln2)
+        if (logP > -XMath.Constants.Ln2)
         {
             return InverseSf(-DistributionMath.Expm1(logP));
         }
@@ -447,7 +447,7 @@ public readonly partial struct FDistribution : IContinuousDistribution
             return double.NaN;
         }
 
-        if (logQ > -DistributionMath.Ln2)
+        if (logQ > -XMath.Constants.Ln2)
         {
             return InverseCdf(-DistributionMath.Expm1(logQ));
         }

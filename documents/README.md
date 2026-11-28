@@ -33,7 +33,7 @@
 ### 使い方
 
 1. [はじめに（コンテナとビューの基本）](getting-started.md) — `Vector<T>`・`Matrix<T>`・`Tensor<T>` の作成、ゼロコピービュー、演算子
-2. [`XMath` の使い方](xmath.md) — 3 つの呼び出し形式、ビューとブロードキャスト、要素別演算・縮約・ユーザー定義演算子
+2. [`XMath` の使い方](xmath.md) — 3 つの呼び出し形式、ビューとブロードキャスト、要素別演算・縮約・数学定数・ユーザー定義演算子
 3. [線形代数と行列分解](linear-algebra.md) — `XMath.Solve`、LU / Cholesky / QR / 固有値 / SVD、バッチ演算
 4. [`XMath.Special` の使い方](special-functions.md) — 特殊関数の呼び方、対数スケール版・補関数版、定義域外の挙動
 5. [疑似乱数と準乱数](random.md) — 決定的なシード管理、並列ストリーム、状態保存、Sobol' 列

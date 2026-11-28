@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -57,7 +60,7 @@ public static partial class XMath
             for (int k = 1; k < DebyeCoefficients.Length; k++)
             {
                 scale /= nu;
-                if (DebyeBounds[k] * scale <= Epsilon * 0.01)
+                if (DebyeBounds[k] * scale <= MachineEpsilon * 0.01)
                 {
                     break;
                 }
@@ -183,8 +186,8 @@ public static partial class XMath
             if (tau < BesselPhaseSeriesMaxTau)
             {
                 DoubleDoubleCosSin(BesselPhaseNearTurningPoint(nu, x), out double cosTheta, out double sinTheta);
-                cosPsi = (cosTheta + sinTheta) * Sqrt1Over2;
-                sinPsi = (sinTheta - cosTheta) * Sqrt1Over2;
+                cosPsi = (cosTheta + sinTheta) * OneOverSqrt2;
+                sinPsi = (sinTheta - cosTheta) * OneOverSqrt2;
             }
             else
             {
@@ -197,13 +200,11 @@ public static partial class XMath
 
             // J = √(2/(πν tan β)) (cos ψ Σ U₂ₖ(i cot β)/ν²ᵏ - i sin ψ Σ U₂ₖ₊₁(i cot β)/ν²ᵏ⁺¹)、Y は cos と sin を入れ替え
             BesselDebyeSums(nu, 1 / tau, imaginary: true, out double evenSum, out double oddSum);
-            double amplitude = Math.Sqrt(2 / Math.PI) / (Math.Sqrt(nu) * Math.Sqrt(tau));
+            double amplitude = SqrtTwoOverPi / (Math.Sqrt(nu) * Math.Sqrt(tau));
             j = amplitude * (cosPsi * evenSum + sinPsi * oddSum);
             y = amplitude * (sinPsi * evenSum - cosPsi * oddSum);
             return true;
         }
-
-        private const double Sqrt1Over2 = 0.7071067811865476;
 
         // (artanh t - t)/t³ = Σ t²ᵏ/(2k+3) (square = t²) および (τ - arctan τ)/τ³ = Σ (-τ²)ᵏ/(2k+3) (square = -τ²) (|square| < 1/4)
         private static double BesselTurningSeries(double square)
@@ -214,7 +215,7 @@ public static partial class XMath
             {
                 double term = power / (2 * k + 3);
                 sum += term;
-                if (Math.Abs(term) <= 0.5 * Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= 0.5 * MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }
@@ -229,7 +230,7 @@ public static partial class XMath
         // φ = (4ζ/(1 - z²))^(1/4) = √2 (3 series / 2)^(1/6) により z = 1 での 0/0 を回避する
         private static void BesselAiryType(double nu, double w, double series, out double j, out double y)
         {
-            double phi = Math.Sqrt(2) * Math.Sqrt(Math.Cbrt(1.5 * series));
+            double phi = Sqrt2 * Math.Sqrt(Math.Cbrt(1.5 * series));
             var (ai, aiPrime, bi, biPrime) = Airy(w);
             double inverseCbrt = 1 / Math.Cbrt(nu);
             double zeta = w * inverseCbrt * inverseCbrt;
@@ -359,7 +360,7 @@ public static partial class XMath
             int e = Math.ILogB(a.Hi);
             double mHi = Math.ScaleB(a.Hi, -e);
             double mLo = Math.ScaleB(a.Lo, -e);
-            if (mHi >= Math.Sqrt(2))
+            if (mHi >= Sqrt2)
             {
                 mHi *= 0.5;
                 mLo *= 0.5;
@@ -386,9 +387,6 @@ public static partial class XMath
             double productLo = Math.FusedMultiplyAdd(e, Ln2, -productHi) + e * Ln2Lo;
             return DoubleDoubleAdd((2 * atanh.Hi, 2 * atanh.Lo), DoubleDoubleNormalize(productHi, productLo));
         }
-
-        // ln 2 - Ln2 (double-double 下位成分)
-        private const double Ln2Lo = 2.3190468138462996e-17;
 
         // e^e / √(c ν f)。e = k ln 2 + r (|r| ≤ ln 2 / 2) に分離し、オーバーフローや非正規化数領域でも 2ᵏ 倍の 1 回だけ丸める (ν f のオーバーフロー回避のため平方根も分離)
         private static double BesselScaledExp((double Hi, double Lo) e, double c, double nu, double f)
@@ -443,8 +441,8 @@ public static partial class XMath
                 double half = nu / 2;
                 double sinHalf = double.SinPi(half);
                 double cosHalf = double.CosPi(half);
-                sinPhase = (sinHalf + cosHalf) * Sqrt1Over2;
-                cosPhase = (cosHalf - sinHalf) * Sqrt1Over2;
+                sinPhase = (sinHalf + cosHalf) * OneOverSqrt2;
+                cosPhase = (cosHalf - sinHalf) * OneOverSqrt2;
             }
 
             cosChi = cosX * cosPhase + sinX * sinPhase;
@@ -530,7 +528,7 @@ public static partial class XMath
         // double-double 級数の打ち切り基準 (2⁻¹¹⁰)
         private const double DoubleDoubleEpsilon = 7.703719777548943e-34;
 
-        // double-double 角度の cos, sin。2π の上位・下位成分 (TwoPiLo) で還元し、下位部分は 1 次補正で加える (角度 1e15 程度まで倍精度維持)
+        // double-double 角度の cos, sin。2π の上位・下位成分 (TauLo) で還元し、下位部分は 1 次補正で加える (角度 1e15 程度まで倍精度維持)
         private static void DoubleDoubleCosSin((double Hi, double Lo) angle, out double cos, out double sin)
         {
             // 角度が 2⁷⁰ ≈ 1e21 を超えると double-double 精度でも位相の誤差が 1 を超えるため、上位部分のみを使い |cos|, |sin| ≤ 1 を保つ
@@ -541,13 +539,12 @@ public static partial class XMath
                 return;
             }
 
-            const double twoPiHi = 2 * Math.PI;
-            double k = Math.Round(angle.Hi / twoPiHi);
-            double product = k * twoPiHi;
-            double productError = Math.FusedMultiplyAdd(k, twoPiHi, -product);
+            double k = Math.Round(angle.Hi / Tau);
+            double product = k * Tau;
+            double productError = Math.FusedMultiplyAdd(k, Tau, -product);
 
             // angle.Hi と k·2π は π 以内で近いため引き算は正確 (k ≠ 0 ではスターベンツの補題)
-            var reduced = DoubleDoubleTwoSum(angle.Hi - product, (angle.Lo - productError) - k * TwoPiLo);
+            var reduced = DoubleDoubleTwoSum(angle.Hi - product, (angle.Lo - productError) - k * TauLo);
             double cosHi = Math.Cos(reduced.Hi);
             double sinHi = Math.Sin(reduced.Hi);
             cos = cosHi - sinHi * reduced.Lo;

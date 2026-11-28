@@ -369,6 +369,15 @@ public readonly ref struct ReadOnlyTensorSpan<TElement> where TElement : unmanag
     public static Tensor<TElement> operator *(ReadOnlyTensorSpan<TElement> a, TElement scalar) => XMath.Multiply(a, scalar);
 
     /// <summary>
+    /// Divides each element of a tensor view by a scalar.
+    /// <para>テンソルビューの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="a">The input tensor view. / 入力テンソルビュー。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new tensor containing the quotients. / 各要素の商を格納した新しいテンソル。</returns>
+    public static Tensor<TElement> operator /(ReadOnlyTensorSpan<TElement> a, TElement scalar) => XMath.Divide(a, scalar);
+
+    /// <summary>
     /// Computes the batched matrix product <c>C[i, j, k] = Σ_l A[i, l, k]·B[l, j, k]</c> (without summing over <c>k</c>).
     /// <para>行列ごとのバッチ積 <c>C[i, j, k] = Σ_l A[i, l, k]·B[l, j, k]</c>（<c>k</c> についての和は取りません）を計算します。</para>
     /// </summary>
@@ -685,6 +694,15 @@ public readonly ref struct TensorSpan<TElement> where TElement : unmanaged, INum
     /// <param name="scalar">The scalar multiplier. / 掛けるスカラー値。</param>
     /// <returns>A new tensor containing <c>a * scalar</c>. / <c>a * scalar</c> を格納した新しいテンソル。</returns>
     public static Tensor<TElement> operator *(TensorSpan<TElement> a, TElement scalar) => XMath.Multiply(a, scalar);
+
+    /// <summary>
+    /// Divides each element of a tensor view by a scalar.
+    /// <para>テンソルビューの各要素をスカラーで割ります。</para>
+    /// </summary>
+    /// <param name="a">The input tensor view. / 入力テンソルビュー。</param>
+    /// <param name="scalar">The scalar divisor. / 除数。</param>
+    /// <returns>A new tensor containing the quotients. / 各要素の商を格納した新しいテンソル。</returns>
+    public static Tensor<TElement> operator /(TensorSpan<TElement> a, TElement scalar) => XMath.Divide(a, scalar);
 
     /// <summary>
     /// Computes the batched matrix product <c>C[i, j, k] = Σ_l A[i, l, k]·B[l, j, k]</c> (without summing over <c>k</c>).

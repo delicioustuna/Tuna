@@ -179,7 +179,7 @@ internal readonly struct StudentTLogPdfGradient(double nu, double location, doub
         }
 
         var (residual, _, shift) = Difference(x);
-        return 2 * (Math.Log(Math.Abs(residual)) + shift * DistributionMath.Ln2 - Math.Log(scale)) - Math.Log(nu);
+        return 2 * (Math.Log(Math.Abs(residual)) + shift * XMath.Constants.Ln2 - Math.Log(scale)) - Math.Log(nu);
     }
 
     // [ln(1 + u) − u/(1 + u)]/u²。u が小さい方では級数の先頭 5 項。

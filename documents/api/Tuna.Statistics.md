@@ -1,7 +1,5 @@
 # Tuna.Statistics API リファレンス
 
-> このファイルは `tools/ApiDocGenerator` によって自動生成されています。手動で編集せず、`dotnet build Tuna.slnx -c Release` の後に再生成してください。
->
 > `(+N overloads)` は `Vector` / `VectorSpan` / `ReadOnlyVectorSpan` 等のコンテナ・ビュー組み合わせや `double` / `float` 固定型オーバーロードの省略を表します。
 
 ## 公開型一覧
@@ -49,8 +47,10 @@ Represents the Bernoulli distribution taking value 1 with probability `p` and 0 
 | `double LogCdf(long k)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ k)`. / 累積分布関数の自然対数 `ln P(X ≤ k)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode probability, long k)` | Records the Bernoulli log cumulative probability and its derivative with respect to the success probability. / ベルヌーイ分布の対数累積確率と成功確率に関する微分を記録します。 |
 | `double LogPmf(long k)` | Evaluates the natural logarithm of the probability mass function at the specified integer. / 指定した整数点で確率質量関数の自然対数を評価します。 |
+| `static ScalarNode LogPmf(ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations)` | Records the sum of Bernoulli log masses with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ベルヌーイ分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPmf(ScalarNode probability, long k)` | Records the Bernoulli log probability mass and its derivative with respect to the success probability. / ベルヌーイ分布の対数確率質量と成功確率に関する微分を記録します。 |
 | `static ScalarNode LogPmf(ScalarNode probability, ReadOnlyVectorSpan<long> observations)` | Records the Bernoulli log likelihood of independent observations as a single operation. / ベルヌーイ分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations, Tape tape = null)` | Records the Bernoulli log mass for each observation as a single operation. / ベルヌーイ分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
 | `double LogSf(long k)` | Evaluates the natural logarithm of the survival function, `ln P(X > k)`. / 生存関数の自然対数 `ln P(X > k)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode probability, long k)` | Records the Bernoulli log survival probability and its derivative with respect to the success probability. / ベルヌーイ分布の対数上側確率と成功確率に関する微分を記録します。 |
 | `double Pmf(long k)` | Evaluates the probability mass function (PMF) at the specified integer. / 指定した整数点で確率質量関数（PMF）を評価します。 |
@@ -98,8 +98,10 @@ Represents the beta distribution on `[0, 1]` with shape parameters `α` and `β`
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode alpha, ScalarNode beta, ScalarNode x)` | Records the beta log cumulative probability and its derivative with respect to the variate. / ベータ分布の対数累積確率と評価点に関する微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> alpha, ScalarSetNode<double> beta, ReadOnlyVectorSpan<double> observations)` | Records the sum of beta log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ベータ分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode alpha, ScalarNode beta, ScalarNode x)` | Records the beta log density and its derivatives. / ベータ分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode alpha, ScalarNode beta, ReadOnlyVectorSpan<double> observations)` | Records the beta log likelihood of independent observations as a single operation. / ベータ分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> alpha, ScalarSetNode<double> beta, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the beta log density for each observation as a single operation. / ベータ分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode alpha, ScalarNode beta, ScalarNode x)` | Records the beta log survival probability and its derivative with respect to the variate. / ベータ分布の対数生存確率と評価点に関する微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -153,8 +155,12 @@ Represents the binomial distribution `B(n, p)` for the number of successes in `n
 | `double LogCdf(long k)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ k)`. / 累積分布関数の自然対数 `ln P(X ≤ k)` を評価します。 |
 | `static ScalarNode LogCdf(long trials, ScalarNode probability, long k)` | Records the binomial log cumulative probability and its derivatives. / 二項分布の対数累積確率とその微分を記録します。 |
 | `double LogPmf(long k)` | Evaluates the natural logarithm of the probability mass function at the specified integer. / 指定した整数点で確率質量関数の自然対数を評価します。 |
+| `static ScalarNode LogPmf(long trials, ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations)` | Records the sum of binomial log masses with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、二項分布の対数尤度の合計を 1 回の演算として記録します。 |
+| `static ScalarNode LogPmf(ReadOnlyVectorSpan<long> trials, ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations)` | Records the sum of binomial log masses with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、二項分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPmf(long trials, ScalarNode probability, long k)` | Records the binomial log mass and its derivatives. / 二項分布の対数質量とその微分を記録します。 |
 | `static ScalarNode LogPmf(long trials, ScalarNode probability, ReadOnlyVectorSpan<long> observations)` | Records the binomial log likelihood of independent observations as a single operation. / 二項分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(long trials, ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations, Tape tape = null)` | Records the binomial log mass for each observation as a single operation. / 二項分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(ReadOnlyVectorSpan<long> trials, ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations, Tape tape = null)` | Records the binomial log mass for each observation as a single operation. / 二項分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
 | `double LogSf(long k)` | Evaluates the natural logarithm of the survival function, `ln P(X > k)`. / 生存関数の自然対数 `ln P(X > k)` を評価します。 |
 | `static ScalarNode LogSf(long trials, ScalarNode probability, long k)` | Records the binomial log survival probability and its derivatives. / 二項分布の対数生存確率とその微分を記録します。 |
 | `double Pmf(long k)` | Evaluates the probability mass function (PMF) at the specified integer. / 指定した整数点で確率質量関数（PMF）を評価します。 |
@@ -203,8 +209,10 @@ Represents the categorical distribution over `0, 1, …, K - 1` with probabiliti
 | `double LogCdf(long k)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ k)`. / 累積分布関数の自然対数 `ln P(X ≤ k)` を評価します。 |
 | `static ScalarNode LogCdf(ReadOnlySpan<ScalarNode> weights, long k)` | Records the categorical log cumulative probability and its weight derivatives. / カテゴリカル分布の対数累積確率と重みに関する微分を記録します。 |
 | `double LogPmf(long k)` | Evaluates the natural logarithm of the probability mass function at the specified integer. / 指定した整数点で確率質量関数の自然対数を評価します。 |
+| `static ScalarNode LogPmf(VectorSetNode<double> weights, ReadOnlyVectorSpan<long> observations)` | Records the sum of categorical log masses with shared or per-observation weights as a single operation. / 共通または観測ごとのカテゴリ重みを用いて、カテゴリカル分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPmf(ReadOnlySpan<ScalarNode> weights, long k)` | Records the categorical log mass and its weight derivatives. / カテゴリカル分布の対数質量と重みに関する微分を記録します。 |
 | `static ScalarNode LogPmf(ReadOnlySpan<ScalarNode> weights, ReadOnlyVectorSpan<long> observations)` | Records the categorical log likelihood of independent observations as a single operation. / カテゴリカル分布の独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(VectorSetNode<double> weights, ReadOnlyVectorSpan<long> observations)` | Records one categorical log mass per observation with shared or per-observation weights as a single operation. / 共通または観測ごとのカテゴリ重みを用いて、カテゴリカル分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
 | `double LogSf(long k)` | Evaluates the natural logarithm of the survival function, `ln P(X > k)`. / 生存関数の自然対数 `ln P(X > k)` を評価します。 |
 | `static ScalarNode LogSf(ReadOnlySpan<ScalarNode> weights, long k)` | Records the categorical log survival probability and its weight derivatives. / カテゴリカル分布の対数生存確率と重みに関する微分を記録します。 |
 | `double Pmf(long k)` | Evaluates the probability mass function (PMF) at the specified integer. / 指定した整数点で確率質量関数（PMF）を評価します。 |
@@ -251,8 +259,10 @@ Represents the Cauchy distribution with location `x₀` and scale `γ`. / 位置
 | `double InverseSf(double q)` | Computes the quantile corresponding to the specified upper-tail probability. / 指定した上側確率に対応する分位点を計算します。 |
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of Cauchy log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、コーシー分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Cauchy log density and its derivatives with respect to the location, scale, and variate. / コーシー分布の対数密度と、位置・尺度・評価点に関する微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the Cauchy log likelihood of independent observations as a single operation. / コーシー分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the Cauchy log density for each observation as a single operation. / コーシー分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
 | `double Sample(IRandomSource random)` | Draws a single random sample from the distribution. / 分布に従って標本を 1 個生成します。 |
@@ -298,8 +308,10 @@ Represents the chi-squared distribution `χ²(ν)` (equivalent to a gamma distri
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode degreesOfFreedom, ScalarNode x)` | Records the chi-squared log cumulative probability and its derivatives. / カイ二乗分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> degreesOfFreedom, ReadOnlyVectorSpan<double> observations)` | Records the sum of chi-squared log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、カイ二乗分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode degreesOfFreedom, ScalarNode x)` | Records the chi-squared log density and its derivatives. / カイ二乗分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode degreesOfFreedom, ReadOnlyVectorSpan<double> observations)` | Records the chi-squared log likelihood of independent observations as a single operation. / カイ二乗分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> degreesOfFreedom, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the chi-squared log density for each observation as a single operation. / カイ二乗分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode degreesOfFreedom, ScalarNode x)` | Records the chi-squared log survival probability and its derivatives. / カイ二乗分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -477,8 +489,10 @@ Represents the exponential distribution parameterized by rate `λ` on `[0, ∞)`
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode rate, ScalarNode x)` | Records the exponential log cumulative probability and its derivatives. / 指数分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> rate, ReadOnlyVectorSpan<double> observations)` | Records the sum of exponential log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、指数分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode rate, ScalarNode x)` | Records the exponential log density and its derivatives. / 指数分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode rate, ReadOnlyVectorSpan<double> observations)` | Records the exponential log likelihood of independent observations as a single operation. / 指数分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> rate, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the exponential log density for each observation as a single operation. / 指数分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode rate, ScalarNode x)` | Records the exponential log survival probability and its derivatives. / 指数分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -526,8 +540,10 @@ Represents the Fisher–Snedecor F-distribution `F(d₁, d₂)`. / F 分布 `F(d
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode numeratorDegreesOfFreedom, ScalarNode denominatorDegreesOfFreedom, ScalarNode x)` | Records the F log cumulative probability and its derivatives. / F 分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> numeratorDegreesOfFreedom, ScalarSetNode<double> denominatorDegreesOfFreedom, ReadOnlyVectorSpan<double> observations)` | Records the sum of F distribution log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、F 分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode numeratorDegreesOfFreedom, ScalarNode denominatorDegreesOfFreedom, ScalarNode x)` | Records the F log density and its derivatives. / F 分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode numeratorDegreesOfFreedom, ScalarNode denominatorDegreesOfFreedom, ReadOnlyVectorSpan<double> observations)` | Records the F log likelihood of independent observations as a single operation. / F 分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> numeratorDegreesOfFreedom, ScalarSetNode<double> denominatorDegreesOfFreedom, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the F distribution log density for each observation as a single operation. / F 分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode numeratorDegreesOfFreedom, ScalarNode denominatorDegreesOfFreedom, ScalarNode x)` | Records the F log survival probability and its derivatives. / F 分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -577,8 +593,10 @@ Represents the gamma distribution parameterized by shape `k` and scale `θ` on `
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the gamma log cumulative probability and its derivatives. / ガンマ分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> shape, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of gamma log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ガンマ分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the gamma log density and its derivatives. / ガンマ分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode shape, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the gamma log likelihood of independent observations as a single operation. / ガンマ分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> shape, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the gamma log density for each observation as a single operation. / ガンマ分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the gamma log survival probability and its derivatives. / ガンマ分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -625,8 +643,10 @@ Represents the geometric distribution for the number of failures before the firs
 | `double LogCdf(long k)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ k)`. / 累積分布関数の自然対数 `ln P(X ≤ k)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode probability, long k)` | Records the geometric log cumulative probability and its derivatives. / 幾何分布の対数累積確率とその微分を記録します。 |
 | `double LogPmf(long k)` | Evaluates the natural logarithm of the probability mass function at the specified integer. / 指定した整数点で確率質量関数の自然対数を評価します。 |
+| `static ScalarNode LogPmf(ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations)` | Records the sum of geometric log masses with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、幾何分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPmf(ScalarNode probability, long k)` | Records the geometric log mass and its derivatives. / 幾何分布の対数質量とその微分を記録します。 |
 | `static ScalarNode LogPmf(ScalarNode probability, ReadOnlyVectorSpan<long> observations)` | Records the geometric log likelihood of independent observations as a single operation. / 幾何分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations, Tape tape = null)` | Records the geometric log mass for each observation as a single operation. / 幾何分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
 | `double LogSf(long k)` | Evaluates the natural logarithm of the survival function, `ln P(X > k)`. / 生存関数の自然対数 `ln P(X > k)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode probability, long k)` | Records the geometric log survival probability and its derivatives. / 幾何分布の対数生存確率とその微分を記録します。 |
 | `double Pmf(long k)` | Evaluates the probability mass function (PMF) at the specified integer. / 指定した整数点で確率質量関数（PMF）を評価します。 |
@@ -674,8 +694,10 @@ Represents the Gumbel (Type I extreme value for maxima) distribution with locati
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Gumbel log cumulative probability and its derivatives. / ガンベル分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of Gumbel log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ガンベル分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Gumbel log density and its derivatives. / ガンベル分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the Gumbel log likelihood of independent observations as a single operation. / ガンベル分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the Gumbel log density for each observation as a single operation. / ガンベル分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Gumbel log survival probability and its derivatives. / ガンベル分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -846,8 +868,10 @@ Represents the inverse gamma distribution with shape `α` and scale `β` on `(0,
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the inverse gamma log cumulative probability and its derivatives. / 逆ガンマ分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> shape, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of inverse gamma log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、逆ガンマ分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the inverse gamma log density and its derivatives. / 逆ガンマ分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode shape, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the inverse gamma log likelihood of independent observations as a single operation. / 逆ガンマ分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> shape, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the inverse gamma log density for each observation as a single operation. / 逆ガンマ分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the inverse gamma log survival probability and its derivatives. / 逆ガンマ分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -925,8 +949,10 @@ Represents the Laplace (double exponential) distribution with location `μ` and 
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Laplace log cumulative probability and its derivatives. / ラプラス分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of Laplace log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ラプラス分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Laplace log density and its derivatives. / ラプラス分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the Laplace log likelihood of independent observations as a single operation. / ラプラス分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the Laplace log density for each observation as a single operation. / ラプラス分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Laplace log survival probability and its derivatives. / ラプラス分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -1050,8 +1076,10 @@ Represents the log-normal distribution where `ln X ~ N(μ, σ²)`. / `ln X ~ N(�
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode mu, ScalarNode sigma, ScalarNode x)` | Records the lognormal log cumulative probability and its derivatives. / 対数正規分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> mu, ScalarSetNode<double> sigma, ReadOnlyVectorSpan<double> observations)` | Records the sum of lognormal log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、対数正規分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode mu, ScalarNode sigma, ScalarNode x)` | Records the lognormal log density and its derivatives. / 対数正規分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode mu, ScalarNode sigma, ReadOnlyVectorSpan<double> observations)` | Records the lognormal log likelihood of independent observations as a single operation. / 対数正規分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> mu, ScalarSetNode<double> sigma, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the lognormal log density for each observation as a single operation. / 対数正規分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode mu, ScalarNode sigma, ScalarNode x)` | Records the lognormal log survival probability and its derivatives. / 対数正規分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -1099,8 +1127,10 @@ Represents the logistic distribution with location `μ` and scale `s`. / 位置 
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the logistic log cumulative probability and its derivatives. / ロジスティック分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of logistic log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ロジスティック分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the logistic log density and its derivatives. / ロジスティック分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode location, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the logistic log likelihood of independent observations as a single operation. / ロジスティック分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the logistic log density for each observation as a single operation. / ロジスティック分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the logistic log survival probability and its derivatives. / ロジスティック分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -1315,8 +1345,10 @@ Represents the negative binomial distribution for the number of failures before 
 | `double LogCdf(long k)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ k)`. / 累積分布関数の自然対数 `ln P(X ≤ k)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode successes, ScalarNode probability, long k)` | Records the negative binomial log cumulative probability and its derivatives. / 負の二項分布の対数累積確率とその微分を記録します。 |
 | `double LogPmf(long k)` | Evaluates the natural logarithm of the probability mass function at the specified integer. / 指定した整数点で確率質量関数の自然対数を評価します。 |
+| `static ScalarNode LogPmf(ScalarSetNode<double> successes, ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations)` | Records the sum of negative binomial log masses with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、負の二項分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPmf(ScalarNode successes, ScalarNode probability, long k)` | Records the negative binomial log mass and its derivatives. / 負の二項分布の対数質量とその微分を記録します。 |
 | `static ScalarNode LogPmf(ScalarNode successes, ScalarNode probability, ReadOnlyVectorSpan<long> observations)` | Records the negative binomial log likelihood of independent observations as a single operation. / 負の二項分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(ScalarSetNode<double> successes, ScalarSetNode<double> probability, ReadOnlyVectorSpan<long> observations, Tape tape = null)` | Records the negative binomial log mass for each observation as a single operation. / 負の二項分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
 | `double LogSf(long k)` | Evaluates the natural logarithm of the survival function, `ln P(X > k)`. / 生存関数の自然対数 `ln P(X > k)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode successes, ScalarNode probability, long k)` | Records the negative binomial log survival probability and its derivatives. / 負の二項分布の対数生存確率とその微分を記録します。 |
 | `double Pmf(long k)` | Evaluates the probability mass function (PMF) at the specified integer. / 指定した整数点で確率質量関数（PMF）を評価します。 |
@@ -1402,8 +1434,10 @@ Represents the normal (Gaussian) distribution `N(μ, σ²)`. / 正規分布（�
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode mean, ScalarNode standardDeviation, ScalarNode x)` | Records the normal log cumulative probability and its derivatives with respect to the mean, standard deviation, and variate. / 正規分布の対数累積確率と、平均・標準偏差・評価点に関する微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> mean, ScalarSetNode<double> standardDeviation, ReadOnlyVectorSpan<double> observations)` | Records the sum of normal log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、正規分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode mean, ScalarNode standardDeviation, ScalarNode x)` | Records the normal log density and its derivatives with respect to the mean, standard deviation, and variate. / 正規分布の対数密度と、平均・標準偏差・評価点に関する微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode mean, ScalarNode standardDeviation, ReadOnlyVectorSpan<double> observations)` | Records the normal log likelihood of independent observations as a single operation. / 正規分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> mean, ScalarSetNode<double> standardDeviation, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the normal log density for each observation as a single operation. / 正規分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode mean, ScalarNode standardDeviation, ScalarNode x)` | Records the normal log survival probability and its derivatives with respect to the mean, standard deviation, and variate. / 正規分布の対数上側確率と、平均・標準偏差・評価点に関する微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -1456,8 +1490,10 @@ Represents the Poisson distribution with rate (mean) `λ`. / 平均（発生率�
 | `double LogCdf(long k)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ k)`. / 累積分布関数の自然対数 `ln P(X ≤ k)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode rate, long k)` | Records the Poisson log cumulative probability and its derivatives. / ポアソン分布の対数累積確率とその微分を記録します。 |
 | `double LogPmf(long k)` | Evaluates the natural logarithm of the probability mass function at the specified integer. / 指定した整数点で確率質量関数の自然対数を評価します。 |
+| `static ScalarNode LogPmf(ScalarSetNode<double> rate, ReadOnlyVectorSpan<long> observations)` | Records the sum of Poisson log masses with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ポアソン分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPmf(ScalarNode rate, long k)` | Records the Poisson log mass and its derivatives. / ポアソン分布の対数質量とその微分を記録します。 |
 | `static ScalarNode LogPmf(ScalarNode rate, ReadOnlyVectorSpan<long> observations)` | Records the Poisson log likelihood of independent observations as a single operation. / ポアソン分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPmfPointwise(ScalarSetNode<double> rate, ReadOnlyVectorSpan<long> observations, Tape tape = null)` | Records the Poisson log mass for each observation as a single operation. / ポアソン分布の観測ごとの対数確率質量を 1 回の演算として記録します。 |
 | `double LogSf(long k)` | Evaluates the natural logarithm of the survival function, `ln P(X > k)`. / 生存関数の自然対数 `ln P(X > k)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode rate, long k)` | Records the Poisson log survival probability and its derivatives. / ポアソン分布の対数生存確率とその微分を記録します。 |
 | `double Pmf(long k)` | Evaluates the probability mass function (PMF) at the specified integer. / 指定した整数点で確率質量関数（PMF）を評価します。 |
@@ -1505,8 +1541,10 @@ Represents the location-scale Student's t-distribution `X = μ + σT`, where `T`
 | `double InverseSf(double q)` | Computes the quantile corresponding to the specified upper-tail probability. / 指定した上側確率に対応する分位点を計算します。 |
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> degreesOfFreedom, ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of Student's t log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、スチューデントの t 分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode degreesOfFreedom, ScalarNode location, ScalarNode scale, ScalarNode x)` | Records the Student's t log density and its derivatives with respect to the degrees of freedom, location, scale, and variate. / スチューデントの t 分布の対数密度と、自由度・位置・尺度・評価点に関する微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode degreesOfFreedom, ScalarNode location, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the Student's t log likelihood of independent observations as a single operation. / スチューデントの t 分布に従う独立な観測値の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> degreesOfFreedom, ScalarSetNode<double> location, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the Student's t log density for each observation as a single operation. / スチューデントの t 分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
 | `double Sample(IRandomSource random)` | Draws a single random sample from the distribution. / 分布に従って標本を 1 個生成します。 |
@@ -1601,8 +1639,10 @@ Represents the continuous uniform distribution `U(a, b)` on `[a, b]`. / `[a, b]`
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode lower, ScalarNode upper, ScalarNode x)` | Records the uniform log cumulative probability and its derivatives. / 一様分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> lower, ScalarSetNode<double> upper, ReadOnlyVectorSpan<double> observations)` | Records the sum of uniform log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、一様分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode lower, ScalarNode upper, ScalarNode x)` | Records the uniform log density and its derivatives. / 一様分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode lower, ScalarNode upper, ReadOnlyVectorSpan<double> observations)` | Records the uniform log likelihood of independent observations as a single operation. / 一様分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> lower, ScalarSetNode<double> upper, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the uniform log density for each observation as a single operation. / 一様分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode lower, ScalarNode upper, ScalarNode x)` | Records the uniform log survival probability and its derivatives. / 一様分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |
@@ -1650,8 +1690,10 @@ Represents the Weibull distribution with shape `k` and scale `λ` on `[0, ∞)`.
 | `double LogCdf(double x)` | Evaluates the natural logarithm of the cumulative distribution function, `ln P(X ≤ x)`. / 累積分布関数の自然対数 `ln P(X ≤ x)` を評価します。 |
 | `static ScalarNode LogCdf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the Weibull log cumulative probability and its derivatives. / ワイブル分布の対数累積確率とその微分を記録します。 |
 | `double LogPdf(double x)` | Evaluates the natural logarithm of the probability density function at the specified point. / 指定した点で確率密度関数の自然対数を評価します。 |
+| `static ScalarNode LogPdf(ScalarSetNode<double> shape, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations)` | Records the sum of Weibull log densities with shared or per-observation parameters as a single operation. / 共通または観測ごとのパラメータを用いて、ワイブル分布の対数尤度の合計を 1 回の演算として記録します。 |
 | `static ScalarNode LogPdf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the Weibull log density and its derivatives. / ワイブル分布の対数密度とその微分を記録します。 |
 | `static ScalarNode LogPdf(ScalarNode shape, ScalarNode scale, ReadOnlyVectorSpan<double> observations)` | Records the Weibull log likelihood of independent observations as a single operation. / ワイブル分布の対数尤度を 1 回の演算として記録します。 |
+| `static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> shape, ScalarSetNode<double> scale, ReadOnlyVectorSpan<double> observations, Tape tape = null)` | Records the Weibull log density for each observation as a single operation. / ワイブル分布の観測ごとの対数密度を 1 回の演算として記録します。 |
 | `double LogSf(double x)` | Evaluates the natural logarithm of the survival function, `ln P(X > x)`. / 生存関数の自然対数 `ln P(X > x)` を評価します。 |
 | `static ScalarNode LogSf(ScalarNode shape, ScalarNode scale, ScalarNode x)` | Records the Weibull log survival probability and its derivatives. / ワイブル分布の対数生存確率とその微分を記録します。 |
 | `double Pdf(double x)` | Evaluates the probability density function (PDF) at the specified point. / 指定した点で確率密度関数（PDF）を評価します。 |

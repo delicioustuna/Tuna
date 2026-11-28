@@ -187,7 +187,7 @@ public sealed class NegativeMultinomialDistribution : IMultivariateDiscreteDistr
 
             double count = x[i];
             stirling -= DistributionMath.StirlingRemainder(count);
-            logs -= 0.5 * (DistributionMath.LnTwoPi + Math.Log(count));
+            logs -= 0.5 * (NumericConstants.LnTau + Math.Log(count));
             deviance += DistributionMath.Bd0(count, m);
         }
 

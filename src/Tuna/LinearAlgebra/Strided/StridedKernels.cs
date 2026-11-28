@@ -18,6 +18,11 @@ internal static partial class StridedKernels
         where TOperator : IStatefulUnaryOperator<T>
     {
         RequireSameShape(x, destination);
+        if (x.IsEmpty)
+        {
+            return;
+        }
+
         RequireElementwiseAlias(x, destination);
         if (x.TryGetDense(out var xs) && destination.TryGetDense(out var ds))
         {
@@ -159,6 +164,11 @@ internal static partial class StridedKernels
     {
         RequireSameShape(x, y);
         RequireSameShape(x, destination);
+        if (x.IsEmpty)
+        {
+            return;
+        }
+
         RequireElementwiseAlias(x, destination);
         RequireElementwiseAlias(y, destination);
         if (x.TryGetDense(out var xs) && y.TryGetDense(out var ys) && destination.TryGetDense(out var ds))
@@ -236,6 +246,11 @@ internal static partial class StridedKernels
         RequireSameShape(x, y);
         RequireSameShape(x, z);
         RequireSameShape(x, destination);
+        if (x.IsEmpty)
+        {
+            return;
+        }
+
         RequireElementwiseAlias(x, destination);
         RequireElementwiseAlias(y, destination);
         RequireElementwiseAlias(z, destination);

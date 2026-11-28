@@ -2,13 +2,6 @@ namespace Tuna.Statistics.Distributions;
 
 internal static class DistributionMath
 {
-    internal const double Epsilon = 2.220446049250313e-16;
-    internal const double MinNormal = 2.2250738585072014e-308;
-    internal const double Ln2 = 0.6931471805599453;
-    internal const double LnPi = 1.1447298858494002;
-    internal const double LnTwoPi = 1.8378770664093453;
-    internal const double LnSqrt2Pi = 0.9189385332046728;
-
     // e^x が正規化数となる下限よりやや大きい閾値。これ未満では線形確率を経由せず対数空間で逆関数を解く
     internal const double LogProbabilityLinearLimit = -700;
 
@@ -59,7 +52,7 @@ internal static class DistributionMath
             return Unstandardize(location, scale, negative ? -z : z);
         }
 
-        double half = Math.Exp(logZ + Math.Log(scale) - Ln2);
+        double half = Math.Exp(logZ + Math.Log(scale) - XMath.Constants.Ln2);
         return 2 * (0.5 * location + (negative ? -half : half));
     }
 
@@ -160,7 +153,7 @@ internal static class DistributionMath
             {
                 double term = power / (2 * k + 1);
                 series += term;
-                if (term <= Epsilon * 0.25 * series)
+                if (term <= NumericConstants.MachineEpsilon * 0.25 * series)
                 {
                     break;
                 }
@@ -180,7 +173,7 @@ internal static class DistributionMath
 
     // a < 1 での StirlingRemainderShifted + ln a。呼び出し側が -ln a を他項の対数と組み合わせて桁落ちを防ぐために使う
     internal static double StirlingRemainderShiftedWithoutLog(double a, double x) =>
-        XMath.Special.LogGamma(1 + a) - a * Math.Log(a) + a - 0.5 * LnTwoPi + 0.5 * Math.Log(a + x);
+        XMath.Special.LogGamma(1 + a) - a * Math.Log(a) + a - 0.5 * NumericConstants.LnTau + 0.5 * Math.Log(a + x);
 
     // ディガンマ漸近残差 R(x) = ln x - 1/(2x) - ψ(x)。
     // x < 10 は漸化差 R(y) - R(y+1) = 2 Σ 2k t^(2k+1)/(2k+1)（t = 1/(2y+1)）を正項級数で加算する（y < 1 は直接式）。
@@ -209,7 +202,7 @@ internal static class DistributionMath
                 {
                     double term = power * (2.0 * k) / (2 * k + 1);
                     series += term;
-                    if (term <= Epsilon * 0.25 * series)
+                    if (term <= NumericConstants.MachineEpsilon * 0.25 * series)
                     {
                         break;
                     }
@@ -349,7 +342,7 @@ internal static class DistributionMath
     {
         double lc = StirlingRemainder(n) - StirlingRemainder(x) - StirlingRemainder(y)
             - Bd0(x, n * p) - Bd0(y, n * q);
-        double lf = LnTwoPi + Math.Log(x) + Math.Log(y) - Math.Log(n);
+        double lf = NumericConstants.LnTau + Math.Log(x) + Math.Log(y) - Math.Log(n);
         return lc - 0.5 * lf;
     }
 
@@ -376,13 +369,13 @@ internal static class DistributionMath
             return double.NegativeInfinity;
         }
 
-        return -StirlingRemainder(x) - Bd0(x, lambda) - 0.5 * (LnTwoPi + Math.Log(x));
+        return -StirlingRemainder(x) - Bd0(x, lambda) - 0.5 * (NumericConstants.LnTau + Math.Log(x));
     }
 
-    // ln x から ln I_x(a, b) を求める。x < MinNormal の極裾は先頭項 x^a / (a B(a, b)) で近似する
+    // ln x から ln I_x(a, b) を求める。x < NumericConstants.MinNormal の極裾は先頭項 x^a / (a B(a, b)) で近似する
     internal static double LogRegularizedIncompleteBetaFromLog(double a, double b, double logX)
     {
-        if (logX >= Math.Log(MinNormal))
+        if (logX >= Math.Log(NumericConstants.MinNormal))
         {
             return XMath.Special.LogRegularizedIncompleteBeta(a, b, Math.Exp(logX));
         }
@@ -390,10 +383,10 @@ internal static class DistributionMath
         return a * logX - Math.Log(a) - XMath.Special.LogBeta(a, b);
     }
 
-    // ln x から ln P(a, x) を求める。x < MinNormal の極裾は先頭項 x^a / Γ(a + 1) で近似する
+    // ln x から ln P(a, x) を求める。x < NumericConstants.MinNormal の極裾は先頭項 x^a / Γ(a + 1) で近似する
     internal static double LogRegularizedGammaPFromLog(double a, double logX)
     {
-        if (logX >= Math.Log(MinNormal))
+        if (logX >= Math.Log(NumericConstants.MinNormal))
         {
             return XMath.Special.LogRegularizedGammaP(a, Math.Exp(logX));
         }
@@ -512,7 +505,7 @@ internal static class DistributionMath
             t = next;
             f = fNext;
             derivative = derivativeNext;
-            if (change <= 2 * Epsilon * Math.Abs(t) || hi - lo <= 2 * Epsilon * Math.Max(Math.Abs(lo), Math.Abs(hi)))
+            if (change <= 2 * NumericConstants.MachineEpsilon * Math.Abs(t) || hi - lo <= 2 * NumericConstants.MachineEpsilon * Math.Max(Math.Abs(lo), Math.Abs(hi)))
             {
                 break;
             }

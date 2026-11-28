@@ -62,9 +62,13 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
         count = 0;
         epoch++;
         ResetOperations();
+        pointwiseOperations?.Clear();
+        pointwiseDerivatives?.Clear();
     }
 
     public DecompositionPool Decompositions => decompositions ??= new();
+
+    public int SlotCount => count;
 
     public bool RequiresGradient(int slot) => (flags[slot] & RequiresGradientFlag) != 0;
 
@@ -197,6 +201,9 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
             case ArrayOperation.Cross:
                 CrossBackward(record);
                 break;
+            case ArrayOperation.Wedge:
+                WedgeBackward(record);
+                break;
             case ArrayOperation.Sum:
                 SumBackward(record, adjoints[record.Output]);
                 break;
@@ -211,6 +218,10 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
                 break;
             case ArrayOperation.Embedding:
                 EmbeddingBackward(record);
+                break;
+            case ArrayOperation.PointwiseSum:
+            case ArrayOperation.PointwiseVector:
+                PointwiseBackward(record, adjoints);
                 break;
             default:
                 ElementwiseBackward(record, adjoints);
@@ -338,6 +349,119 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
         {
             XMath.Cross(dz, VectorView(u), destination);
             AddGradient(v, contribution, negate: false);
+        }
+    }
+
+    private void WedgeBackward(in ArrayRecord record)
+    {
+        int output = record.Output, n = rows[output];
+        if (!Touched(output) || n < 2)
+        {
+            return;
+        }
+
+        ArrayView u = record.Left, v = record.Right;
+        int uOffset = Offset(u), vOffset = Offset(v);
+        ReadOnlySpan<T> g = OutputGradient(output);
+        bool sharedGradient = u.Slot == v.Slot
+            || (gradients[u.Slot] is { } gradient && ReferenceEquals(gradient, gradients[v.Slot]));
+        if (sharedGradient && uOffset == vOffset)
+        {
+            AddSharedWedgeGradient(u, Values(u.Slot).Slice(uOffset, n), g);
+            return;
+        }
+
+        bool needsU = RequiresGradient(u.Slot), needsV = RequiresGradient(v.Slot);
+        Span<T> first = Scratch(Contribution, n);
+        if (needsU && needsV)
+        {
+            Span<T> second = Scratch(Reduction, n);
+            MultiplyWedgeAdjointPair(g, Values(v.Slot).Slice(vOffset, n), Values(u.Slot).Slice(uOffset, n), first, second);
+            AddGradient(u, first, negate: false);
+            AddGradient(v, second, negate: true);
+        }
+        else
+        {
+            ReadOnlySpan<T> vector = needsU ? Values(v.Slot).Slice(vOffset, n) : Values(u.Slot).Slice(uOffset, n);
+            MultiplyWedgeAdjoint(g, vector, first);
+            AddGradient(needsU ? u : v, first, negate: needsV);
+        }
+    }
+
+    private void AddSharedWedgeGradient(in ArrayView target, ReadOnlySpan<T> vector, ReadOnlySpan<T> g)
+    {
+        int n = vector.Length;
+        if (!ContainsNonFinite(vector) && !ContainsNonFiniteOffDiagonal(g, n))
+        {
+            return;
+        }
+
+        // 寄与を蓄積前に相殺し、有限な成分はゼロ、非有限な成分は NaN にする。
+        Span<T> contribution = Scratch(Contribution, n);
+        MultiplyWedgeAdjoint(g, vector, contribution);
+        for (int i = 0; i < n; i++)
+        {
+            T value = contribution[i];
+            contribution[i] = value - value;
+        }
+
+        AddGradient(target, contribution, negate: false);
+    }
+
+    private static bool ContainsNonFiniteOffDiagonal(ReadOnlySpan<T> matrix, int n)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            ReadOnlySpan<T> column = matrix.Slice(j * n, n);
+            if (ContainsNonFinite(column[..j]) || ContainsNonFinite(column[(j + 1)..]))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void MultiplyWedgeAdjoint(ReadOnlySpan<T> g, ReadOnlySpan<T> x, Span<T> result)
+    {
+        int n = x.Length;
+        // 2 番目以降の成分は、対応する列を走査して最初の寄与を書き込む。
+        result[0] = T.Zero;
+        for (int j = 1; j < n; j++)
+        {
+            ReadOnlySpan<T> column = g.Slice(j * n, j);
+            T xj = x[j], sum = T.Zero;
+            for (int i = 0, mirror = j; i < j; i++, mirror += n)
+            {
+                T skew = column[i] - g[mirror];
+                result[i] += skew * xj;
+                sum -= skew * x[i];
+            }
+
+            result[j] = sum;
+        }
+    }
+
+    private static void MultiplyWedgeAdjointPair(ReadOnlySpan<T> g, ReadOnlySpan<T> x, ReadOnlySpan<T> y, Span<T> first, Span<T> second)
+    {
+        int n = x.Length;
+        first[0] = second[0] = T.Zero;
+        for (int j = 1; j < n; j++)
+        {
+            ReadOnlySpan<T> column = g.Slice(j * n, j);
+            T xj = x[j], yj = y[j];
+            T sumX = T.Zero, sumY = T.Zero;
+            for (int i = 0, mirror = j; i < j; i++, mirror += n)
+            {
+                T skew = column[i] - g[mirror];
+                first[i] += skew * xj;
+                second[i] += skew * yj;
+                sumX -= skew * x[i];
+                sumY -= skew * y[i];
+            }
+
+            first[j] = sumX;
+            second[j] = sumY;
         }
     }
 
@@ -696,18 +820,17 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
         }
 
         cachedCount = count;
-        TrimSpares();
+        TrimSpares(RetentionFactor * peakBorrowed);
         reviewRetention = false;
     }
 
-    private void TrimSpares()
+    private void TrimSpares(long limit, bool discardEmptySpares = false)
     {
         if (spares is null)
         {
             return;
         }
 
-        long limit = RetentionFactor * peakBorrowed;
         if (retained > limit)
         {
             if (trimOrder.Length < spares.Count)
@@ -744,10 +867,13 @@ internal sealed partial class ArrayStore<T> where T : unmanaged, IFloatingPointI
 
         foreach (var (length, spare) in spares)
         {
-            if (spare.Arrays.Count == 0 && spare.LastUse != epoch)
+            if (spare.Arrays.Count == 0 && (discardEmptySpares || spare.LastUse != epoch))
             {
                 spares.Remove(length);
-                emptySpares.Push(spare);
+                if (!discardEmptySpares)
+                {
+                    emptySpares.Push(spare);
+                }
             }
         }
     }

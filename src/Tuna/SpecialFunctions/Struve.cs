@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -207,7 +210,7 @@ public static partial class XMath
             for (int k = 0; k < 500; k++)
             {
                 double magnitude = Math.Abs(scaledPrefactor * term);
-                if (magnitude <= 0.25 * Epsilon * Math.Abs(scaledI + scaledPrefactor * sum) || term == 0)
+                if (magnitude <= 0.25 * MachineEpsilon * Math.Abs(scaledI + scaledPrefactor * sum) || term == 0)
                 {
                     double total = scaledI + scaledPrefactor * sum;
                     double halfGrowth = Math.Exp(0.5 * x);
@@ -250,7 +253,7 @@ public static partial class XMath
 
                 sum += next;
                 term = next;
-                if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(sum))
                 {
                     return true;
                 }

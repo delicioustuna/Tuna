@@ -98,7 +98,7 @@ public readonly struct LocationScaleDistribution<TDistribution> : IContinuousDis
         double z = Standardize(x);
         double f = _distribution.Pdf(z);
         double density = f / _scale;
-        if (f >= DistributionMath.MinNormal && density >= DistributionMath.MinNormal && density < double.PositiveInfinity)
+        if (f >= NumericConstants.MinNormal && density >= NumericConstants.MinNormal && density < double.PositiveInfinity)
         {
             return density;
         }

@@ -8,6 +8,14 @@
 - **ゼロコピー `ArrayView` と演算ディスパッチ**: `ArrayView` は連続配列・部分行列・転置・ベクトルブロードキャスト（`Repeat`）をコピーなしで表現します。`ArrayStore.ElementwiseBackward` は `ArrayOperation` 列挙型の連続配置（単項 → 活性化 → 二項 → スカラー演算 → 縮約・Softmax → 損失 → 線形代数）を前提にディスパッチします。
 - **`XMath` / `XMath.Special` 拡張としての公開**: スカラー・ベクトル・行列・テンソルノードの演算は単一の `partial class XMathExtensions`（`extension(XMath)`）に集約し、スカラー特殊関数は `XMathSpecialExtensions`（`extension(XMath.Special)`）に配置しています。いずれも `[EditorBrowsable(EditorBrowsableState.Never)]` を付与し、コア演算と同じ `XMath.*` / `XMath.Special.*` の入口から統一的に呼び出せる構成としています。
 
+### 点ごとの一括記録
+
+`ScalarSetNode<T>` は共通スカラーまたは点ごとのスカラーを持つベクトルを表します。`VectorSetNode<T>` は共通ベクトルまたは点ごとのベクトルを列に並べた行列を表します。`Tuna.Differentiation` がテープ所有権、世代番号、点数と入力形状の一致を検証します。
+
+合計を返す `PointwiseSum` は共通入力の局所偏微分を順伝播で集約し、入力と同じ大きさのバッファに保存します。点ごとの値を返す `PointwiseVector` は局所偏微分を各点について保持し、逆伝播で各点の随伴を掛けて共通入力への寄与を集約します。共通行列を含む配列の勾配は、元のビューや `Parameter<T>` の勾配領域に加算します。順伝播で例外が発生した場合は、確保したスロットを再利用可能な状態に戻します。
+
+`InternalsVisibleTo` で `Tuna.Statistics` に入力のバインドと一括記録の入口を公開します。分布実装は評価値と局所偏微分を計算し、テープのノードやビューの内部表現は `Tuna.Differentiation` が管理します。
+
 ## 2. メモリプーリングと保持上限
 
 - **スロットキャッシュと長さ別スペア（`ArrayStore<T>`）**: プール済みの値・勾配配列をスロット番号に紐付けたまま `Reset()` をまたいで再利用し、定常状態の反復実行でアロケーションゼロを実現します（形状が変わらない場合は `reviewRetention` が走査を省略）。形状が変わった配列は長さ別の `spares` スタックへ退避します。

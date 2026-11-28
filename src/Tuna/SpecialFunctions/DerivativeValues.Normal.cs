@@ -1,3 +1,5 @@
+using static Tuna.XMath.Constants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -68,7 +70,7 @@ public static partial class XMath
             }
 
             // 密度を先に丸めず、-x を掛けた導関数が表現可能な範囲まで指数を保持する
-            return ScaledExpMinusHalfSquare(x, -x * InvSqrt2Pi);
+            return ScaledExpMinusHalfSquare(x, -x * OneOverSqrtTwoPi);
         }
 
         /// <summary>
@@ -95,7 +97,7 @@ public static partial class XMath
                 return x;
             }
 
-            return x >= 0 ? (2 * InvSqrt2Pi) / NormalErfcx(x) : NormalPdf(x) / NormalSf(x);
+            return x >= 0 ? (2 * OneOverSqrtTwoPi) / NormalErfcx(x) : NormalPdf(x) / NormalSf(x);
         }
 
         /// <summary>

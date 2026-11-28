@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -150,7 +153,7 @@ public static partial class XMath
                 a = next;
             }
 
-            var period = DoubleDoubleDivide((2 * PiHi, 2 * PiLo), a);
+            var period = DoubleDoubleDivide((2 * Pi, 2 * PiLo), a);
             (jacobiPeriodKeyHi, jacobiPeriodKeyLo, jacobiPeriodValue) = (m1.Hi, m1.Lo, period);
             return period;
         }
@@ -290,7 +293,7 @@ public static partial class XMath
                 // K = π/(2 AGM(1, √m₁))（倍精度で数 ulp。分岐判定および丸め誤差が相対的に効かない引数の計算に使用）
                 double a = 1;
                 double b = Math.Sqrt(m1.Hi);
-                while (Math.Abs(a - b) > Epsilon * a)
+                while (Math.Abs(a - b) > MachineEpsilon * a)
                 {
                     double next = 0.5 * (a + b);
                     b = Math.Sqrt(a * b);
@@ -369,7 +372,7 @@ public static partial class XMath
             c[0] = Math.Sqrt(m);
             b[0] = Math.Sqrt(m1);
             int n = 0;
-            while (n < a.Length - 1 && Math.Abs(c[n]) > Epsilon * a[n])
+            while (n < a.Length - 1 && Math.Abs(c[n]) > MachineEpsilon * a[n])
             {
                 a[n + 1] = 0.5 * (a[n] + b[n]);
                 c[n + 1] = 0.5 * (a[n] - b[n]);

@@ -6,6 +6,55 @@ namespace Tuna.Statistics.Distributions;
 public readonly partial struct FDistribution
 {
     /// <summary>
+    /// Records the sum of F distribution log densities with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、F 分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="numeratorDegreesOfFreedom">Numerator degrees of freedom. / 分子の自由度。</param>
+    /// <param name="denominatorDegreesOfFreedom">Denominator degrees of freedom. / 分母の自由度。</param>
+    /// <param name="observations">The observations. / 観測値のベクトル。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations. / パラメータベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPdf(ScalarSetNode<double> numeratorDegreesOfFreedom, ScalarSetNode<double> denominatorDegreesOfFreedom,
+        ReadOnlyVectorSpan<double> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, numeratorDegreesOfFreedom, denominatorDegreesOfFreedom);
+
+    /// <summary>
+    /// Records the F distribution log density for each observation as a single operation.
+    /// <para>F 分布の観測ごとの対数密度を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="numeratorDegreesOfFreedom">Numerator degrees of freedom. / 分子の自由度。</param>
+    /// <param name="denominatorDegreesOfFreedom">Denominator degrees of freedom. / 分母の自由度。</param>
+    /// <param name="observations">The observations. / 観測値のベクトル。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log densities in observation order. / 入力順に並べた観測ごとの対数密度。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations, or no tape is available. / パラメータベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> numeratorDegreesOfFreedom, ScalarSetNode<double> denominatorDegreesOfFreedom,
+        ReadOnlyVectorSpan<double> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, tape: tape);
+
+    private static void ValidateSharedLikelihoodParameters(double? numeratorDegreesOfFreedom, double? denominatorDegreesOfFreedom, double? unusedThird) =>
+        _ = new FDistribution(numeratorDegreesOfFreedom ?? 1, denominatorDegreesOfFreedom ?? 1, forDifferentiation: true);
+
+    private static LikelihoodEvaluation EvaluateLikelihoodPoint(double observation, double numeratorDegreesOfFreedom, double denominatorDegreesOfFreedom,
+        double _, LikelihoodGradients gradients)
+    {
+        var distribution = new FDistribution(numeratorDegreesOfFreedom, denominatorDegreesOfFreedom, forDifferentiation: true);
+        double value = distribution.LogPdf(observation);
+        if (gradients == LikelihoodGradients.None)
+        {
+            return new(value);
+        }
+
+        var (da, db, _) = distribution.DensityGradient(observation,
+            (gradients & LikelihoodGradients.First) != 0, (gradients & LikelihoodGradients.Second) != 0, differentiateX: false);
+        return new(value, new(da), new(db));
+    }
+
+    /// <summary>
     /// Records the F log density and its derivatives.
     /// <para>F 分布の対数密度とその微分を記録します。</para>
     /// </summary>
@@ -24,9 +73,8 @@ public readonly partial struct FDistribution
             return value;
         }
 
-        double? dA = numeratorDegreesOfFreedom.RequiresGradient ? XMath.Special.LogBetaDerivative(d.A, d.B) : null;
-        double? dB = denominatorDegreesOfFreedom.RequiresGradient ? XMath.Special.LogBetaDerivative(d.B, d.A) : null;
-        var (da, db, dx) = d.DensityGradient(x.Value, dA, dB, x.RequiresGradient);
+        var (da, db, dx) = d.DensityGradient(x.Value,
+            numeratorDegreesOfFreedom.RequiresGradient, denominatorDegreesOfFreedom.RequiresGradient, x.RequiresGradient);
         return ScalarNode.Record(value, [(numeratorDegreesOfFreedom, da), (denominatorDegreesOfFreedom, db), (x, dx)]);
     }
 
@@ -112,6 +160,13 @@ public readonly partial struct FDistribution
             : value;
     }
 
+    private (double, double, double) DensityGradient(double x, bool differentiateA, bool differentiateB, bool differentiateX)
+    {
+        double? dA = differentiateA ? XMath.Special.LogBetaDerivative(A, B) : null;
+        double? dB = differentiateB ? XMath.Special.LogBetaDerivative(B, A) : null;
+        return DensityGradient(x, dA, dB, differentiateX);
+    }
+
     private (double, double, double) DensityGradient(double x, double? dA, double? dB, bool differentiateX)
     {
         if (double.IsNaN(x))
@@ -142,7 +197,7 @@ public readonly partial struct FDistribution
         double da = 0, db = 0, dx = 0;
         if (dA.HasValue || dB.HasValue)
         {
-            double logSmall = small >= DistributionMath.MinNormal ? Math.Log(small) : LogSmallCoordinate(LogR(x), smallUpper);
+            double logSmall = small >= NumericConstants.MinNormal ? Math.Log(small) : LogSmallCoordinate(LogR(x), smallUpper);
             // 大きい側の座標の対数は、小さい側の座標から計算して桁落ちを避ける。
             double logLarge = DistributionMath.Log1p(-small);
             if (dA is double dBetaA)
@@ -193,7 +248,7 @@ public readonly partial struct FDistribution
         var (smallShape, otherShape) = smallUpper ? (b, a) : (a, b);
         double sign = upperTail ? -1 : 1;
         (double Mantissa, long Exponent) ratio;
-        if (small >= DistributionMath.MinNormal)
+        if (small >= NumericConstants.MinNormal)
         {
             double correction = d.CoordinateCorrection(x, small, smallUpper);
             ratio = XMath.Special.ScaledBetaTailPrefixRatio(smallShape, otherShape, small, correction, value,
@@ -217,7 +272,7 @@ public readonly partial struct FDistribution
     {
         double product = _numerator * x;
         double total = product + _denominator;
-        if (!double.IsFinite(total) || product < DistributionMath.MinNormal)
+        if (!double.IsFinite(total) || product < NumericConstants.MinNormal)
         {
             return 0;
         }

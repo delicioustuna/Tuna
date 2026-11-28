@@ -23,12 +23,6 @@ internal static class ConditionKernels
     /// </summary>
     private const int MaxEstimateIterations = 5;
 
-    // LAPACK dlamch('E')
-    /// <summary>
-    /// 倍精度の丸めの単位 2⁻⁵³
-    /// </summary>
-    private const double Epsilon = 1.1102230246251565e-16;
-
     // transpose が真なら Bᵀ·x。
     /// <summary>
     /// <paramref name="x"/> を <c>B·x</c>で上書きする
@@ -227,7 +221,7 @@ internal static class ConditionKernels
             }
 
             previous = correction;
-            if (correction <= Epsilon * MaxAbs(x))
+            if (correction <= NumericConstants.UnitRoundoff * MaxAbs(x))
             {
                 break;
             }

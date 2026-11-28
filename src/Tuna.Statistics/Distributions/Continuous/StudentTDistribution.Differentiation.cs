@@ -6,6 +6,47 @@ namespace Tuna.Statistics.Distributions;
 public readonly partial struct StudentTDistribution
 {
     /// <summary>
+    /// Records the sum of Student's t log densities with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、スチューデントの t 分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="degreesOfFreedom">Degrees of freedom. / 自由度。</param>
+    /// <param name="location">Location. / 位置パラメータ。</param>
+    /// <param name="scale">Scale. / 尺度パラメータ。</param>
+    /// <param name="observations">The observations. / 観測値のベクトル。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations. / パラメータベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPdf(ScalarSetNode<double> degreesOfFreedom, ScalarSetNode<double> location, ScalarSetNode<double> scale,
+        ReadOnlyVectorSpan<double> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, degreesOfFreedom, location, scale);
+
+    /// <summary>
+    /// Records the Student's t log density for each observation as a single operation.
+    /// <para>スチューデントの t 分布の観測ごとの対数密度を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="degreesOfFreedom">Degrees of freedom. / 自由度。</param>
+    /// <param name="location">Location. / 位置パラメータ。</param>
+    /// <param name="scale">Scale. / 尺度パラメータ。</param>
+    /// <param name="observations">The observations. / 観測値のベクトル。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log densities in observation order. / 入力順に並べた観測ごとの対数密度。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations, or no tape is available. / パラメータベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPdfPointwise(ScalarSetNode<double> degreesOfFreedom, ScalarSetNode<double> location, ScalarSetNode<double> scale,
+        ReadOnlyVectorSpan<double> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, degreesOfFreedom, location, scale, tape: tape);
+
+    private static void ValidateSharedLikelihoodParameters(double? degreesOfFreedom, double? location, double? scale) =>
+        _ = new StudentTDistribution(degreesOfFreedom ?? 1, location ?? 0, scale ?? 1, forDifferentiation: true);
+
+    private static LikelihoodEvaluation EvaluateLikelihoodPoint(double observation, double degreesOfFreedom, double location, double scale,
+        LikelihoodGradients gradients) =>
+        new StudentTDistribution(degreesOfFreedom, location, scale, forDifferentiation: true).DensityPoint(observation,
+            (gradients & LikelihoodGradients.First) != 0, (gradients & LikelihoodGradients.Second) != 0, (gradients & LikelihoodGradients.Third) != 0);
+
+    /// <summary>
     /// Records the Student's t log density and its derivatives with respect to the degrees of freedom, location, scale, and variate.
     /// <para>スチューデントの t 分布の対数密度と、自由度・位置・尺度・評価点に関する微分を記録します。</para>
     /// </summary>
@@ -24,32 +65,37 @@ public readonly partial struct StudentTDistribution
     {
         var distribution = new StudentTDistribution(degreesOfFreedom.Value, location.Value, scale.Value, forDifferentiation: true);
         double observation = x.Value;
-        double t = distribution.Standardize(observation);
-        double value = distribution.LogPdfStandardized(t);
         bool requiresNu = degreesOfFreedom.RequiresGradient;
         bool requiresLocation = location.RequiresGradient || x.RequiresGradient;
         bool requiresScale = scale.RequiresGradient;
+        var point = distribution.DensityPoint(observation, requiresNu, requiresLocation, requiresScale);
+        double locationDerivative = point.Second.Value;
+        return requiresNu || requiresLocation || requiresScale
+            ? ScalarNode.Record(point.Value, [(degreesOfFreedom, point.First.Value), (location, locationDerivative), (scale, point.Third.Value), (x, -locationDerivative)])
+            : point.Value;
+    }
+
+    private LikelihoodEvaluation DensityPoint(double observation, bool requiresNu, bool requiresLocation, bool requiresScale)
+    {
+        double t = Standardize(observation);
+        double value = LogPdfStandardized(t);
         if (!requiresNu && !requiresLocation && !requiresScale)
         {
-            return value;
+            return new(value);
         }
 
-        double dNu = 0, dLocation, dScale;
-        if (distribution.IsNormal)
+        if (IsNormal)
         {
-            var normal = new NormalDistribution(distribution._location, distribution._scale);
-            dLocation = requiresLocation ? normal.LogPdfMeanDerivative(observation, t) : 0;
-            dScale = requiresScale ? normal.LogPdfScaleDerivative(observation, t) : 0;
-        }
-        else
-        {
-            var gradient = new StudentTLogPdfGradient(distribution._degreesOfFreedom, distribution._location, distribution._scale, requiresNu);
-            var (locationDerivative, scaleDerivative) = gradient.LocationScale(observation, t, requiresLocation, requiresScale);
-            (dLocation, dScale) = (locationDerivative.Value, scaleDerivative.Value);
-            dNu = requiresNu ? gradient.DegreesOfFreedom(observation, t).Value : 0;
+            var normal = new NormalDistribution(_location, _scale);
+            double locationDerivative = requiresLocation ? normal.LogPdfMeanDerivative(observation, t) : 0;
+            double scaleDerivative = requiresScale ? normal.LogPdfScaleDerivative(observation, t) : 0;
+            return new(value, default, new(locationDerivative), new(scaleDerivative));
         }
 
-        return ScalarNode.Record(value, [(degreesOfFreedom, dNu), (location, dLocation), (scale, dScale), (x, -dLocation)]);
+        var gradient = new StudentTLogPdfGradient(_degreesOfFreedom, _location, _scale, requiresNu);
+        var (dLocation, dScale) = gradient.LocationScale(observation, t, requiresLocation, requiresScale);
+        var dNu = requiresNu ? gradient.DegreesOfFreedom(observation, t) : default;
+        return new(value, dNu, dLocation, dScale);
     }
 
     /// <summary>

@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -48,7 +50,7 @@ public static partial class XMath
                     double wp1 = w + 1;
                     double step = f / (ew * wp1 - (w + 2) * f / (2 * wp1));
                     w -= step;
-                    if (Math.Abs(step) <= 2 * Epsilon * Math.Abs(w))
+                    if (Math.Abs(step) <= 2 * MachineEpsilon * Math.Abs(w))
                     {
                         break;
                     }
@@ -116,7 +118,7 @@ public static partial class XMath
             if (q < 0)
             {
                 // 入力の丸め誤差程度のずれは分岐点とみなす
-                if (q > -4 * Epsilon)
+                if (q > -4 * MachineEpsilon)
                 {
                     q = 0;
                     return true;
@@ -145,7 +147,7 @@ public static partial class XMath
                         power *= t / k;
                         double term = (k - 1) * power;
                         g += term;
-                        if (Math.Abs(term) <= Epsilon * Math.Abs(g) * 0.5)
+                        if (Math.Abs(term) <= MachineEpsilon * Math.Abs(g) * 0.5)
                         {
                             break;
                         }
@@ -166,7 +168,7 @@ public static partial class XMath
 
                 double step = f / f1 / (1 - f * f2 / (2 * f1 * f1));
                 t -= step;
-                if (Math.Abs(step) <= 2 * Epsilon * Math.Abs(t))
+                if (Math.Abs(step) <= 2 * MachineEpsilon * Math.Abs(t))
                 {
                     break;
                 }
@@ -185,7 +187,7 @@ public static partial class XMath
                 double f2 = -1 / (w * w);
                 double step = f / f1 / (1 - f * f2 / (2 * f1 * f1));
                 w -= step;
-                if (Math.Abs(step) <= 2 * Epsilon * Math.Abs(w))
+                if (Math.Abs(step) <= 2 * MachineEpsilon * Math.Abs(w))
                 {
                     break;
                 }

@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -64,7 +67,7 @@ public static partial class XMath
                 power *= u2;
                 double term = BernoulliEven[k] * power / FactorialTable[2 * k + 1];
                 sum += term;
-                if (Math.Abs(term) <= Epsilon * Math.Abs(u) * 0.25)
+                if (Math.Abs(term) <= MachineEpsilon * Math.Abs(u) * 0.25)
                 {
                     break;
                 }

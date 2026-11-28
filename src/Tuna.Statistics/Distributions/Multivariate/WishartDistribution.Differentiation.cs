@@ -92,10 +92,10 @@ public sealed partial class WishartDistribution
                 {
                     int diagonal = i * order + i;
                     double entry = whitened[diagonal];
-                    double logRatio = entry >= DistributionMath.MinNormal && double.IsFinite(entry)
+                    double logRatio = entry >= NumericConstants.MinNormal && double.IsFinite(entry)
                         ? Math.Log(entry) : Math.Log(observed[diagonal]) - Math.Log(l[diagonal]);
                     double halfDegree = 0.5 * (nu - i);
-                    dNu += logRatio - 0.5 * (DistributionMath.Ln2 + XMath.Special.Digamma(halfDegree));
+                    dNu += logRatio - 0.5 * (XMath.Constants.Ln2 + XMath.Special.Digamma(halfDegree));
                 }
             }
 

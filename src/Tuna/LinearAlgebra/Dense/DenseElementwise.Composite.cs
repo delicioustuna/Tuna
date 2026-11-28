@@ -398,7 +398,7 @@ internal static partial class DenseElementwise
     private static TLanes Log1pFinish<TLanes>(TLanes x, TLanes u, TLanes log) where TLanes : struct, ILanes<TLanes>
     {
         var one = TLanes.Create(1);
-        var y = TLanes.Select(TLanes.GreaterThanOrEqual(u, TLanes.Create(2 / XMath.Special.Epsilon)), log, log * x / (u - one));
+        var y = TLanes.Select(TLanes.GreaterThanOrEqual(u, TLanes.Create(2 / NumericConstants.MachineEpsilon)), log, log * x / (u - one));
         return TLanes.Select(TLanes.Equal(u, one), x, y);
     }
 
@@ -415,7 +415,7 @@ internal static partial class DenseElementwise
         var small = x + x * x * (TLanes.Create(0.5) + x / TLanes.Create(6));
         var u = TLanes.Exp(x);
         var um1 = u - one;
-        var y = TLanes.Select(TLanes.GreaterThanOrEqual(u, TLanes.Create(1 / XMath.Special.Epsilon)), um1, um1 * x / TLanes.Log(u));
+        var y = TLanes.Select(TLanes.GreaterThanOrEqual(u, TLanes.Create(1 / NumericConstants.MachineEpsilon)), um1, um1 * x / TLanes.Log(u));
         y = TLanes.Select(TLanes.Equal(um1, TLanes.Create(-1)), TLanes.Create(-1), y);
         y = TLanes.Select(TLanes.Equal(u, one), x, y);
         return TLanes.Select(TLanes.LessThan(TLanes.Abs(x), TLanes.Create(1e-5)), small, y);

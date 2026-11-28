@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -250,7 +252,7 @@ public static partial class XMath
                 term *= ratio;
                 sum += term;
                 absoluteSum += Math.Abs(term);
-                if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(sum) && k > hump && Math.Abs(ratio) < 1)
+                if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(sum) && k > hump && Math.Abs(ratio) < 1)
                 {
                     break;
                 }
@@ -394,7 +396,7 @@ public static partial class XMath
                 double term = power * e;
                 tail += term;
                 absoluteTail += Math.Abs(term);
-                if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(tail) && n > hump)
+                if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(tail) && n > hump)
                 {
                     // Eₙ が偶然 0 に近いだけの場合を除くため、2 項続けて小さいことを確かめる
                     if (++small >= 2)
@@ -482,7 +484,7 @@ public static partial class XMath
                     double expRatio = pl == 0 ? 1 : Expm1(pl) / pl;
                     double term = StirlingSeriesCoefficients[k - 1] * p * power * expRatio * lnRatio;
                     dd += term;
-                    if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(dd))
+                    if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(dd))
                     {
                         break;
                     }

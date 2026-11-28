@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -18,9 +21,6 @@ public static partial class XMath
 
         // これより大きな ζ = (2/3)x^(3/2) では Bi(x) が確実にオーバーフローする（実境界は x ≈ 104.42、ζ ≈ 711.4）
         private const double ScorerBiOverflowZeta = 720;
-
-        // ln 2 の倍精度表現との残差（ln 2 - Ln2）
-        private const double ScorerLn2Lo = 2.3190468138462996e-17;
 
         // 40 点ガウス・ルジャンドル則（正の節点 20 個）。[0, S] で指数部が 0 から 41 まで変わる整関数の積分に使用する
         private static readonly (double[] Nodes, double[] Weights) ScorerRule = CreateGaussLegendreRule(40);
@@ -179,7 +179,7 @@ public static partial class XMath
             {
                 term *= (3.0 * k - 2) * (3 * k - 1) * inv3;
                 sum += alternating && (k & 1) == 1 ? -term : term;
-                if (term <= 0.25 * Epsilon * sum)
+                if (term <= 0.25 * MachineEpsilon * sum)
                 {
                     break;
                 }
@@ -223,7 +223,7 @@ public static partial class XMath
 
             // e^ζ = 2ⁿ e^r。r = ζ - n·ln2 は ln2 の上位を FMA で、下位と ζ の下位を後から足す（|r| ≤ ln2/2）
             double n = Math.Round(zeta / Ln2);
-            double reduced = Math.FusedMultiplyAdd(-n, Ln2, zeta) - n * ScorerLn2Lo + zetaLo;
+            double reduced = Math.FusedMultiplyAdd(-n, Ln2, zeta) - n * Ln2Lo + zetaLo;
             double growth = Math.Exp(reduced);
 
             // K の項は I の項に対して e^(-2ζ) 程度。n が大きければ単に 0 になる
@@ -279,7 +279,7 @@ public static partial class XMath
                     qSum += sign * term;
                 }
 
-                if (term <= 0.25 * Epsilon)
+                if (term <= 0.25 * MachineEpsilon)
                 {
                     break;
                 }
@@ -289,8 +289,8 @@ public static partial class XMath
             // （ζ ≈ 10¹⁵ では lo が 0.1 程度になるので、1次の近似では足りない）
             double cosZeta = Math.Cos(zeta);
             double sinZeta = Math.Sin(zeta);
-            double c = InvSqrt2 * (cosZeta + sinZeta);
-            double s = InvSqrt2 * (sinZeta - cosZeta);
+            double c = OneOverSqrt2 * (cosZeta + sinZeta);
+            double s = OneOverSqrt2 * (sinZeta - cosZeta);
             double cosLo = Math.Cos(zetaLo);
             double sinLo = Math.Sin(zetaLo);
             double cosPhase = c * cosLo - s * sinLo;

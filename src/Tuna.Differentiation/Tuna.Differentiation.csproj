@@ -12,6 +12,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Tuna\Tuna.csproj" />
+    <InternalsVisibleTo Include="Tuna.Statistics" />
+    <InternalsVisibleTo Include="Tuna.Differentiation.Tests" />
   </ItemGroup>
 
   <ItemGroup>

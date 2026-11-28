@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -127,7 +129,7 @@ public static partial class XMath
                 sum += term;
 
                 // s < 0 では項がいったん増えるので、項の比 |z| (1 + 1/(n+a))^(-s) が 1 未満になってから打ち切る
-                if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(sum) && (s >= 0 || Math.Abs(z) * Math.Exp(-s * Log1p(1 / (n + a))) < 1))
+                if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(sum) && (s >= 0 || Math.Abs(z) * Math.Exp(-s * Log1p(1 / (n + a))) < 1))
                 {
                     break;
                 }
@@ -224,7 +226,7 @@ public static partial class XMath
 
                 double term = BernoulliEven[j] / FactorialTable[2 * j] * endpoint * g;
                 correction += term;
-                if (Math.Abs(term) <= 0.125 * Epsilon * Math.Abs(total + correction))
+                if (Math.Abs(term) <= 0.125 * MachineEpsilon * Math.Abs(total + correction))
                 {
                     break;
                 }
@@ -254,7 +256,7 @@ public static partial class XMath
                 c = b + an / c;
                 double delta = c * d;
                 f *= delta;
-                if (Math.Abs(delta - 1) <= Epsilon)
+                if (Math.Abs(delta - 1) <= MachineEpsilon)
                 {
                     break;
                 }

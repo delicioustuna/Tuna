@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -152,7 +155,7 @@ public static partial class XMath
                     term *= x2 / n;
                     double t = term / (2 * n + 1);
                     sum += t;
-                    if (Math.Abs(t) <= Epsilon * Math.Abs(sum) * 0.5)
+                    if (Math.Abs(t) <= MachineEpsilon * Math.Abs(sum) * 0.5)
                     {
                         break;
                     }
@@ -206,7 +209,7 @@ public static partial class XMath
                 {
                     term *= -twoX2 / (2 * n + 1);
                     value += term;
-                    if (Math.Abs(term) <= Epsilon * value * 0.5)
+                    if (Math.Abs(term) <= MachineEpsilon * value * 0.5)
                     {
                         break;
                     }
@@ -248,7 +251,7 @@ public static partial class XMath
 
                     term = next;
                     sum += term;
-                    if (term <= Epsilon * sum * 0.5)
+                    if (term <= MachineEpsilon * sum * 0.5)
                     {
                         break;
                     }
@@ -406,7 +409,7 @@ public static partial class XMath
             if (q < MinNormal)
             {
                 // e^(y²) がオーバーフローする裾。erfc⁻¹(q) = Q⁻¹(q/2)/√2 を対数で解く
-                return InverseNormalLogSfTail(Math.Log(q) - Ln2) * InvSqrt2;
+                return InverseNormalLogSfTail(Math.Log(q) - Ln2) * OneOverSqrt2;
             }
 
             double y = InverseErfcInitialGuess(Math.Sqrt(-Math.Log(q)));

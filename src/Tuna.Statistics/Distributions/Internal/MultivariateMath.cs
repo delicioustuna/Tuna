@@ -11,7 +11,7 @@ namespace Tuna.Statistics.Distributions;
 internal static class MultivariateMath
 {
     // 対称性判定の相対許容誤差 √ε（|a_ij - a_ji| <= √ε √|a_ii| √|a_jj|）
-    internal const double SymmetryTolerance = 1.4901161193847656e-08;
+    internal const double SymmetryTolerance = NumericConstants.SqrtMachineEpsilon;
 
     internal const int StackLimit = 256;
 
@@ -402,13 +402,13 @@ internal static class MultivariateMath
     internal static double LogGammaPrefixOfHalfSquare(double shape, double a, out double logY)
     {
         double y = 0.5 * a * a;
-        if (y >= DistributionMath.MinNormal && y < double.PositiveInfinity)
+        if (y >= NumericConstants.MinNormal && y < double.PositiveInfinity)
         {
             logY = Math.Log(y);
             return XMath.Special.LogGammaPrefix(shape, y);
         }
 
-        logY = 2 * Math.Log(a) - DistributionMath.Ln2;
+        logY = 2 * Math.Log(a) - XMath.Constants.Ln2;
         return shape * logY - y - XMath.Special.LogGamma(shape);
     }
 
@@ -416,7 +416,7 @@ internal static class MultivariateMath
     internal static double ChiSample(IRandomSource random, double shape) =>
         shape >= 1
             ? Math.Sqrt(2 * Sampling.StandardGamma(random, shape))
-            : Math.Exp(0.5 * (DistributionMath.Ln2 + Sampling.LogStandardGamma(random, shape)));
+            : Math.Exp(0.5 * (XMath.Constants.Ln2 + Sampling.LogStandardGamma(random, shape)));
 
     // 下三角 B の B Bᵀ を対称に格納する
     internal static void WriteLowerGram(ReadOnlySpan<double> b, int n, MatrixSpan<double> destination)
@@ -497,7 +497,7 @@ internal static class MultivariateMath
             sum += value;
         }
 
-        if (!(Math.Abs(sum - 1) <= 16 * values.Length * DistributionMath.Epsilon))
+        if (!(Math.Abs(sum - 1) <= 16 * values.Length * NumericConstants.MachineEpsilon))
         {
             throw new ArgumentException($"The probabilities must sum to one (the sum is {sum}).", name);
         }

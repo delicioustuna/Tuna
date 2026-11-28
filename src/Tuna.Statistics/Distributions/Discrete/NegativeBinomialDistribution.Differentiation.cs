@@ -6,6 +6,44 @@ namespace Tuna.Statistics.Distributions;
 public readonly partial struct NegativeBinomialDistribution
 {
     /// <summary>
+    /// Records the sum of negative binomial log masses with shared or per-observation parameters as a single operation.
+    /// <para>共通または観測ごとのパラメータを用いて、負の二項分布の対数尤度の合計を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="successes">Number of successes. / 成功回数。</param>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <returns>The log likelihood in observation order (zero for empty observations). / 入力順に集計した対数尤度。観測値が空の場合は 0。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations. / パラメータベクトルの長さが観測数と一致しない場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static ScalarNode LogPmf(ScalarSetNode<double> successes, ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations) =>
+        PointwiseLogLikelihood.RecordSum(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, successes, probability);
+
+    /// <summary>
+    /// Records the negative binomial log mass for each observation as a single operation.
+    /// <para>負の二項分布の観測ごとの対数確率質量を 1 回の演算として記録します。</para>
+    /// </summary>
+    /// <param name="successes">Number of successes. / 成功回数。</param>
+    /// <param name="probability">Success probability. / 成功確率。</param>
+    /// <param name="observations">The integer observations. / 整数の観測値。</param>
+    /// <param name="tape">The tape, required when all parameters are scalar constants. / テープ。すべてのパラメータがスカラー定数の場合は必須です。</param>
+    /// <returns>The log masses in observation order. / 入力順に並べた観測ごとの対数確率質量。</returns>
+    /// <exception cref="ArgumentException">A vector parameter has a different length from the observations, or no tape is available. / パラメータベクトルの長さが観測数と一致しない場合、またはテープが未指定の場合。</exception>
+    /// <exception cref="DistributionParameterOutOfRangeException">A distribution parameter is outside its domain. / 分布パラメータが定義域外の場合。</exception>
+    /// <exception cref="InvalidOperationException">A node is invalid, the tapes differ, or backpropagation has completed for a differentiable input. / ノードが無効、テープが異なる、または微分対象のノードのテープが逆伝播済みの場合。</exception>
+    public static VectorNode<double> LogPmfPointwise(ScalarSetNode<double> successes, ScalarSetNode<double> probability,
+        ReadOnlyVectorSpan<long> observations, Tape? tape = null) =>
+        PointwiseLogLikelihood.RecordVector(observations, EvaluateLikelihoodPoint, ValidateSharedLikelihoodParameters, successes, probability, tape: tape);
+
+    private static void ValidateSharedLikelihoodParameters(double? successes, double? probability, double? unusedThird) =>
+        _ = new NegativeBinomialDistribution(successes ?? 1, probability ?? 1, forDifferentiation: true);
+
+    private static LikelihoodEvaluation EvaluateLikelihoodPoint(long observation, double successes, double probability, double _, LikelihoodGradients gradients) =>
+        new NegativeBinomialDistribution(successes, probability, forDifferentiation: true).MassPoint(observation,
+            (gradients & LikelihoodGradients.First) != 0, (gradients & LikelihoodGradients.Second) != 0);
+
+    /// <summary>
     /// Records the negative binomial log mass and its derivatives.
     /// <para>負の二項分布の対数質量とその微分を記録します。</para>
     /// </summary>
@@ -18,15 +56,19 @@ public readonly partial struct NegativeBinomialDistribution
     public static ScalarNode LogPmf(ScalarNode successes, ScalarNode probability, long k)
     {
         var d = new NegativeBinomialDistribution(successes.Value, probability.Value, forDifferentiation: true);
-        double value = d.LogPmf(k);
-        if (!successes.RequiresGradient && !probability.RequiresGradient)
-        {
-            return value;
-        }
+        bool requiresShape = successes.RequiresGradient, requiresProbability = probability.RequiresGradient;
+        var point = d.MassPoint(k, requiresShape, requiresProbability);
+        return requiresShape || requiresProbability
+            ? ScalarNode.Record(point.Value, [(successes, point.First.Value), (probability, point.Second.Value)])
+            : point.Value;
+    }
 
-        double dr = k >= 0 && successes.RequiresGradient ? d.ShapeDerivative(k, Math.Log(d._p)) : 0;
-        double dp = k >= 0 && probability.RequiresGradient ? d.ProbabilityDerivative(k) : 0;
-        return ScalarNode.Record(value, [(successes, dr), (probability, dp)]);
+    private LikelihoodEvaluation MassPoint(long k, bool requiresShape, bool requiresProbability)
+    {
+        double value = LogPmf(k);
+        double dr = k >= 0 && requiresShape ? ShapeDerivative(k, Math.Log(_p)) : 0;
+        double dp = k >= 0 && requiresProbability ? ProbabilityDerivative(k) : 0;
+        return new(value, new(dr), new(dp));
     }
 
     /// <summary>

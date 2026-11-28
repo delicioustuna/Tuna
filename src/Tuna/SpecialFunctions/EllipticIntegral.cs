@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -6,9 +9,6 @@ public static partial class XMath
     {
         // カールソン倍加公式の収束判定相対偏差 (打ち切り誤差は概ねこの 6 乗)
         private const double CarlsonTolerance = 0.0008;
-
-        private const double PiHi = 3.141592653589793;
-        private const double PiLo = 1.2246467991473532e-16;
 
         /// <summary>
         /// Computes Carlson's symmetric elliptic integral of the first kind, <c>R_F(x, y, z) = (1 / 2) ∫₀^∞ dt / √((t + x)(t + y)(t + z))</c>.
@@ -466,7 +466,7 @@ public static partial class XMath
                 double nextB = Math.Sqrt(a * b);
                 a = nextA;
                 b = nextB;
-                if (Math.Abs(a - b) <= Epsilon * a)
+                if (Math.Abs(a - b) <= MachineEpsilon * a)
                 {
                     break;
                 }
@@ -746,7 +746,7 @@ public static partial class XMath
             }
 
             periods = Math.Round(phi / Math.PI);
-            double reduced = periods == 0 ? phi : (phi - periods * PiHi) - periods * PiLo;
+            double reduced = periods == 0 ? phi : (phi - periods * Pi) - periods * PiLo;
             if (periods != 0 && m > 1)
             {
                 return false;

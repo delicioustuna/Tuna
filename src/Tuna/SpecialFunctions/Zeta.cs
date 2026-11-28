@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -94,7 +97,7 @@ public static partial class XMath
             double sinTerm = double.SinPi(s / 2);
 
             // (2π)ˢ を、2π の丸め誤差を補正して計算する
-            double twoPiPow = Math.Pow(2 * Math.PI, s) * Math.Exp(s * (TwoPiLo / (2 * Math.PI)));
+            double twoPiPow = Math.Pow(2 * Math.PI, s) * Math.Exp(s * (TauLo / (2 * Math.PI)));
             if (oneMinusS < 171)
             {
                 double gamma = Gamma(oneMinusS);
@@ -316,7 +319,7 @@ public static partial class XMath
                 {
                     double term = Power(k);
                     sum += term;
-                    if (term <= Epsilon * sum * 0.25)
+                    if (term <= MachineEpsilon * sum * 0.25)
                     {
                         return sum;
                     }
@@ -342,7 +345,7 @@ public static partial class XMath
             {
                 double term = EulerMaclaurinCoefficients[j] * factor;
                 correction += term;
-                if (Math.Abs(term) <= Epsilon * Math.Abs(tail + sum) * 0.125)
+                if (Math.Abs(term) <= MachineEpsilon * Math.Abs(tail + sum) * 0.125)
                 {
                     break;
                 }

@@ -88,11 +88,22 @@ Matrix<double> scaled = Hadamard(X, scale.BroadcastRows(X.Rows));
 - **活性化関数・Softmax**: `Relu`, `LeakyRelu`, `Elu`, `Selu`, `Silu`, `Gelu`, `Logistic`, `Tanh`, `Softplus`, `Softmax`, `LogSoftmax`, `ColumnSoftmax`, `ColumnLogSoftmax`
 - **縮約・統計量**: `Sum`, `Mean`, `Variance`, `StandardDeviation`, `Min`, `Max`, `Norm`, `Norm1`, `NormInfinity`, `LogSumExp`, `Trace`, `ColumnSums`, `RowMeans` など（`ignoreNaN: true` オプション付きオーバーロードあり）
 - **ソート・順序統計量**: `Sort`, `ArgSort`, `Median`, `Quantile`, `IndexOfMax`, `IndexOfMin`
-- **積・距離**: `Dot`, `Cross`, `Multiply`, `Hadamard`, `Outer`, `Transpose`, `Distance`, `SquaredDistance`
+- **積・距離**: `Dot`, `Cross`, `Wedge`, `Multiply`, `Hadamard`, `Outer`, `Transpose`, `Distance`, `SquaredDistance`
 - **複素数**: `Real`, `Imaginary`, `Magnitude`, `Phase`
 - **連立一次方程式・対数行列式**: `Solve`, `Inverse`, `SolveLowerTriangular`, `SolveUpperTriangular`, `CholeskyLogDeterminant`
 
 全メソッドの網羅的な一覧は [Tuna API リファレンス](api/Tuna.md#static-class-xmath) を参照してください。
+
+## 数学定数
+
+`XMath.Constants` は、`π`・`e`・`γ` などの数学定数と、`π/2`・`1/√(2π)`・`ln(2π)`・`log₂ e`・度とラジアンの換算係数などの派生値を、事前計算した `double` の `const` として提供します。各値は厳密値から 1 回だけ丸めた最も近い `double` なので、同じ式を実行時に倍精度で計算した値（`Math.Sqrt(2 * Math.PI)` など）とは最下位の桁が異なる場合があります。
+
+`float`・`Half` やジェネリックなコードでは `XMath.Constants<T>` を使います。型ごとに厳密値から直接丸めた値を持つため、`(float)XMath.Constants.Pi` や `T.CreateChecked(Math.PI)` のように `double` を経由する変換（二重丸めになり得ます）は不要です。
+
+```csharp
+double density = XMath.Constants.OneOverSqrtTwoPi * Math.Exp(-0.5 * x * x);
+float radians = degrees * XMath.Constants<float>.DegreesToRadians;
+```
 
 ## ユーザー定義演算子と Source Generator
 

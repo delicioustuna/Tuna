@@ -172,7 +172,7 @@ public sealed partial class DirichletDistribution : IMultivariateContinuousDistr
             remaining[i] = sum;
         }
 
-        if (!(Math.Abs(sum - 1) <= 16 * k * DistributionMath.Epsilon))
+        if (!(Math.Abs(sum - 1) <= 16 * k * NumericConstants.MachineEpsilon))
         {
             return double.NegativeInfinity;
         }

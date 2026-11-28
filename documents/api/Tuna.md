@@ -1,7 +1,5 @@
 # Tuna API リファレンス
 
-> このファイルは `tools/ApiDocGenerator` によって自動生成されています。手動で編集せず、`dotnet build Tuna.slnx -c Release` の後に再生成してください。
->
 > `(+N overloads)` は `Vector` / `VectorSpan` / `ReadOnlyVectorSpan` 等のコンテナ・ビュー組み合わせや `double` / `float` 固定型オーバーロードの省略を表します。
 
 ## 名前空間と公開型
@@ -302,11 +300,15 @@ Provides scalar elementary functions and numerical operations for vectors, matri
 | `static T Distance<T>(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y)  (+2 overloads)` | Computes the Euclidean distance `√Σᵢ (xᵢ − yᵢ)²` between two vectors without undue intermediate overflow or underflow. / 途中のオーバーフローやアンダーフローを回避して、2点間のユークリッド距離 `√Σᵢ (xᵢ − yᵢ)²` を計算します。 |
 | `static Matrix<T> Distance<T>(ReadOnlyMatrixSpan<T> x, ReadOnlyMatrixSpan<T> y)  (+2 overloads)` | Applies `Distance` to every pair of columns of the input matrices (`result[i, j]` corresponds to column i and column j) and returns a new matrix. / `Distance` を入力行列の列の組ごとに適用し（`result[i, j]` は列 i と列 j の値）、新しい行列を返します。 |
 | `static MatrixSpan<T> Distance<T>(ReadOnlyMatrixSpan<T> x, ReadOnlyMatrixSpan<T> y, MatrixSpan<T> destination)  (+2 overloads)` | Applies `Distance` to every pair of columns of the input matrices (`result[i, j]` corresponds to column i and column j), writes the result to `destination`, and returns it. / `Distance` を入力行列の列の組ごとに適用し（`result[i, j]` は列 i と列 j の値）、結果を `destination` に書き込んで返します。 |
+| `static Tensor<T> Divide<T>(ReadOnlyTensorSpan<T> x, ReadOnlyTensorSpan<T> y)  (+2 overloads)` | Computes the elementwise quotient of two tensors. / 2つのテンソルの要素ごとの商を計算します。 |
+| `static Tensor<T> Divide<T>(ReadOnlyTensorSpan<T> x, T scalar)  (+2 overloads)` | Divides each element of a tensor by a scalar. / テンソルの各要素をスカラーで割ります。 |
 | `static T Divide<T>(T x, T y)` | Computes the quotient `x / y`. / 商 `x / y` を計算します。 |
 | `static Vector<T> Divide<T>(ReadOnlyVectorSpan<T> x, T y)  (+2 overloads)` | Applies `Divide` elementwise to the input vector and returns a new vector. / `Divide` をベクトルの要素ごとに適用し、新しいベクトルを返します。 |
 | `static Matrix<T> Divide<T>(ReadOnlyMatrixSpan<T> x, T y)  (+2 overloads)` | Applies `Divide` elementwise to the input matrix and returns a new matrix. / `Divide` を行列の要素ごとに適用し、新しい行列を返します。 |
 | `static Vector<T> Divide<T>(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y)  (+2 overloads)` | Applies `Divide` elementwise to the input vector and returns a new vector. / `Divide` をベクトルの要素ごとに適用し、新しいベクトルを返します。 |
 | `static Matrix<T> Divide<T>(ReadOnlyMatrixSpan<T> x, ReadOnlyMatrixSpan<T> y)  (+2 overloads)` | Applies `Divide` elementwise to the input matrix and returns a new matrix. / `Divide` を行列の要素ごとに適用し、新しい行列を返します。 |
+| `static TensorSpan<T> Divide<T>(ReadOnlyTensorSpan<T> x, ReadOnlyTensorSpan<T> y, TensorSpan<T> destination)  (+2 overloads)` | Divides two tensors elementwise and writes the result to `destination`. / 2つのテンソルを要素ごとに除算し、結果を `destination` に書き込みます。 |
+| `static TensorSpan<T> Divide<T>(ReadOnlyTensorSpan<T> x, T scalar, TensorSpan<T> destination)  (+2 overloads)` | Divides each element of a tensor by a scalar and writes the result to `destination`. / テンソルの各要素をスカラーで割り、結果を `destination` に書き込みます。 |
 | `static VectorSpan<T> Divide<T>(ReadOnlyVectorSpan<T> x, T y, VectorSpan<T> destination)  (+2 overloads)` | Applies `Divide` elementwise to the input vector, writes the result to `destination`, and returns it. / `Divide` をベクトルの要素ごとに適用し、結果を `destination` に書き込んで返します。 |
 | `static MatrixSpan<T> Divide<T>(ReadOnlyMatrixSpan<T> x, T y, MatrixSpan<T> destination)  (+2 overloads)` | Applies `Divide` elementwise to the input matrix, writes the result to `destination`, and returns it. / `Divide` を行列の要素ごとに適用し、結果を `destination` に書き込んで返します。 |
 | `static VectorSpan<T> Divide<T>(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y, VectorSpan<T> destination)  (+2 overloads)` | Applies `Divide` elementwise to the input vector, writes the result to `destination`, and returns it. / `Divide` をベクトルの要素ごとに適用し、結果を `destination` に書き込んで返します。 |
@@ -725,6 +727,8 @@ Provides scalar elementary functions and numerical operations for vectors, matri
 | `static TensorSpan<T> Transpose<T>(ReadOnlyTensorSpan<T> x, TensorSpan<T> destination)  (+2 overloads)` | Writes the slice-wise transpose `A[:, :, k]ᵀ` into `destination`. / 各行列スライスの転置 `A[:, :, k]ᵀ` を `destination` に書き込みます。 |
 | `static MatrixSpan<T> Transpose<T>(ReadOnlyMatrixSpan<T> x, MatrixSpan<T> destination)  (+2 overloads)` | Writes the transpose `Aᵀ` of the input matrix into `destination`. / 入力行列の転置 `Aᵀ` を `destination` に書き込みます。 |
 | `static T Variance<T>(ReadOnlyVectorSpan<T> x, int correction)  (+2 overloads)` | Computes the variance `Σ(x[i] - mean)² / (n - correction)` of the elements in a vector. / ベクトル要素の分散 `Σ(x[i] - mean)² / (n - correction)` を計算します。 |
+| `static Matrix<T> Wedge<T>(ReadOnlyVectorSpan<T> u, ReadOnlyVectorSpan<T> v)  (+2 overloads)` | Computes the wedge product `u vᵀ − v uᵀ` of two vectors of the same length. / 同じ長さの 2 つのベクトルのウェッジ積 `u vᵀ − v uᵀ` を計算します。 |
+| `static MatrixSpan<T> Wedge<T>(ReadOnlyVectorSpan<T> u, ReadOnlyVectorSpan<T> v, MatrixSpan<T> destination)  (+2 overloads)` | Writes the wedge product `u vᵀ − v uᵀ` of two vectors to `destination`. / 2 つのベクトルのウェッジ積 `u vᵀ − v uᵀ` を `destination` に書き込みます。 |
 | `static Tensor<Half> Zip<TOperator>(ReadOnlyTensorSpan<Half> x, ReadOnlyTensorSpan<Half> y)  (+3 overloads)` | Applies a stateless binary operator `TOperator` elementwise to two tensors. / 状態を持たない2引数演算子 `TOperator` を2つのテンソルの対応する要素ごとに適用します。 |
 | `static Vector<Half> Zip<TOperator>(ReadOnlyVectorSpan<Half> x, ReadOnlyVectorSpan<Half> y)  (+3 overloads)` | Applies a stateless binary operator `TOperator` elementwise to two vectors (`result[i] = TOperator(x[i], y[i])`). / 状態を持たない2引数演算子 `TOperator` を2つのベクトルの対応する要素ごとに適用します（`result[i] = TOperator(x[i], y[i])`）。 |
 | `static Matrix<Half> Zip<TOperator>(ReadOnlyMatrixSpan<Half> x, ReadOnlyMatrixSpan<Half> y)  (+3 overloads)` | Applies a stateless binary operator `TOperator` elementwise to two matrices (`result[i, j] = TOperator(x[i, j], y[i, j])`). / 状態を持たない2引数演算子 `TOperator` を2つの行列の対応する要素ごとに適用します（`result[i, j] = TOperator(x[i, j], y[i, j])`）。 |
@@ -766,6 +770,96 @@ Provides scalar elementary functions and numerical operations for vectors, matri
 | `static VectorSpan<T> Zip<T, TOperator>(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y, ReadOnlyVectorSpan<T> z, TOperator op, VectorSpan<T> destination)  (+2 overloads)` | Applies a stateful ternary operator `op` elementwise to three vectors and writes the result to `destination`. / 状態を持つ3引数演算子 `op` を3つのベクトルの対応する要素ごとに適用し、`destination` に書き込みます。 |
 | `static MatrixSpan<T> Zip<T, TOperator>(ReadOnlyMatrixSpan<T> x, ReadOnlyMatrixSpan<T> y, ReadOnlyMatrixSpan<T> z, TOperator op, MatrixSpan<T> destination)  (+2 overloads)` | Applies a stateful ternary operator `op` elementwise to three matrices and writes the result to `destination`. / 状態を持つ3引数演算子 `op` を3つの行列の対応する要素ごとに適用し、`destination` に書き込みます。 |
 
+#### `static class XMath.Constants`
+
+Provides precomputed double-precision values of mathematical constants frequently used in numerical computing. / 数値計算でよく使う数学定数の倍精度の値を、事前計算済みの定数として提供します。
+
+**フィールド・定数**
+
+| メンバー | 説明 |
+| --- | --- |
+| `const double Catalan` | Catalan's constant `G = β(2)`. / カタラン定数 `G = β(2)`。 |
+| `const double DegreesToRadians` | The number of radians in one degree, `π/180`. / 1 度に相当するラジアン `π/180`。 |
+| `const double E` | The base of the natural logarithm, `e`. / 自然対数の底 `e`。 |
+| `const double EulerGamma` | The Euler–Mascheroni constant `γ`. / オイラー・マスケローニ定数 `γ`。 |
+| `const double GoldenRatio` | The golden ratio `φ = (1 + √5)/2`. / 黄金比 `φ = (1 + √5)/2`。 |
+| `const double Ln10` | The natural logarithm of 10, `ln 10`. / 10 の自然対数 `ln 10`。 |
+| `const double Ln2` | The natural logarithm of 2, `ln 2`. / 2 の自然対数 `ln 2`。 |
+| `const double LnPi` | The natural logarithm of `π`, `ln π`. / `π` の自然対数 `ln π`。 |
+| `const double LnSqrtPi` | The value of `ln √π = (ln π)/2`. / `ln √π = (ln π)/2` の値。 |
+| `const double LnSqrtTwoPi` | The value of `ln √(2π) = ln(2π)/2`. / `ln √(2π) = ln(2π)/2` の値。 |
+| `const double LnTwoPi` | The value of `ln(2π)`. / `ln(2π)` の値。 |
+| `const double Log10E` | The base-10 logarithm of `e`, `log₁₀ e = 1/ln 10`. / `e` の常用対数 `log₁₀ e = 1/ln 10`。 |
+| `const double Log10Of2` | The base-10 logarithm of 2, `log₁₀ 2`. / 2 の常用対数 `log₁₀ 2`。 |
+| `const double Log2E` | The base-2 logarithm of `e`, `log₂ e = 1/ln 2`. / `e` の 2 を底とする対数 `log₂ e = 1/ln 2`。 |
+| `const double Log2Of10` | The base-2 logarithm of 10, `log₂ 10`. / 10 の 2 を底とする対数 `log₂ 10`。 |
+| `const double OneOverPi` | The value of `1/π`. / `1/π` の値。 |
+| `const double OneOverSqrt2` | The value of `1/√2 = √2/2`. / `1/√2 = √2/2` の値。 |
+| `const double OneOverSqrtPi` | The value of `1/√π`. / `1/√π` の値。 |
+| `const double OneOverSqrtTwoPi` | The value of `1/√(2π)`. / `1/√(2π)` の値。 |
+| `const double OneOverTwoPi` | The value of `1/(2π)`. / `1/(2π)` の値。 |
+| `const double Pi` | The ratio of a circle's circumference to its diameter, `π`. / 円周率 `π`。 |
+| `const double PiOver2` | The value of `π/2`. / `π/2` の値。 |
+| `const double PiOver4` | The value of `π/4`. / `π/4` の値。 |
+| `const double PiSquared` | The value of `π²`. / `π²` の値。 |
+| `const double PiSquaredOver6` | The value of `π²/6 = ζ(2)`. / `π²/6 = ζ(2)` の値。 |
+| `const double RadiansToDegrees` | The number of degrees in one radian, `180/π`. / 1 ラジアンに相当する度数 `180/π`。 |
+| `const double Sqrt2` | The square root of 2, `√2`. / 2 の平方根 `√2`。 |
+| `const double Sqrt3` | The square root of 3, `√3`. / 3 の平方根 `√3`。 |
+| `const double SqrtPi` | The value of `√π`. / `√π` の値。 |
+| `const double SqrtPiOver2` | The value of `√(π/2)`. / `√(π/2)` の値。 |
+| `const double SqrtTwoOverPi` | The value of `√(2/π)`. / `√(2/π)` の値。 |
+| `const double SqrtTwoPi` | The value of `√(2π)`. / `√(2π)` の値。 |
+| `const double Tau` | The ratio of a circle's circumference to its radius, `τ = 2π`. / 円周と半径の比 `τ = 2π`。 |
+| `const double TwoOverPi` | The value of `2/π`. / `2/π` の値。 |
+| `const double TwoOverSqrtPi` | The value of `2/√π`. / `2/√π` の値。 |
+| `const double Zeta3` | Apéry's constant `ζ(3)`. / アペリーの定数 `ζ(3)`。 |
+
+#### `static class XMath.Constants<T>`
+
+Provides mathematical constants rounded directly to the floating-point type `T`. / 数学定数を浮動小数点型 `T` へ直接丸めた値を提供します。
+
+**フィールド・定数**
+
+| メンバー | 説明 |
+| --- | --- |
+| `static T Catalan` | Catalan's constant `G = β(2)`. / カタラン定数 `G = β(2)`。 |
+| `static T DegreesToRadians` | The number of radians in one degree, `π/180`. / 1 度に相当するラジアン `π/180`。 |
+| `static T E` | The base of the natural logarithm, `e`. / 自然対数の底 `e`。 |
+| `static T EulerGamma` | The Euler–Mascheroni constant `γ`. / オイラー・マスケローニ定数 `γ`。 |
+| `static T GoldenRatio` | The golden ratio `φ = (1 + √5)/2`. / 黄金比 `φ = (1 + √5)/2`。 |
+| `static T Ln10` | The natural logarithm of 10, `ln 10`. / 10 の自然対数 `ln 10`。 |
+| `static T Ln2` | The natural logarithm of 2, `ln 2`. / 2 の自然対数 `ln 2`。 |
+| `static T LnPi` | The natural logarithm of `π`, `ln π`. / `π` の自然対数 `ln π`。 |
+| `static T LnSqrtPi` | The value of `ln √π = (ln π)/2`. / `ln √π = (ln π)/2` の値。 |
+| `static T LnSqrtTwoPi` | The value of `ln √(2π) = ln(2π)/2`. / `ln √(2π) = ln(2π)/2` の値。 |
+| `static T LnTwoPi` | The value of `ln(2π)`. / `ln(2π)` の値。 |
+| `static T Log10E` | The base-10 logarithm of `e`, `log₁₀ e = 1/ln 10`. / `e` の常用対数 `log₁₀ e = 1/ln 10`。 |
+| `static T Log10Of2` | The base-10 logarithm of 2, `log₁₀ 2`. / 2 の常用対数 `log₁₀ 2`。 |
+| `static T Log2E` | The base-2 logarithm of `e`, `log₂ e = 1/ln 2`. / `e` の 2 を底とする対数 `log₂ e = 1/ln 2`。 |
+| `static T Log2Of10` | The base-2 logarithm of 10, `log₂ 10`. / 10 の 2 を底とする対数 `log₂ 10`。 |
+| `static T OneOverPi` | The value of `1/π`. / `1/π` の値。 |
+| `static T OneOverSqrt2` | The value of `1/√2 = √2/2`. / `1/√2 = √2/2` の値。 |
+| `static T OneOverSqrtPi` | The value of `1/√π`. / `1/√π` の値。 |
+| `static T OneOverSqrtTwoPi` | The value of `1/√(2π)`. / `1/√(2π)` の値。 |
+| `static T OneOverTwoPi` | The value of `1/(2π)`. / `1/(2π)` の値。 |
+| `static T Pi` | The ratio of a circle's circumference to its diameter, `π`. / 円周率 `π`。 |
+| `static T PiOver2` | The value of `π/2`. / `π/2` の値。 |
+| `static T PiOver4` | The value of `π/4`. / `π/4` の値。 |
+| `static T PiSquared` | The value of `π²`. / `π²` の値。 |
+| `static T PiSquaredOver6` | The value of `π²/6 = ζ(2)`. / `π²/6 = ζ(2)` の値。 |
+| `static T RadiansToDegrees` | The number of degrees in one radian, `180/π`. / 1 ラジアンに相当する度数 `180/π`。 |
+| `static T Sqrt2` | The square root of 2, `√2`. / 2 の平方根 `√2`。 |
+| `static T Sqrt3` | The square root of 3, `√3`. / 3 の平方根 `√3`。 |
+| `static T SqrtPi` | The value of `√π`. / `√π` の値。 |
+| `static T SqrtPiOver2` | The value of `√(π/2)`. / `√(π/2)` の値。 |
+| `static T SqrtTwoOverPi` | The value of `√(2/π)`. / `√(2/π)` の値。 |
+| `static T SqrtTwoPi` | The value of `√(2π)`. / `√(2π)` の値。 |
+| `static T Tau` | The ratio of a circle's circumference to its radius, `τ = 2π`. / 円周と半径の比 `τ = 2π`。 |
+| `static T TwoOverPi` | The value of `2/π`. / `2/π` の値。 |
+| `static T TwoOverSqrtPi` | The value of `2/√π`. / `2/√π` の値。 |
+| `static T Zeta3` | Apéry's constant `ζ(3)`. / アペリーの定数 `ζ(3)`。 |
+
 #### `static class XMath.InPlace`
 
 Provides in-place operations that overwrite their input buffer. / 入力バッファをインプレースで上書きする演算を提供します。
@@ -784,6 +878,7 @@ Provides in-place operations that overwrite their input buffer. / 入力バッ�
 | `static void ColumnLogSoftmax<T>(Matrix<T> x)` | Computes the column-wise log-softmax of a matrix in place. / 行列の各列ごとの対数ソフトマックスをインプレースで計算します。 |
 | `static void ColumnSoftmax<T>(MatrixSpan<T> x)` | Computes the column-wise softmax distribution of a matrix in place. / 行列の各列ごとのソフトマックス分布をインプレースで計算します。 |
 | `static void ColumnSoftmax<T>(Matrix<T> x)` | Computes the column-wise softmax distribution of a matrix in place. / 行列の各列ごとのソフトマックス分布をインプレースで計算します。 |
+| `static void Divide<T>(TensorSpan<T> x, T scalar)  (+1 overloads)` | Divides each element of a tensor by a scalar in place. / テンソルの各要素をインプレースでスカラー除算します。 |
 | `static void Divide<T>(VectorSpan<T> x, T y)  (+1 overloads)` | Applies `Divide` elementwise in place, overwriting `x`. / `Divide` を要素ごとにインプレースで適用し、`x` を上書きします。 |
 | `static void Divide<T>(MatrixSpan<T> x, T y)  (+1 overloads)` | Applies `Divide` elementwise in place, overwriting `x`. / `Divide` を要素ごとにインプレースで適用し、`x` を上書きします。 |
 | `static void Elu<T>(VectorSpan<T> x, T alpha)  (+1 overloads)` | Applies `Elu` elementwise in place, overwriting `x`. / `Elu` を要素ごとにインプレースで適用し、`x` を上書きします。 |
@@ -1434,7 +1529,7 @@ Represents a dense column-major two-dimensional numerical matrix. / 列優先レ
 
 **演算子**
 
-`Matrix<TElement> operator +(Matrix<TElement> a, Matrix<TElement> b)` / `explicit operator TElement[,](Matrix<TElement> matrix)` / `explicit operator Matrix<TElement>(TElement[,] values)` / `implicit operator MatrixSpan<TElement>(Matrix<TElement> matrix)` / `implicit operator ReadOnlyMatrixSpan<TElement>(Matrix<TElement> matrix)` / `Matrix<TElement> operator *(Matrix<TElement> a, Matrix<TElement> b)` / `Matrix<TElement> operator *(Matrix<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(TElement scalar, Matrix<TElement> a)` / `Matrix<TElement> operator -(Matrix<TElement> a, Matrix<TElement> b)` / `Matrix<TElement> operator -(Matrix<TElement> a)`
+`Matrix<TElement> operator +(Matrix<TElement> a, Matrix<TElement> b)` / `Matrix<TElement> operator /(Matrix<TElement> a, TElement scalar)` / `explicit operator TElement[,](Matrix<TElement> matrix)` / `explicit operator Matrix<TElement>(TElement[,] values)` / `implicit operator MatrixSpan<TElement>(Matrix<TElement> matrix)` / `implicit operator ReadOnlyMatrixSpan<TElement>(Matrix<TElement> matrix)` / `Matrix<TElement> operator *(Matrix<TElement> a, Matrix<TElement> b)` / `Matrix<TElement> operator *(Matrix<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(TElement scalar, Matrix<TElement> a)` / `Matrix<TElement> operator -(Matrix<TElement> a, Matrix<TElement> b)` / `Matrix<TElement> operator -(Matrix<TElement> a)`
 
 ### `readonly ref struct MatrixSpan<TElement>`
 
@@ -1481,7 +1576,7 @@ Represents a zero-copy, strided writable view over a two-dimensional matrix. / �
 
 **演算子**
 
-`Matrix<TElement> operator +(MatrixSpan<TElement> a, MatrixSpan<TElement> b)` / `implicit operator ReadOnlyMatrixSpan<TElement>(MatrixSpan<TElement> view)` / `Matrix<TElement> operator *(MatrixSpan<TElement> a, MatrixSpan<TElement> b)` / `Matrix<TElement> operator *(MatrixSpan<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(TElement scalar, MatrixSpan<TElement> a)` / `Matrix<TElement> operator -(MatrixSpan<TElement> a, MatrixSpan<TElement> b)` / `Matrix<TElement> operator -(MatrixSpan<TElement> a)`
+`Matrix<TElement> operator +(MatrixSpan<TElement> a, MatrixSpan<TElement> b)` / `Matrix<TElement> operator /(MatrixSpan<TElement> a, TElement scalar)` / `implicit operator ReadOnlyMatrixSpan<TElement>(MatrixSpan<TElement> view)` / `Matrix<TElement> operator *(MatrixSpan<TElement> a, MatrixSpan<TElement> b)` / `Matrix<TElement> operator *(MatrixSpan<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(TElement scalar, MatrixSpan<TElement> a)` / `Matrix<TElement> operator -(MatrixSpan<TElement> a, MatrixSpan<TElement> b)` / `Matrix<TElement> operator -(MatrixSpan<TElement> a)`
 
 ### `class QrDecomposition`
 
@@ -1555,7 +1650,7 @@ Represents a zero-copy, strided read-only view over a two-dimensional matrix. / 
 
 **演算子**
 
-`Matrix<TElement> operator +(ReadOnlyMatrixSpan<TElement> a, ReadOnlyMatrixSpan<TElement> b)` / `Matrix<TElement> operator *(ReadOnlyMatrixSpan<TElement> a, ReadOnlyMatrixSpan<TElement> b)` / `Matrix<TElement> operator *(ReadOnlyMatrixSpan<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(TElement scalar, ReadOnlyMatrixSpan<TElement> a)` / `Matrix<TElement> operator -(ReadOnlyMatrixSpan<TElement> a, ReadOnlyMatrixSpan<TElement> b)` / `Matrix<TElement> operator -(ReadOnlyMatrixSpan<TElement> a)`
+`Matrix<TElement> operator +(ReadOnlyMatrixSpan<TElement> a, ReadOnlyMatrixSpan<TElement> b)` / `Matrix<TElement> operator /(ReadOnlyMatrixSpan<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(ReadOnlyMatrixSpan<TElement> a, ReadOnlyMatrixSpan<TElement> b)` / `Matrix<TElement> operator *(ReadOnlyMatrixSpan<TElement> a, TElement scalar)` / `Matrix<TElement> operator *(TElement scalar, ReadOnlyMatrixSpan<TElement> a)` / `Matrix<TElement> operator -(ReadOnlyMatrixSpan<TElement> a, ReadOnlyMatrixSpan<TElement> b)` / `Matrix<TElement> operator -(ReadOnlyMatrixSpan<TElement> a)`
 
 ### `readonly ref struct ReadOnlyTensorMatrices<TElement>`
 
@@ -1631,7 +1726,7 @@ Represents a zero-copy, strided read-only view over a rank-3 tensor. / ストラ
 
 **演算子**
 
-`Tensor<TElement> operator +(ReadOnlyTensorSpan<TElement> a, ReadOnlyTensorSpan<TElement> b)` / `Tensor<TElement> operator *(ReadOnlyTensorSpan<TElement> a, ReadOnlyTensorSpan<TElement> b)` / `Tensor<TElement> operator *(ReadOnlyTensorSpan<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(TElement scalar, ReadOnlyTensorSpan<TElement> a)` / `Tensor<TElement> operator -(ReadOnlyTensorSpan<TElement> a, ReadOnlyTensorSpan<TElement> b)` / `Tensor<TElement> operator -(ReadOnlyTensorSpan<TElement> a)`
+`Tensor<TElement> operator +(ReadOnlyTensorSpan<TElement> a, ReadOnlyTensorSpan<TElement> b)` / `Tensor<TElement> operator /(ReadOnlyTensorSpan<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(ReadOnlyTensorSpan<TElement> a, ReadOnlyTensorSpan<TElement> b)` / `Tensor<TElement> operator *(ReadOnlyTensorSpan<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(TElement scalar, ReadOnlyTensorSpan<TElement> a)` / `Tensor<TElement> operator -(ReadOnlyTensorSpan<TElement> a, ReadOnlyTensorSpan<TElement> b)` / `Tensor<TElement> operator -(ReadOnlyTensorSpan<TElement> a)`
 
 ### `readonly ref struct ReadOnlyVectorSpan<T>`
 
@@ -1671,7 +1766,7 @@ Represents a zero-copy, strided read-only view over a one-dimensional vector. / 
 
 **演算子**
 
-`Vector<T> operator +(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y)` / `implicit operator ReadOnlyVectorSpan<T>(ReadOnlySpan<T> data)` / `Vector<T> operator *(ReadOnlyMatrixSpan<T> a, ReadOnlyVectorSpan<T> x)` / `Vector<T> operator *(ReadOnlyVectorSpan<T> x, T scalar)` / `Vector<T> operator *(T scalar, ReadOnlyVectorSpan<T> x)` / `Vector<T> operator -(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y)` / `Vector<T> operator -(ReadOnlyVectorSpan<T> x)`
+`Vector<T> operator +(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y)` / `Vector<T> operator /(ReadOnlyVectorSpan<T> x, T scalar)` / `implicit operator ReadOnlyVectorSpan<T>(ReadOnlySpan<T> data)` / `Vector<T> operator *(ReadOnlyMatrixSpan<T> a, ReadOnlyVectorSpan<T> x)` / `Vector<T> operator *(ReadOnlyVectorSpan<T> x, T scalar)` / `Vector<T> operator *(T scalar, ReadOnlyVectorSpan<T> x)` / `Vector<T> operator -(ReadOnlyVectorSpan<T> x, ReadOnlyVectorSpan<T> y)` / `Vector<T> operator -(ReadOnlyVectorSpan<T> x)`
 
 ### `class SingularValueDecomposition`
 
@@ -1768,7 +1863,7 @@ Represents a dense rank-3 multidimensional numerical array storing a batch of co
 
 **演算子**
 
-`Tensor<TElement> operator +(Tensor<TElement> a, Tensor<TElement> b)` / `implicit operator TensorSpan<TElement>(Tensor<TElement> tensor)` / `implicit operator ReadOnlyTensorSpan<TElement>(Tensor<TElement> tensor)` / `Tensor<TElement> operator *(TElement scalar, Tensor<TElement> a)` / `Tensor<TElement> operator *(Tensor<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(Tensor<TElement> a, Tensor<TElement> b)` / `Tensor<TElement> operator -(Tensor<TElement> a, Tensor<TElement> b)` / `Tensor<TElement> operator -(Tensor<TElement> a)`
+`Tensor<TElement> operator +(Tensor<TElement> a, Tensor<TElement> b)` / `Tensor<TElement> operator /(Tensor<TElement> a, TElement scalar)` / `implicit operator TensorSpan<TElement>(Tensor<TElement> tensor)` / `implicit operator ReadOnlyTensorSpan<TElement>(Tensor<TElement> tensor)` / `Tensor<TElement> operator *(TElement scalar, Tensor<TElement> a)` / `Tensor<TElement> operator *(Tensor<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(Tensor<TElement> a, Tensor<TElement> b)` / `Tensor<TElement> operator -(Tensor<TElement> a, Tensor<TElement> b)` / `Tensor<TElement> operator -(Tensor<TElement> a)`
 
 ### `readonly ref struct TensorMatrices<TElement>`
 
@@ -1851,7 +1946,7 @@ Represents a zero-copy, strided writable view over a rank-3 tensor. / ストラ�
 
 **演算子**
 
-`Tensor<TElement> operator +(TensorSpan<TElement> a, TensorSpan<TElement> b)` / `implicit operator ReadOnlyTensorSpan<TElement>(TensorSpan<TElement> view)` / `Tensor<TElement> operator *(TElement scalar, TensorSpan<TElement> a)` / `Tensor<TElement> operator *(TensorSpan<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(TensorSpan<TElement> a, TensorSpan<TElement> b)` / `Tensor<TElement> operator -(TensorSpan<TElement> a, TensorSpan<TElement> b)` / `Tensor<TElement> operator -(TensorSpan<TElement> a)`
+`Tensor<TElement> operator +(TensorSpan<TElement> a, TensorSpan<TElement> b)` / `Tensor<TElement> operator /(TensorSpan<TElement> a, TElement scalar)` / `implicit operator ReadOnlyTensorSpan<TElement>(TensorSpan<TElement> view)` / `Tensor<TElement> operator *(TElement scalar, TensorSpan<TElement> a)` / `Tensor<TElement> operator *(TensorSpan<TElement> a, TElement scalar)` / `Tensor<TElement> operator *(TensorSpan<TElement> a, TensorSpan<TElement> b)` / `Tensor<TElement> operator -(TensorSpan<TElement> a, TensorSpan<TElement> b)` / `Tensor<TElement> operator -(TensorSpan<TElement> a)`
 
 ### `enum TwoStageReduction`
 
@@ -1903,7 +1998,7 @@ Represents a dense one-dimensional numerical vector. / 1 次元の密ベクト�
 
 **演算子**
 
-`Vector<T> operator +(Vector<T> x, Vector<T> y)` / `explicit operator Vector<T>(T[] values)` / `explicit operator T[](Vector<T> vector)` / `implicit operator VectorSpan<T>(Vector<T> vector)` / `implicit operator ReadOnlyVectorSpan<T>(Vector<T> vector)` / `Vector<T> operator *(ReadOnlyMatrixSpan<T> a, Vector<T> x)` / `Vector<T> operator *(T scalar, Vector<T> x)` / `Vector<T> operator *(Vector<T> x, T scalar)` / `Vector<T> operator -(Vector<T> x, Vector<T> y)` / `Vector<T> operator -(Vector<T> x)`
+`Vector<T> operator +(Vector<T> x, Vector<T> y)` / `Vector<T> operator /(Vector<T> x, T scalar)` / `explicit operator Vector<T>(T[] values)` / `explicit operator T[](Vector<T> vector)` / `implicit operator VectorSpan<T>(Vector<T> vector)` / `implicit operator ReadOnlyVectorSpan<T>(Vector<T> vector)` / `Vector<T> operator *(ReadOnlyMatrixSpan<T> a, Vector<T> x)` / `Vector<T> operator *(T scalar, Vector<T> x)` / `Vector<T> operator *(Vector<T> x, T scalar)` / `Vector<T> operator -(Vector<T> x, Vector<T> y)` / `Vector<T> operator -(Vector<T> x)`
 
 ### `readonly ref struct VectorSpan<T>`
 
@@ -1945,7 +2040,7 @@ Represents a zero-copy, strided writable view over a one-dimensional vector. / �
 
 **演算子**
 
-`Vector<T> operator +(VectorSpan<T> x, VectorSpan<T> y)` / `implicit operator VectorSpan<T>(Span<T> data)` / `implicit operator ReadOnlyVectorSpan<T>(VectorSpan<T> view)` / `Vector<T> operator *(ReadOnlyMatrixSpan<T> a, VectorSpan<T> x)` / `Vector<T> operator *(T scalar, VectorSpan<T> x)` / `Vector<T> operator *(VectorSpan<T> x, T scalar)` / `Vector<T> operator -(VectorSpan<T> x, VectorSpan<T> y)` / `Vector<T> operator -(VectorSpan<T> x)`
+`Vector<T> operator +(VectorSpan<T> x, VectorSpan<T> y)` / `Vector<T> operator /(VectorSpan<T> x, T scalar)` / `implicit operator VectorSpan<T>(Span<T> data)` / `implicit operator ReadOnlyVectorSpan<T>(VectorSpan<T> view)` / `Vector<T> operator *(ReadOnlyMatrixSpan<T> a, VectorSpan<T> x)` / `Vector<T> operator *(T scalar, VectorSpan<T> x)` / `Vector<T> operator *(VectorSpan<T> x, T scalar)` / `Vector<T> operator -(VectorSpan<T> x, VectorSpan<T> y)` / `Vector<T> operator -(VectorSpan<T> x)`
 
 ## Tuna.QuasiRandom
 

@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -46,7 +49,7 @@ public static partial class XMath
             var first = DoubleDoublePositiveDigamma(reflected);
             var (sine, cosine) = DoubleDoubleSinCosPi(x);
             var cotangent = DoubleDoubleDivide(cosine, sine);
-            var second = DoubleDoubleMultiply((Math.PI, 0.5 * TwoPiLo), cotangent);
+            var second = DoubleDoubleMultiply((Pi, PiLo), cotangent);
             return DoubleDoubleAdd(first, (-second.Hi, -second.Lo));
         }
 
@@ -85,7 +88,7 @@ public static partial class XMath
             var fraction = complement
                 ? DoubleDoubleAdd((0.5, 0), reduced.Hi < 0 ? reduced : (-reduced.Hi, -reduced.Lo))
                 : reduced;
-            var angle = DoubleDoubleMultiply((Math.PI, 0.5 * TwoPiLo), fraction);
+            var angle = DoubleDoubleMultiply((Pi, PiLo), fraction);
             var square = DoubleDoubleMultiply(angle, angle);
             var negativeSquare = (-square.Hi, -square.Lo);
             var sineTerm = angle;
@@ -154,7 +157,7 @@ public static partial class XMath
             var recurrence = DoubleDoubleLog(product);
             var result = DoubleDoubleMultiply(DoubleDoubleAdd(x, (-0.5, 0)), DoubleDoubleLog(x));
             result = DoubleDoubleAdd(result, (-x.Hi, -x.Lo));
-            result = DoubleDoubleAdd(result, (LnSqrt2Pi, LnSqrt2PiLo));
+            result = DoubleDoubleAdd(result, (LnSqrtTwoPi, LnSqrtTwoPiLo));
             var inverse = DoubleDoubleDivide((1.0, 0.0), x);
             var square = DoubleDoubleMultiply(inverse, inverse);
             var power = inverse;

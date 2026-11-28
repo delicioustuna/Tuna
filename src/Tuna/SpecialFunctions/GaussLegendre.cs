@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -21,7 +23,7 @@ public static partial class XMath
                     LegendreWithDerivative(n, x, out double p, out double derivative);
                     double step = p / derivative;
                     x -= step;
-                    if (Math.Abs(step) <= Epsilon * 0.5)
+                    if (Math.Abs(step) <= MachineEpsilon * 0.5)
                     {
                         break;
                     }

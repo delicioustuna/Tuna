@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -76,7 +79,7 @@ public static partial class XMath
             {
                 // u = 1 - z。sin πu = sin πz、Cl₂(2πu) = -Cl₂(2πz) なので丸めた u は漸近展開と u ln 2 の部分にしか使わない
                 double u = 1 - z;
-                return LogBarnesGAsymptotic(u) - u * LnTwoPi + u * Math.Log(Math.Abs(2 * double.SinPi(z))) - ClausenTurns(z) / (2 * Math.PI);
+                return LogBarnesGAsymptotic(u) - u * LnTau + u * Math.Log(Math.Abs(2 * double.SinPi(z))) - ClausenTurns(z) / (2 * Math.PI);
             }
 
             double n = Math.Round(z - 1);
@@ -215,7 +218,7 @@ public static partial class XMath
 
             // k = 2 の項の符号は正
             sum *= t * t * t;
-            return 0.5 * t * (LnTwoPi - 1) - 0.5 * (1 + EulerGamma) * t * t + sum;
+            return 0.5 * t * (LnTau - 1) - 0.5 * (1 + EulerGamma) * t * t + sum;
         }
 
         // ln G(1 + u) の漸近展開 (u > 39)
@@ -229,7 +232,7 @@ public static partial class XMath
             {
                 double term = BernoulliEven[k + 1] / (4.0 * k * (k + 1)) * power;
                 sum += term;
-                if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }
@@ -237,7 +240,7 @@ public static partial class XMath
                 power *= inverse;
             }
 
-            return 0.5 * u * u * (lnu - 1.5) + 0.5 * u * LnTwoPi - lnu / 12 + ZetaDerivativeAtMinusOne + sum;
+            return 0.5 * u * u * (lnu - 1.5) + 0.5 * u * LnTau - lnu / 12 + ZetaDerivativeAtMinusOne + sum;
         }
     }
 }

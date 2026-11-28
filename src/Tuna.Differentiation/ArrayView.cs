@@ -62,6 +62,7 @@ internal enum ArrayOperation : byte
     MatrixVectorMultiply,
     Outer,
     Cross,
+    Wedge,
     Sum,
     Dot,
     Trace,
@@ -163,6 +164,9 @@ internal enum ArrayOperation : byte
 
     // ScalarInput holds the slot containing the copied embedding indices.
     Embedding,
+
+    PointwiseSum,
+    PointwiseVector,
 }
 
 // Position is the scalar nodeCount when recorded; backward processes this record before scalar node Position - 1.

@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -170,7 +172,7 @@ public static partial class XMath
             else
             {
                 double power = ScaledPower(2 * Math.PI, n, out long powerExponent);
-                amplitude = -2 * factorial / power * (1 - n * (TwoPiLo / (2 * Math.PI)));
+                amplitude = -2 * factorial / power * (1 - n * (TauLo / (2 * Math.PI)));
                 exponent = factorialExponent - powerExponent;
             }
 
@@ -215,7 +217,7 @@ public static partial class XMath
                 scale *= inverse;
                 double term = binomial * scale * AppellValueAtCenter(k, 0.5, euler);
                 sum += term;
-                if (Math.Abs(term) <= 0.25 * Epsilon * Math.Abs(sum))
+                if (Math.Abs(term) <= 0.25 * MachineEpsilon * Math.Abs(sum))
                 {
                     break;
                 }

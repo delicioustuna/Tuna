@@ -9,8 +9,6 @@ namespace Tuna.LinearAlgebra;
 /// </summary>
 internal static partial class HessenbergQr
 {
-    private const double Epsilon = 2.220446049250313e-16;
-
     // vectors が真なら z（ヘッセンベルグ化の直交行列）に固有ベクトルの実形式を求める。
     // backSubstitute が偽なら後退代入をせず、H に実シューア形、z にシューアベクトルを残す。
     /// <summary>
@@ -22,7 +20,7 @@ internal static partial class HessenbergQr
     internal static bool Solve(int nn, int low, int high, Span<double> h, Span<double> wr, Span<double> wi, Span<double> z, bool vectors, bool backSubstitute = true)
     {
         int ld = nn;
-        double eps = Epsilon;
+        double eps = NumericConstants.MachineEpsilon;
         double exshift = 0.0;
         double p = 0, q = 0, r = 0, s = 0, zz = 0, w, x, y;
 

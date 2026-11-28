@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Numerics;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -236,7 +237,7 @@ public static partial class XMath
                 double power = ScaledPower(k - j, n, out long exponent);
                 double term = binomial * ScaleB(power / top, exponent - topExponent);
                 sum += (j % 2 == 0 ? term : -term);
-                if (term < 0.25 * Epsilon * sum)
+                if (term < 0.25 * MachineEpsilon * sum)
                 {
                     break;
                 }

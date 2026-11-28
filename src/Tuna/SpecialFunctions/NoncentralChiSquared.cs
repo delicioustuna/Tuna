@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -113,7 +116,7 @@ public static partial class XMath
                 // a + (j - 1) の順にする（(a + j) - 1 は小さい a の下位ビットを失う）
                 term *= t / (j * (a + (j - 1)));
                 sum += term;
-                if (term <= sum * Epsilon * 0.5)
+                if (term <= sum * MachineEpsilon * 0.5)
                 {
                     break;
                 }
@@ -131,7 +134,7 @@ public static partial class XMath
             {
                 term *= t / ((m + 1) * (a + m));
                 sum += term;
-                if (term <= sum * Epsilon * 0.5)
+                if (term <= sum * MachineEpsilon * 0.5)
                 {
                     break;
                 }

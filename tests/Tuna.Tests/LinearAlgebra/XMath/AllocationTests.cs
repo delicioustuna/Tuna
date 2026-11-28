@@ -22,6 +22,17 @@ public class AllocationTests
         Assert.Equal(0L, MinimumAllocation(() => _ = XMath.Trace(matrix)));
     }
 
+    [Fact]
+    public void WedgeWithDestinationDoesNotAllocate()
+    {
+        var u = Matrix<double>.Generate(2, 32, (i, j) => i - j);
+        var v = Vector<double>.Generate(32, i => i + 1);
+        var destination = new Matrix<double>(32, 32);
+
+        Assert.Equal(0L, MinimumAllocation(() => XMath.Wedge(v, v, destination)));
+        Assert.Equal(0L, MinimumAllocation(() => XMath.Wedge(u.Row(0), v, destination.T)));
+    }
+
     [Theory]
     [InlineData(4)]
     [InlineData(40)]

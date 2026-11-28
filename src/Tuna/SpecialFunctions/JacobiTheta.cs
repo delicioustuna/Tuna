@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -49,13 +52,13 @@ public static partial class XMath
                     // z = kπ + r（double-double）から、r ∓ π/2 を作る（π/4 < |r| ≤ π/2 なので上位どうしの差は丸められない）。
                     // r > 0 なら z + π/2 = (k+1)π + (r - π/2) で符号が反転する
                     double shifted = r > 0
-                        ? (r - PiHi / 2) + (rLo - PiLo / 2)
-                        : (r + PiHi / 2) + (rLo + PiLo / 2);
+                        ? (r - Pi / 2) + (rLo - PiLo / 2)
+                        : (r + Pi / 2) + (rLo + PiLo / 2);
                     return (r > 0 ? -sign : sign) * JacobiTheta1Core(shifted, q);
                 }
 
                 double periods = Math.Round(z / Math.PI + 0.5);
-                double w = (Math.FusedMultiplyAdd(-periods, PiHi, z) + PiHi / 2) + (PiLo / 2 - periods * PiLo);
+                double w = (Math.FusedMultiplyAdd(-periods, Pi, z) + Pi / 2) + (PiLo / 2 - periods * PiLo);
                 double shiftSign = Math.IEEERemainder(periods, 2) == 0 ? 1 : -1;
                 return shiftSign * JacobiTheta1Core(w, q);
             }
@@ -75,7 +78,7 @@ public static partial class XMath
                 {
                     double term = power * Math.Cos((2 * n + 1) * r);
                     sum += term;
-                    if (power <= Epsilon * Epsilon * Math.Abs(sum))
+                    if (power <= MachineEpsilon * MachineEpsilon * Math.Abs(sum))
                     {
                         break;
                     }
@@ -97,7 +100,7 @@ public static partial class XMath
                 double minus = r - n * Math.PI;
                 double term = Math.Exp(-plus * plus / (Math.PI * t)) + Math.Exp(-minus * minus / (Math.PI * t));
                 total += n % 2 == 1 ? -term : term;
-                if (term <= Epsilon * Epsilon * total)
+                if (term <= MachineEpsilon * MachineEpsilon * total)
                 {
                     break;
                 }
@@ -170,7 +173,7 @@ public static partial class XMath
                 {
                     double term = power * Math.Sin((2 * n + 1) * r);
                     sum += n % 2 == 0 ? term : -term;
-                    if (power <= Epsilon * Epsilon * Math.Abs(sum))
+                    if (power <= MachineEpsilon * MachineEpsilon * Math.Abs(sum))
                     {
                         break;
                     }
@@ -192,7 +195,7 @@ public static partial class XMath
                 double d = x - a;
                 double term = Math.Exp(-d * d / (Math.PI * t)) * -Expm1(-4 * a * x / (Math.PI * t));
                 total += n % 2 == 1 ? term : -term;
-                if (Math.Abs(term) <= Epsilon * Epsilon * Math.Abs(total))
+                if (Math.Abs(term) <= MachineEpsilon * MachineEpsilon * Math.Abs(total))
                 {
                     break;
                 }
@@ -217,7 +220,7 @@ public static partial class XMath
                     double power = Math.Pow(q, (double)n * n);
                     double term = power * Math.Cos(2 * n * r);
                     sum += shift == 1 && n % 2 == 1 ? -term : term;
-                    if (power <= Epsilon * Epsilon)
+                    if (power <= MachineEpsilon * MachineEpsilon)
                     {
                         break;
                     }
@@ -236,7 +239,7 @@ public static partial class XMath
                 double minus = center - n * Math.PI;
                 double term = Math.Exp(-plus * plus / (Math.PI * t)) + Math.Exp(-minus * minus / (Math.PI * t));
                 total += term;
-                if (term <= Epsilon * Epsilon * total)
+                if (term <= MachineEpsilon * MachineEpsilon * total)
                 {
                     break;
                 }
@@ -270,7 +273,7 @@ public static partial class XMath
 
             rLo = 0;
             double periods = Math.Round(z / Math.PI);
-            r = periods == 0 ? z : Math.FusedMultiplyAdd(-periods, PiHi, z) - periods * PiLo;
+            r = periods == 0 ? z : Math.FusedMultiplyAdd(-periods, Pi, z) - periods * PiLo;
             sign = Math.IEEERemainder(periods, 2) == 0 ? 1 : -1;
             return true;
         }

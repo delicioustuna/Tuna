@@ -1,3 +1,6 @@
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -79,7 +82,7 @@ public static partial class XMath
             else
             {
                 double periods = Math.Round(phi / Math.PI);
-                r = periods == 0 ? phi : Math.FusedMultiplyAdd(-periods, PiHi, phi) - periods * PiLo;
+                r = periods == 0 ? phi : Math.FusedMultiplyAdd(-periods, Pi, phi) - periods * PiLo;
             }
 
             double s = Math.Sin(r);
@@ -116,7 +119,7 @@ public static partial class XMath
 
             // Λ₀(φ + jπ) = Λ₀(φ) + 2j, |r| ≤ π/2
             double periods = Math.Round(phi / Math.PI);
-            double r = periods == 0 ? phi : Math.FusedMultiplyAdd(-periods, PiHi, phi) - periods * PiLo;
+            double r = periods == 0 ? phi : Math.FusedMultiplyAdd(-periods, Pi, phi) - periods * PiLo;
             double s = Math.Sin(r);
             double value;
             if (m == 0)
@@ -270,7 +273,7 @@ public static partial class XMath
 
             for (int i = 0; i < 64; i++)
             {
-                if (Math.Abs(a - b) <= 2 * Epsilon * a)
+                if (Math.Abs(a - b) <= 2 * MachineEpsilon * a)
                 {
                     break;
                 }

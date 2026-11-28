@@ -1,12 +1,10 @@
 # Tuna.Differentiation API リファレンス
 
-> このファイルは `tools/ApiDocGenerator` によって自動生成されています。手動で編集せず、`dotnet build Tuna.slnx -c Release` の後に再生成してください。
->
 > `(+N overloads)` は `Vector` / `VectorSpan` / `ReadOnlyVectorSpan` 等のコンテナ・ビュー組み合わせや `double` / `float` 固定型オーバーロードの省略を表します。
 
 ## 公開型一覧
 
-- `Tuna.Differentiation` (16 型): [`CholeskyDecompositionNode`](#readonly-struct-choleskydecompositionnode), [`DifferentiableOperationContext<T>`](#readonly-ref-struct-differentiableoperationcontextt), [`IDifferentiableOperation<T>`](#interface-idifferentiableoperationt), [`LuDecompositionNode`](#readonly-struct-ludecompositionnode), [`MatrixNode<TElement>`](#readonly-struct-matrixnodetelement), [`Parameter<T>`](#class-parametert), [`ParameterSet<T>`](#class-parametersett), [`QrDecompositionNode`](#readonly-struct-qrdecompositionnode), [`ScalarNode`](#readonly-struct-scalarnode), [`SingularValueDecompositionNode`](#readonly-struct-singularvaluedecompositionnode), [`SymmetricEigenDecompositionNode`](#readonly-struct-symmetriceigendecompositionnode), [`Tape`](#class-tape), [`TensorNode<TElement>`](#readonly-struct-tensornodetelement), [`VectorNode<T>`](#readonly-struct-vectornodet), [`XMathExtensions`](#static-class-xmathextensions), [`XMathSpecialExtensions`](#static-class-xmathspecialextensions)
+- `Tuna.Differentiation` (18 型): [`CholeskyDecompositionNode`](#readonly-struct-choleskydecompositionnode), [`DifferentiableOperationContext<T>`](#readonly-ref-struct-differentiableoperationcontextt), [`IDifferentiableOperation<T>`](#interface-idifferentiableoperationt), [`LuDecompositionNode`](#readonly-struct-ludecompositionnode), [`MatrixNode<TElement>`](#readonly-struct-matrixnodetelement), [`Parameter<T>`](#class-parametert), [`ParameterSet<T>`](#class-parametersett), [`QrDecompositionNode`](#readonly-struct-qrdecompositionnode), [`ScalarNode`](#readonly-struct-scalarnode), [`ScalarSetNode<T>`](#readonly-struct-scalarsetnodet), [`SingularValueDecompositionNode`](#readonly-struct-singularvaluedecompositionnode), [`SymmetricEigenDecompositionNode`](#readonly-struct-symmetriceigendecompositionnode), [`Tape`](#class-tape), [`TensorNode<TElement>`](#readonly-struct-tensornodetelement), [`VectorNode<T>`](#readonly-struct-vectornodet), [`VectorSetNode<T>`](#readonly-struct-vectorsetnodet), [`XMathExtensions`](#static-class-xmathextensions), [`XMathSpecialExtensions`](#static-class-xmathspecialextensions)
 
 ## Tuna.Differentiation
 
@@ -207,6 +205,14 @@ Represents a scalar node for reverse-mode automatic differentiation. A node with
 
 `ScalarNode operator +(ScalarNode left, ScalarNode right)` / `ScalarNode operator /(ScalarNode left, ScalarNode right)` / `bool operator >(ScalarNode left, ScalarNode right)` / `bool operator >=(ScalarNode left, ScalarNode right)` / `implicit operator ScalarNode(double value)` / `bool operator <(ScalarNode left, ScalarNode right)` / `bool operator <=(ScalarNode left, ScalarNode right)` / `ScalarNode operator *(ScalarNode left, ScalarNode right)` / `ScalarNode operator -(ScalarNode left, ScalarNode right)` / `ScalarNode operator -(ScalarNode operand)`
 
+### `readonly struct ScalarSetNode<T>`
+
+Represents a shared scalar or a vector containing one scalar per point. / 全点で共通のスカラー、または点ごとのスカラーを格納するベクトルを表します。
+
+**演算子**
+
+`implicit operator ScalarSetNode<T>(ScalarNode value)` / `implicit operator ScalarSetNode<T>(T value)` / `implicit operator ScalarSetNode<T>(VectorNode<T> value)`
+
 ### `readonly struct SingularValueDecompositionNode`
 
 Represents a thin singular value decomposition `A = UΣVᵀ` recorded on a `Tape`. / `Tape` に記録された薄い特異値分解 `A = UΣVᵀ` を表すノードです。
@@ -343,6 +349,14 @@ Represents a vector node for reverse-mode automatic differentiation. / 逆モー
 **演算子**
 
 `VectorNode<T> operator +(ScalarNode s, VectorNode<T> x)` / `VectorNode<T> operator +(VectorNode<T> x, ScalarNode s)` / `VectorNode<T> operator +(VectorNode<T> x, VectorNode<T> y)` / `VectorNode<T> operator /(VectorNode<T> x, ScalarNode s)` / `VectorNode<T> operator *(MatrixNode<T> a, VectorNode<T> x)` / `VectorNode<T> operator *(ScalarNode s, VectorNode<T> x)` / `VectorNode<T> operator *(VectorNode<T> x, ScalarNode s)` / `VectorNode<T> operator -(ScalarNode s, VectorNode<T> x)` / `VectorNode<T> operator -(VectorNode<T> x, ScalarNode s)` / `VectorNode<T> operator -(VectorNode<T> x, VectorNode<T> y)` / `VectorNode<T> operator -(VectorNode<T> x)`
+
+### `readonly struct VectorSetNode<T>`
+
+Represents a shared vector or a matrix containing one vector per point. / 全点で共通のベクトル、または点ごとのベクトルを格納する行列を表します。
+
+**演算子**
+
+`implicit operator VectorSetNode<T>(MatrixNode<T> value)` / `implicit operator VectorSetNode<T>(VectorNode<T> value)`
 
 ### `static class XMathExtensions`
 
@@ -514,6 +528,7 @@ Provides `XMath` extension methods for building differentiable scalar, vector, m
 | `static VectorNode<T> Tanh<T>(VectorNode<T> x, bool approximate)` | Computes the hyperbolic tangent `tanh(x)` elementwise, optionally using an approximate `float` kernel. / 各要素の双曲線正接 `tanh(x)` を計算します（`float` では近似カーネルを選択可能）。 |
 | `static MatrixNode<T> Tanh<T>(MatrixNode<T> x, bool approximate)` | Computes the hyperbolic tangent `tanh(x)` elementwise, optionally using an approximate `float` kernel. / 各要素の双曲線正接 `tanh(x)` を計算します（`float` では近似カーネルを選択可能）。 |
 | `static ScalarNode Trace<T>(MatrixNode<T> x)` | Computes the sum of the main diagonal of a matrix node. / 行列ノードの主対角成分の和を計算します。 |
+| `static MatrixNode<T> Wedge<T>(VectorNode<T> u, VectorNode<T> v)` | Computes the differentiable wedge product `u vᵀ − v uᵀ`. / 微分可能なウェッジ積 `u vᵀ − v uᵀ` を計算します。 |
 
 ### `static class XMathSpecialExtensions`
 

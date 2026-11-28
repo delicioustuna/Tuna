@@ -223,7 +223,7 @@ public static partial class XMathExtensions
             double difference = b - a;
             double t = ExpNonpositiveDifference(b, a);
             double denominator;
-            if (difference < -Ln2)
+            if (difference < -XMath.Constants.Ln2)
             {
                 denominator = 1 - t;
             }

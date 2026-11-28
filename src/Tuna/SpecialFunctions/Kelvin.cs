@@ -1,4 +1,6 @@
 using System.Numerics;
+using static Tuna.XMath.Constants;
+using static Tuna.NumericConstants;
 
 namespace Tuna;
 
@@ -17,10 +19,6 @@ public static partial class XMath
 
         // これより大きい x では K_n(x e^(iπ/4))（n = 0, 1）に漸近展開を使う（それ以下は台形則）
         private const double KelvinKAsymptoticLimit = 30;
-
-        // 1/√2 の上位・下位部分（double-double 用）
-        private const double KelvinInvSqrt2Hi = 0.7071067811865476;
-        private const double KelvinInvSqrt2Lo = -4.833646656726457e-17;
 
         /// <summary>
         /// Computes the Kelvin function <c>ber_n(x) = Re J_n(x e^(3πi / 4))</c>.
@@ -158,7 +156,7 @@ public static partial class XMath
                         break;
                 }
 
-                if (term <= 0.5 * Epsilon * Math.Max(Math.Abs(re), Math.Abs(im)))
+                if (term <= 0.5 * MachineEpsilon * Math.Max(Math.Abs(re), Math.Abs(im)))
                 {
                     break;
                 }
@@ -349,10 +347,10 @@ public static partial class XMath
 
                 // e^(-ikπ/4)
                 KelvinEighthRoot(-k, out int c, out int s, out bool diagonal);
-                double scale = diagonal ? KelvinInvSqrt2Hi * magnitude : magnitude;
+                double scale = diagonal ? OneOverSqrt2 * magnitude : magnitude;
                 re += c * scale;
                 im += s * scale;
-                if (Math.Abs(magnitude) <= 0.25 * Epsilon * Math.Sqrt(re * re + im * im) || magnitude == 0)
+                if (Math.Abs(magnitude) <= 0.25 * MachineEpsilon * Math.Sqrt(re * re + im * im) || magnitude == 0)
                 {
                     sum = new Complex(re, im);
                     return true;
@@ -378,8 +376,8 @@ public static partial class XMath
         // x/√2 を double-double で返す
         private static (double Hi, double Lo) KelvinXOverSqrt2(double x)
         {
-            double hi = x * KelvinInvSqrt2Hi;
-            double lo = Math.FusedMultiplyAdd(x, KelvinInvSqrt2Hi, -hi) + x * KelvinInvSqrt2Lo;
+            double hi = x * OneOverSqrt2;
+            double lo = Math.FusedMultiplyAdd(x, OneOverSqrt2, -hi) + x * OneOverSqrt2Lo;
             return DoubleDoubleNormalize(hi, lo);
         }
 
@@ -421,7 +419,7 @@ public static partial class XMath
             if (order >= 2)
             {
                 // 2/z = (2/x) e^(-iπ/4)
-                Complex twoOverZ = new Complex(KelvinInvSqrt2Hi, -KelvinInvSqrt2Hi) * (2 / x);
+                Complex twoOverZ = new Complex(OneOverSqrt2, -OneOverSqrt2) * (2 / x);
                 Complex previous = k0;
                 for (int j = 1; j < order; j++)
                 {
@@ -474,7 +472,7 @@ public static partial class XMath
             double h = Math.Min(0.08, 0.4 / Math.Sqrt(x));
             double re = 0.5;
             double im = 0;
-            double c = Math.Sqrt(2) * x;
+            double c = Sqrt2 * x;
             for (int k = 1; k < 100000; k++)
             {
                 double t = k * h;
@@ -574,8 +572,8 @@ public static partial class XMath
             var imaginary = DoubleDoubleAdd(KelvinScale(re, s), KelvinScale(im, c));
             if (diagonal)
             {
-                real = DoubleDoubleMultiply(real, (KelvinInvSqrt2Hi, KelvinInvSqrt2Lo));
-                imaginary = DoubleDoubleMultiply(imaginary, (KelvinInvSqrt2Hi, KelvinInvSqrt2Lo));
+                real = DoubleDoubleMultiply(real, (OneOverSqrt2, OneOverSqrt2Lo));
+                imaginary = DoubleDoubleMultiply(imaginary, (OneOverSqrt2, OneOverSqrt2Lo));
             }
 
             re = real;
@@ -586,7 +584,7 @@ public static partial class XMath
         private static Complex KelvinKerKeiTiny(int n, double x)
         {
             KelvinEighthRoot(-3 * (long)n, out int c, out int s, out bool diagonal);
-            double factor = diagonal ? KelvinInvSqrt2Hi : 1;
+            double factor = diagonal ? OneOverSqrt2 : 1;
             double leading = 0.5 * ScaledPower(0.5 * x, -n, out long e1) * ScaledFactorial(n - 1, out long f1);
             double re;
             double im;

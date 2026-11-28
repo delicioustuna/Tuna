@@ -5,8 +5,6 @@ namespace Tuna.LinearAlgebra;
 /// </summary>
 internal static class TridiagonalEigen
 {
-    private const double Epsilon = 2.220446049250313e-16;
-
     // d を固有値（昇順）で、 z（n × n、null 可）を固有ベクトルを掛けたもので上書きする。
     // e は長さ n で、e[i] が (i+1, i) 成分（e[n-1] は作業用）。
     /// <summary>
@@ -51,7 +49,7 @@ internal static class TridiagonalEigen
             int m = l;
             while (m < n - 1)
             {
-                if (Math.Abs(e[m]) <= Epsilon * tst1)
+                if (Math.Abs(e[m]) <= NumericConstants.MachineEpsilon * tst1)
                 {
                     break;
                 }
@@ -126,7 +124,7 @@ internal static class TridiagonalEigen
                     e[l] = s * p;
                     d[l] = c * p;
                 }
-                while (Math.Abs(e[l]) > Epsilon * tst1);
+                while (Math.Abs(e[l]) > NumericConstants.MachineEpsilon * tst1);
             }
 
             d[l] += f;

@@ -60,7 +60,7 @@ internal static partial class HessenbergQr
     /// </summary>
     private static void SolveVector(int n, Span<double> h, int ld, ReadOnlySpan<double> wr, ReadOnlySpan<double> wi, ReadOnlySpan<double> ht, ReadOnlySpan<double> sub, double norm)
     {
-        double eps = Epsilon;
+        double eps = NumericConstants.MachineEpsilon;
         double p, q, r = 0, s = 0, zz = 0, t, w, x, y;
         p = wr[n];
         q = wi[n];

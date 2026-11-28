@@ -88,7 +88,7 @@ public readonly partial struct LogNormalDistribution : IContinuousDistribution
     }
 
     /// <inheritdoc/>
-    public double Entropy => _mu + 0.5 + DistributionMath.LnSqrt2Pi + Math.Log(_sigma);
+    public double Entropy => _mu + 0.5 + XMath.Constants.LnSqrtTwoPi + Math.Log(_sigma);
 
     /// <inheritdoc/>
     public double Median => Math.Exp(_mu);
@@ -116,7 +116,7 @@ public readonly partial struct LogNormalDistribution : IContinuousDistribution
 
         // Fall back to log-space when NormalPdf underflows even though dividing by σx recovers a normal float.
         double value = XMath.Special.NormalPdf(Standardize(x)) / _sigma / x;
-        return value >= DistributionMath.MinNormal && value < double.PositiveInfinity ? value : Math.Exp(LogPdf(x));
+        return value >= NumericConstants.MinNormal && value < double.PositiveInfinity ? value : Math.Exp(LogPdf(x));
     }
 
     /// <inheritdoc/>

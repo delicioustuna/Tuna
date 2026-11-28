@@ -1,3 +1,5 @@
+using static Tuna.NumericConstants;
+
 namespace Tuna;
 
 public static partial class XMath
@@ -93,7 +95,7 @@ public static partial class XMath
             double t = 0.5 * x * x;
             double term = 1;
             double sum = 1;
-            for (int k = 0; term > sum * Epsilon * 0.5; k++)
+            for (int k = 0; term > sum * MachineEpsilon * 0.5; k++)
             {
                 term *= t / ((k + 1) * (2.0 * n + 2 * k + 3));
                 sum += term;

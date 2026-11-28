@@ -15,9 +15,8 @@ internal sealed class GenzProbability : IMultivariateIntegrand
     // 条件付き分散の丸め誤差による非正値のみを下限クリップする
     private const double MinimumVariance = double.Epsilon;
 
-    // 正規化数の最小値 (2^-1022) および Φ⁻¹ が有限となる確率上限 (1 - 2^-53)
-    private const double SmallestNormal = 2.2250738585072014e-308;
-    private const double MaxProbability = 1 - 1.1102230246251565e-16;
+    // Φ⁻¹ が有限となる確率上限 (1 - 2^-53)
+    private const double MaxProbability = 1 - NumericConstants.UnitRoundoff;
 
     // 積分次元がこれ以下は直積求積 (Cubature)、それを超える次元は準モンテカルロ積分を使用する
     private const int ProductRuleMaxDimension = 2;
@@ -159,13 +158,13 @@ internal sealed class GenzProbability : IMultivariateIntegrand
             // 上側の区間は符号を反転した下側の区間 [-b, -a] の分位点を使う
             double low = XMath.Special.NormalCdf(-b);
             probability = XMath.Special.NormalCdf(-a) - low;
-            double p = Math.Clamp(low + w * probability, SmallestNormal, MaxProbability);
+            double p = Math.Clamp(low + w * probability, NumericConstants.MinNormal, MaxProbability);
             return Math.Clamp(-XMath.Special.InverseNormalCdf(p), a, b);
         }
 
         double lower = XMath.Special.NormalCdf(a);
         probability = XMath.Special.NormalCdf(b) - lower;
-        double q = Math.Clamp(lower + w * probability, SmallestNormal, MaxProbability);
+        double q = Math.Clamp(lower + w * probability, NumericConstants.MinNormal, MaxProbability);
         return Math.Clamp(XMath.Special.InverseNormalCdf(q), a, b);
     }
 

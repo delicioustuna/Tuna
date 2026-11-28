@@ -9,9 +9,6 @@ namespace Tuna.LinearAlgebra;
 /// </summary>
 internal static class HessenbergReduction
 {
-    private const double SafeMin = 2.2250738585072014e-308;
-    private const double Ulp = 2.220446049250313e-16;
-
     // LAPACK dgebal 'B'
     // 孤立した固有値を左上と右下へ移し、残りの [ilo, ihi] の行と列のノルムを揃える。
     /// <summary>
@@ -131,7 +128,7 @@ internal static class HessenbergReduction
     private static void Scale(int n, Span<double> a, int lda, Span<double> scale, int k, int l)
     {
         const double radix = 2.0;
-        double sfmin1 = SafeMin / (Ulp * radix);
+        double sfmin1 = NumericConstants.MinNormal / (NumericConstants.MachineEpsilon * radix);
         double sfmax1 = 1.0 / sfmin1;
         double sfmin2 = sfmin1 * radix;
         double sfmax2 = 1.0 / sfmin2;

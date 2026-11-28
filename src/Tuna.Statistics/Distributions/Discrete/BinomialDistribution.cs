@@ -40,12 +40,17 @@ public readonly partial struct BinomialDistribution : IDiscreteDistribution
 
     private BinomialDistribution(long trials, double probability, bool forDifferentiation)
     {
-        ArgumentOutOfRangeException.ThrowIfNegative(trials);
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(trials, MaxTrials);
+        ValidateTrialCount(trials);
         DistributionArgument.Probability(probability, nameof(probability), forDifferentiation);
         _trials = trials;
         _p = probability;
         _q = 1 - probability;
+    }
+
+    private static void ValidateTrialCount(long trials)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(trials);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(trials, MaxTrials);
     }
 
     /// <summary>

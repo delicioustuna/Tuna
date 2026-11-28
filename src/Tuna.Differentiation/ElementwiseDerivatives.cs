@@ -205,7 +205,7 @@ internal readonly struct LogitDerivative<T> : IUnaryKernel<T> where T : unmanage
 // Uses t = exp(x) for x < -ln 2 and m = expm1(-x) otherwise to avoid cancellation and overflow.
 internal readonly struct Log1mExpDerivative<T> : ITernaryKernel<T> where T : unmanaged, IFloatingPointIeee754<T>
 {
-    private static T NegativeLn2 => T.CreateTruncating(-0.6931471805599453);
+    private static T NegativeLn2 => -XMath.Constants<T>.Ln2;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T Invoke(T x, T t, T m)
